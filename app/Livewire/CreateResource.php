@@ -67,16 +67,19 @@ class CreateResource extends Component implements HasForms
                     ->label('Fichier')
                     ->collection('resources')
                     ->required(fn (Get $get): bool => ! ($get('text') || $get('url')))
+                    ->hidden(fn (Get $get): bool => ($get('text') || $get('url')))
                     ->live()
                     ->columnSpanFull(),
                 RichEditor::make('text')
                     ->label('Texte')
                     ->required(fn (Get $get): bool => ! ($get('media') || $get('url')))
+                    ->hidden(fn (Get $get): bool => ($get('media') || $get('url')))
                     ->live()
                     ->columnSpanFull(),
                 TextInput::make('url')
                     ->label('URL')
                     ->required(fn (Get $get): bool => ! ($get('media') || $get('text')))
+                    ->hidden(fn (Get $get): bool => ($get('media') || $get('text')))
                     ->url()
                     ->live()
                     ->columnSpanFull(),
