@@ -91,7 +91,7 @@ class CreateResource extends Component implements HasForms
             ->model(Resource::class);
     }
 
-    public function create(): null
+    public function create(): mixed
     {
         $resource = Resource::create($this->form->getState());
 
