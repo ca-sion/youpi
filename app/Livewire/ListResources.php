@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Resource;
 use Filament\Tables\Table;
+use Livewire\Attributes\Url;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Columns\TextColumn;
@@ -18,6 +19,33 @@ class ListResources extends Component implements HasForms, HasTable
 {
     use InteractsWithTable;
     use InteractsWithForms;
+
+    #[Url]
+    public bool $isTableReordering = false;
+
+    /**
+     * @var array<string, mixed> | null
+     */
+    #[Url]
+    public ?array $tableFilters = null;
+
+    #[Url]
+    public ?string $tableGrouping = null;
+
+    #[Url]
+    public ?string $tableGroupingDirection = null;
+
+    /**
+     * @var ?string
+     */
+    #[Url]
+    public $tableSearch = '';
+
+    #[Url]
+    public ?string $tableSortColumn = null;
+
+    #[Url]
+    public ?string $tableSortDirection = null;
 
     public function render()
     {
@@ -61,8 +89,10 @@ class ListResources extends Component implements HasForms, HasTable
             ])
             ->bulkActions([
                 // ...
-            ])->recordUrl(
+            ])
+            ->recordUrl(
                 fn (Model $record): string => route('resources.view', ['resource' => $record]),
-            );
+            )
+            ->persistFiltersInSession();
     }
 }
