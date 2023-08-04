@@ -31,7 +31,7 @@
                                     {{ data_get(config('youpi.resource_types'), $resource->type) }}
                                 </td>
                                 <td class="px-4 py-2 text-end">
-                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
+                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                                         Afficher
                                         <i class="bi bi-arrow-right ml-2"></i>
                                     </a>@endif
@@ -109,7 +109,7 @@
                                     {{ data_get($resource, 'athleteGroup.name') }}
                                 </td>
                                 <td class="px-4 py-2 text-end">
-                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
+                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                                         Afficher
                                         <i class="bi bi-arrow-right ml-2"></i>
                                     </a>@endif
