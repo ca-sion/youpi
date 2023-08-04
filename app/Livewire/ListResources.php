@@ -31,7 +31,8 @@ class ListResources extends Component implements HasForms, HasTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('name')
-                    ->label('Nom'),
+                    ->label('Nom')
+                    ->searchable(),
                 TextColumn::make('date')
                     ->label('Date')
                     ->date(config('youpi.date_format')),

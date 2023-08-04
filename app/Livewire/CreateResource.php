@@ -56,6 +56,13 @@ class CreateResource extends Component implements HasForms
                     ->hidden(fn (Get $get): bool => in_array($get('type'), ['documentation', null]))
                     ->required(fn (Get $get): bool => ! in_array($get('type'), ['sessions', 'exercises', 'documentation', null]))
                     ->live(),
+                DatePicker::make('date_end')
+                    ->label('Date de fin')
+                    ->helperText('Date à laquelle se termine le plan')
+                    ->minDate(now()->subYear())
+                    ->hidden(fn (Get $get): bool => ! in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
+                    ->required(fn (Get $get): bool => in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
+                    ->live(),
                 Select::make('athlete_group_id')
                     ->label('Groupe d\'athlètes')
                     ->helperText('Groupe pour lequel la ressource est destinée')

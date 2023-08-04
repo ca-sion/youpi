@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <div class="mx-auto max-w-4xl">
+    <div class="mx-auto max-w-4xl mb-10">
         <section class="bg-white dark:bg-gray-900">
             <div class="py-8 px-4 mx-auto max-w-3xl lg:py-10">
                 <h2 class="mb-2 text-2xl font-semibold leading-none text-gray-900 md:text-3xl dark:text-white">Cette semaine</h2>
@@ -31,7 +31,7 @@
                                     {{ data_get(config('youpi.resource_types'), $resource->type) }}
                                 </td>
                                 <td class="px-4 py-2 text-end">
-                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
                                         Afficher
                                         <i class="bi bi-arrow-right ml-2"></i>
                                     </a>@endif
@@ -109,7 +109,7 @@
                                     {{ data_get($resource, 'athleteGroup.name') }}
                                 </td>
                                 <td class="px-4 py-2 text-end">
-                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
                                         Afficher
                                         <i class="bi bi-arrow-right ml-2"></i>
                                     </a>@endif

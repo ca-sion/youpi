@@ -3,9 +3,9 @@
 return [
 
     'resource_types' => [
-        'year_plan' => 'Plan de méso-cycle (annuel)',
+        'year_plan' => 'Plan annuel (méso-cycle)',
         'macro_plan' => 'Plan de macro-cycle (période)',
-        'micro_plan' => 'Plan de micro-cycle',
+        'micro_plan' => 'Plan de micro-cycle (jours)',
         'week_plan' => 'Plan hebdomadaire',
         'day_plan' => 'Plan journalier',
         'session' => 'Séance',

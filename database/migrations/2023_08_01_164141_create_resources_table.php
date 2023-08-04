@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('url')->nullable();
             $table->string('type')->nullable();
             $table->date('date')->nullable();
+            $table->date('date_end')->nullable();
             $table->foreignId('athlete_group_id')->nullable()->constrained()->nullOnDelete();
             $table->string('author')->nullable();
             $table->timestamps();
