@@ -30,7 +30,7 @@ class Resource extends Model implements HasMedia
     }
 
     /**
-     * Get the resource first file.
+     * Get the resource first media url.
      *
      * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
@@ -38,19 +38,38 @@ class Resource extends Model implements HasMedia
     {
         return Attribute::make(
             get: fn () => $this->getFirstMediaUrl('resources'),
-            //getMedia('resources')->first()->getUrl()
         );
     }
 
     /**
-     * Get the resource first file.
+     * Get the resource first media.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function firstMedia(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->getFirstMedia('resources'),
+        );
+    }
+
+    /**
+     * Get the resource url.
      *
      * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function attachment(): Attribute
     {
+        if (! empty($this->url)) {
+            $value = $this->url;
+        } elseif (! empty($this->firstMedia) && $this->firstMediaUrl) {
+            $value = 'https://drive.google.com/viewer?embedded=true&hl=fr-CH&url=' . $this->firstMediaUrl;
+        } else {
+            $value = null;
+        }
+
         return Attribute::make(
-            get: fn () => $this->url ?? $this->firstMediaUrl ?? null,
+            get: fn () => $value,
         );
     }
 }
