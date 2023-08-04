@@ -9,9 +9,8 @@
 
         <title>{{ config('app.name') }}</title>
 
-        @if ($favicon = filament()->getFavicon())
-            <link rel="icon" href="{{ $favicon }}" />
-        @endif
+        <link rel="icon" type="image/png" sizes="512x512" href="/images/logo-youpi.png">
+        <link rel="icon" href="/images/logo-youpi.svg">
 
         <style>
             [x-cloak] {
@@ -21,6 +20,7 @@
 
         @filamentStyles
         @vite('resources/css/app.css')
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     </head>
 
     <body class="antialiased bg-gray-50 dark:bg-gray-900">
@@ -29,7 +29,7 @@
             <nav class="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800">
                 <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
                     <a href="/" class="flex items-center">
-                        <img src="https://flowbite.com/docs/images/logo.svg" class="mr-3 h-6 sm:h-9" alt="Flowbite Logo" />
+                        <img src="/images/logo-youpi.svg" class="mr-3 h-6 sm:h-9" alt="{{ config('app.name') }} Logo" />
                         <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">{{ config('app.name') }}</span>
                     </a>
                     <div class="flex items-center lg:order-2">
@@ -62,8 +62,6 @@
         </main>
 
         @stack('modal')
-
-        @livewire(Filament\Livewire\Notifications::class)
 
         @filamentScripts
         @vite('resources/js/app.js')

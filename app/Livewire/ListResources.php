@@ -28,6 +28,7 @@ class ListResources extends Component implements HasForms, HasTable
     {
         return $table
             ->query(Resource::query())
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('name')
                     ->label('Nom'),

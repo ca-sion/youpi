@@ -53,7 +53,7 @@ class CreateResource extends Component implements HasForms
                     ->label('Date')
                     ->helperText('Date à laquelle le plan ou la séance est prévue ou débute')
                     ->minDate(now()->subYear())
-                    ->hidden(fn (Get $get): bool => in_array($get('type'), ['sessions', 'exercises', 'documentation', null]))
+                    ->hidden(fn (Get $get): bool => in_array($get('type'), ['documentation', null]))
                     ->required(fn (Get $get): bool => ! in_array($get('type'), ['sessions', 'exercises', 'documentation', null]))
                     ->live(),
                 Select::make('athlete_group_id')
@@ -61,7 +61,7 @@ class CreateResource extends Component implements HasForms
                     ->helperText('Groupe pour lequel la ressource est destinée')
                     ->relationship('athleteGroup', 'name')
                     ->hidden(fn (Get $get): bool => in_array($get('type'), ['documentation', null]))
-                    ->required(fn (Get $get): bool => ! in_array($get('type'), ['documentation', null]))
+                    ->required(fn (Get $get): bool => in_array($get('type'), ['week_plan', 'day_plan', 'session', null]))
                     ->live(),
                 SpatieMediaLibraryFileUpload::make('media')
                     ->label('Fichier')

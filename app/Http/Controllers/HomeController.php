@@ -19,18 +19,27 @@ class HomeController extends Controller
         $week_start = now()->startOfWeek()->isoFormat('Y-MM-DD');
         $week_end = now()->endOfWeek()->isoFormat('Y-MM-DD');
 
-        $today_resources = Resource::where('date', $today)->with('athleteGroup')->get();
+        $today_resources = Resource::where('date', $today)
+            ->with('athleteGroup')
+            ->get();
         $all_week_resources = Resource::where('date', '>=', $week_start)
-        ->where('date', '<=', $week_end)
-        ->where('type', '=', 'session')
-        ->with('athleteGroup')
-        ->get();
+            ->where('date', '<=', $week_end)
+            ->where('type', '=', 'session')
+            ->with('athleteGroup')
+            ->get();
         $week_resources = Resource::where('date', '>=', $week_start)
             ->where('date', '<=', $week_end)
             ->where('type', '<>', 'session')
             ->with('athleteGroup')
             ->get();
+        $sessions_exercises = Resource::whereIn('type', ['sessions', 'exercises'])
+            ->with('athleteGroup')
+            ->get();
+        $year_plans = Resource::whereIn('type', ['year_plan', 'macro_plan'])
+            ->where('date', '<=', $today)
+            ->with('athleteGroup')
+            ->get();
 
-        return view('welcome', compact('today_resources', 'week_resources', 'all_week_resources'));
+        return view('welcome', compact('today_resources', 'week_resources', 'all_week_resources', 'sessions_exercises', 'year_plans'));
     }
 }
