@@ -26,11 +26,13 @@ class HomeController extends Controller
             ->where('date', '<=', $week_end)
             ->where('type', '=', 'session')
             ->with('athleteGroup')
+            ->orderBy('date', 'asc')
             ->get();
         $week_resources = Resource::where('date', '>=', $week_start)
             ->where('date', '<=', $week_end)
-            ->where('type', '<>', 'session')
+            ->whereIn('type', ['week_plan'])
             ->with('athleteGroup')
+            ->orderBy('date', 'asc')
             ->get();
         $sessions_exercises = Resource::whereIn('type', ['sessions', 'exercises'])
             ->with('athleteGroup')
@@ -38,8 +40,18 @@ class HomeController extends Controller
         $year_plans = Resource::whereIn('type', ['year_plan', 'macro_plan'])
             ->where('date', '<=', $today)
             ->with('athleteGroup')
+            ->orderBy('date', 'asc')
             ->get();
 
-        return view('welcome', compact('today_resources', 'week_resources', 'all_week_resources', 'sessions_exercises', 'year_plans'));
+        $allForModal = $today_resources
+        ->merge($all_week_resources)
+        ->merge($week_resources)
+        ->merge($sessions_exercises)
+        ->merge($year_plans)
+        ->filter(function ($resource) {
+            return $resource->text;
+        });
+
+        return view('welcome', compact('today_resources', 'week_resources', 'all_week_resources', 'sessions_exercises', 'year_plans', 'allForModal'));
     }
 }

@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Models\AthleteGroup;
 use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Resource;
 use Filament\Forms\Form;
+use Illuminate\Support\Carbon;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
@@ -14,6 +16,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Redirect;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 
@@ -38,16 +41,19 @@ class CreateResource extends Component implements HasForms
     {
         return $form
             ->schema([
-                TextInput::make('name')
-                    ->label('Nom')
-                    ->required()
-                    ->autofocus()
-                    ->maxLength(255),
                 Select::make('type')
                     ->label('Type')
                     ->required()
                     ->options(config('youpi.resource_types'))
                     ->default('week_plan')
+                    ->autofocus()
+                    ->live(),
+                Select::make('athlete_group_id')
+                    ->label('Groupe d\'athlètes')
+                    ->helperText('Groupe pour lequel la ressource est destinée')
+                    ->relationship('athleteGroup', 'name')
+                    ->hidden(fn (Get $get): bool => in_array($get('type'), ['documentation', null]))
+                    ->required(fn (Get $get): bool => in_array($get('type'), ['week_plan', 'day_plan', 'session', null]))
                     ->live(),
                 DatePicker::make('date')
                     ->label('Date')
@@ -62,13 +68,6 @@ class CreateResource extends Component implements HasForms
                     ->minDate(now()->subYear())
                     ->hidden(fn (Get $get): bool => ! in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
                     ->required(fn (Get $get): bool => in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
-                    ->live(),
-                Select::make('athlete_group_id')
-                    ->label('Groupe d\'athlètes')
-                    ->helperText('Groupe pour lequel la ressource est destinée')
-                    ->relationship('athleteGroup', 'name')
-                    ->hidden(fn (Get $get): bool => in_array($get('type'), ['documentation', null]))
-                    ->required(fn (Get $get): bool => in_array($get('type'), ['week_plan', 'day_plan', 'session', null]))
                     ->live(),
                 SpatieMediaLibraryFileUpload::make('media')
                     ->label('Fichier')
@@ -90,11 +89,64 @@ class CreateResource extends Component implements HasForms
                     ->url()
                     ->live()
                     ->columnSpanFull(),
+                TextInput::make('name')
+                    ->label('Nom')
+                    ->required(fn (Get $get): bool => in_array($get('type'), ['sessions', 'exercises', 'documentation', null]))
+                    ->maxLength(255)
+                    ->live(),
+                Placeholder::make('computedName')
+                    ->label('Nom affiché')
+                    ->live()
+                    ->content(function (Get $get): string {
+                        $whithWeek = true;
+                        $whithAthleteGroup = true;
+                        $whithName = true;
+
+                        $cDate = Carbon::parse($get('date'));
+                        $year = $cDate->year;
+                        $week = $cDate->weekOfYear;
+                        $day = $cDate->day;
+                        $shortDayName = $cDate->locale('fr')->shortDayName;
+                        $dayName = $cDate->locale('fr')->dayName;
+                        $type = $get('type');
+                        $group = $get('athlete_group_id') ? AthleteGroup::find($get('athlete_group_id'))->name : null;
+                        $name = $get('name');
+
+                        $hasYear = in_array($type, ['year_plan', 'macro_plan', 'micro_plan']);
+                        $hasWeek = $whithWeek && in_array($type, ['week_plan', 'day_plan', 'session']);
+                        $hasDay = $type == 'session';
+                        $hasGroup = ! empty($group) && $whithAthleteGroup;
+
+                        $value = '';
+                        if ($hasYear) {
+                            $value .= $year;
+                        }
+                        $value .= ($hasWeek && $hasYear ? ' · ' : null);
+                        if ($hasWeek) {
+                            $value .= 'Semaine '.$week;
+                        }
+                        $value .= ($hasWeek && $hasDay ? ' · ' : null);
+                        if ($hasDay) {
+                            $value .= str($dayName)->ucfirst().' '.$day;
+                        }
+                        $value .= (($hasGroup && $hasYear) || ($hasGroup && $hasDay) || ($hasGroup && $hasWeek)  ? ' · ' : null);
+                        if ($hasGroup) {
+                            $value .= $group;
+                        }
+                        $value .= (($hasYear || $hasWeek || $hasDay || $hasGroup) && $name  ? ' · ' : null);
+                        if (! empty($name) && $whithName) {
+                            $value .= $name;
+                        }
+
+                        return $value;
+                    }),
                 TextInput::make('author')
                     ->label('Auteur')
                     ->helperText('Auteur de la ressource')
                     ->maxLength(255),
-                // Textarea::make('description'),
+
+                // TextInput::make('description')
+                //     ->label('Description ou indication'),
             ])
             ->columns()
             ->statePath('data')

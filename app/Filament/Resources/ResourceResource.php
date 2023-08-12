@@ -105,9 +105,9 @@ class ResourceResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
+                TextColumn::make('computedName')
                     ->label('Nom')
-                    ->searchable(),
+                    ->searchable(['name', 'date']),
                 TextColumn::make('date')
                     ->label('Date')
                     ->date(config('youpi.date_format')),
