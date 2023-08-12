@@ -103,7 +103,9 @@ class CreateResource extends Component implements HasForms
                         $whithName = true;
 
                         $cDate = Carbon::parse($get('date'));
+                        $cDateEnd = Carbon::parse($get('date_end'));
                         $year = $cDate->year;
+                        $yearEnd = $cDateEnd->year;
                         $week = $cDate->weekOfYear;
                         $day = $cDate->day;
                         $shortDayName = $cDate->locale('fr')->shortDayName;
@@ -119,7 +121,7 @@ class CreateResource extends Component implements HasForms
 
                         $value = '';
                         if ($hasYear) {
-                            $value .= $year;
+                            $value .= ($year == $yearEnd) ? $year : $year.'-'.$yearEnd;
                         }
                         $value .= ($hasWeek && $hasYear ? ' · ' : null);
                         if ($hasWeek) {

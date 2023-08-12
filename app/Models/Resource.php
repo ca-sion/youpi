@@ -82,7 +82,9 @@ class Resource extends Model implements HasMedia
     private function computedNameService($whithWeek = true, $whithAthleteGroup = true, $whithName = true): string
     {
         $cDate = Carbon::parse($this->date);
+        $cDateEnd = Carbon::parse($this->date_end);
         $year = $cDate->year;
+        $yearEnd = $cDateEnd->year;
         $week = $cDate->weekOfYear;
         $day = $cDate->day;
         $shortDayName = $cDate->locale('fr')->shortDayName;
@@ -98,7 +100,7 @@ class Resource extends Model implements HasMedia
 
         $value = '';
         if ($hasYear) {
-            $value .= $year;
+            $value .= ($year == $yearEnd) ? $year : $year.'-'.$yearEnd;
         }
         $value .= ($hasWeek && $hasYear ? ' · ' : null);
         if ($hasWeek) {
