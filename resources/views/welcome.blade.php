@@ -20,7 +20,7 @@
                             <tbody>
                             @foreach ($section['resources'] as $resource)
                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <th scope="row" class="pe-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white w-[150px] max-w-[250px]">
+                                <th scope="row" class="pe-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white w-[150px] max-w-[350px]">
                                     {{ $resource->computedNameWithoutWeek }}
                                 </th>
                                 {{--
@@ -32,14 +32,37 @@
                                 </td>
                                 --}}
                                 <td class="px-4 py-2 text-end">
-                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
-                                        Afficher
-                                        <i class="bi bi-arrow-right ml-2"></i>
-                                    </a>@endif
-                                    @if ($resource->text)<button data-modal-target="modal-{{ $resource->id }}" data-modal-toggle="modal-{{ $resource->id }}" type="button" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
-                                        Afficher
-                                        <i class="bi bi-box-arrow-in-up ml-2"></i>
-                                    </button>@endif
+                                    @if ($resource->isAccessible)
+                                        @if ($resource->attachment_type == 'text')
+                                        <button data-modal-target="modal-{{ $resource->id }}" data-modal-toggle="modal-{{ $resource->id }}" type="button" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                                            Afficher
+                                            <i class="bi bi-box-arrow-in-up ml-2"></i>
+                                        </button>
+                                        @elseif ($resource->attachment)
+                                        <a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
+                                            Afficher
+                                            <i class="bi bi-arrow-right ml-2"></i>
+                                        </a>
+                                        @endif
+                                    @else
+                                    <span data-tooltip-target="tooltip-lock-{{ $resource->id }}" data-tooltip-placement="left">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </span>
+                                    <div id="tooltip-lock-{{ $resource->id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                        Accessible
+                                        @if ($resource->available_weekdays)
+                                            le
+                                            @foreach ($resource->available_weekdays as $wd)
+                                                {{ data_get(config('youpi.weekdays'), $wd) }}
+                                                @if (! $loop->last), @endif
+                                            @endforeach
+                                        @endif
+                                        @if ($resource->available_time_start)
+                                            à partir de {{ $resource->available_time_start }}
+                                        @endif
+                                        <div class="tooltip-arrow" data-popper-arrow></div>
+                                    </div>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach
@@ -75,21 +98,44 @@
                             <tbody>
                             @foreach ($section['resources'] as $resource)
                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <th scope="row" class="pe-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white w-[150px] max-w-[250px]">
+                                <th scope="row" class="pe-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white w-[150px] max-w-[350px]">
                                     {{ $resource->computedNameWithoutGroup }}
                                 </th>
                                 <td class="px-4 py-2 w-[100px]">
                                     {{ data_get($resource, 'athleteGroup.name') }}
                                 </td>
                                 <td class="px-4 py-2 text-end">
-                                    @if ($resource->attachment)<a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
-                                        Afficher
-                                        <i class="bi bi-arrow-right ml-2"></i>
-                                    </a>@endif
-                                    @if ($resource->text)<button data-modal-target="modal-{{ $resource->id }}" data-modal-toggle="modal-{{ $resource->id }}" type="button" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
-                                        Afficher
-                                        <i class="bi bi-box-arrow-in-up ml-2"></i>
-                                    </button>@endif
+                                    @if ($resource->isAccessible)
+                                        @if ($resource->attachment_type == 'text')
+                                        <button data-modal-target="modal-{{ $resource->id }}" data-modal-toggle="modal-{{ $resource->id }}" type="button" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                                            Afficher
+                                            <i class="bi bi-box-arrow-in-up ml-2"></i>
+                                        </button>
+                                        @elseif ($resource->attachment)
+                                        <a href="{{ $resource->attachment }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline" target="_blank">
+                                            Afficher
+                                            <i class="bi bi-arrow-right ml-2"></i>
+                                        </a>
+                                        @endif
+                                    @else
+                                    <span data-tooltip-target="tooltip-lock-b-{{ $resource->id }}" data-tooltip-placement="left">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </span>
+                                    <div id="tooltip-lock-b-{{ $resource->id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                        Accessible
+                                        @if ($resource->available_weekdays)
+                                            le
+                                            @foreach ($resource->available_weekdays as $wd)
+                                                {{ data_get(config('youpi.weekdays'), $wd) }}
+                                                @if (! $loop->last), @endif
+                                            @endforeach
+                                        @endif
+                                        @if ($resource->available_time_start)
+                                            à partir de {{ $resource->available_time_start }}
+                                        @endif
+                                        <div class="tooltip-arrow" data-popper-arrow></div>
+                                    </div>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach

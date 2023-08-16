@@ -10,11 +10,15 @@ use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use App\Models\Resource as ResourceModel;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\TimePicker;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ResourceResource\Pages;
@@ -22,7 +26,6 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ResourceResource\RelationManagers;
-use Illuminate\Database\Eloquent\Model;
 
 class ResourceResource extends Resource
 {
@@ -98,6 +101,30 @@ class ResourceResource extends Resource
                     ->label('Auteur')
                     ->helperText('Auteur de la ressource')
                     ->maxLength(255),
+
+                Section::make('Accès')
+                    ->description('Protéger l\'accès à la resource avec différentes options.')
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        Toggle::make('is_protected')
+                            ->label('Protéger')
+                            ->helperText('La resource est reste toujours accessible avec le mot de passe.')
+                            ->live(),
+                        TimePicker::make('available_time_start')
+                            ->label('Accessible dès')
+                            ->hint('Heure depuis laquelle la ressource est accessible')
+                            ->helperText('Si laissé vide, la ressource reste protégée.')
+                            ->seconds(false)
+                            ->visible(fn (Get $get): bool => $get('is_protected')),
+                        Select::make('available_weekdays')
+                            ->label('Accessible les')
+                            ->hint('Jours pour lesquelles la ressource est accessible')
+                            ->helperText('Si laissé vide, la ressource reste protégée.')
+                            ->visible(fn (Get $get): bool => $get('is_protected'))
+                            ->multiple()
+                            ->options(config('youpi.weekdays')),
+                    ]),
             ]);
     }
 

@@ -15,10 +15,14 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Redirect;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Toggle;
 
 class CreateResource extends Component implements HasForms
 {
@@ -69,23 +73,33 @@ class CreateResource extends Component implements HasForms
                     ->hidden(fn (Get $get): bool => ! in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
                     ->required(fn (Get $get): bool => in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
                     ->live(),
+                Select::make('attachment_type')
+                    ->label('Type de pièce-jointe')
+                    ->required()
+                    ->live()
+                    ->options([
+                        'media' => 'Fichier',
+                        'text' => 'Texte',
+                        'url' => 'URL (lien)',
+                    ])
+                    ->default('media'),
                 SpatieMediaLibraryFileUpload::make('media')
                     ->label('Fichier')
                     ->collection('resources')
-                    ->required(fn (Get $get): bool => ! ($get('text') || $get('url')))
-                    ->hidden(fn (Get $get): bool => ($get('text') || $get('url')))
+                    ->required(fn (Get $get): bool => $get('attachment_type') == 'media')
+                    ->visible(fn (Get $get): bool => $get('attachment_type') == 'media')
                     ->live()
                     ->columnSpanFull(),
                 RichEditor::make('text')
                     ->label('Texte')
-                    ->required(fn (Get $get): bool => ! ($get('media') || $get('url')))
-                    ->hidden(fn (Get $get): bool => ($get('media') || $get('url')))
+                    ->required(fn (Get $get): bool => $get('attachment_type') == 'text')
+                    ->visible(fn (Get $get): bool => $get('attachment_type') == 'text')
                     ->live()
                     ->columnSpanFull(),
                 TextInput::make('url')
                     ->label('URL')
-                    ->required(fn (Get $get): bool => ! ($get('media') || $get('text')))
-                    ->hidden(fn (Get $get): bool => ($get('media') || $get('text')))
+                    ->required(fn (Get $get): bool => $get('attachment_type') == 'url')
+                    ->visible(fn (Get $get): bool => $get('attachment_type') == 'url')
                     ->url()
                     ->live()
                     ->columnSpanFull(),
@@ -108,7 +122,6 @@ class CreateResource extends Component implements HasForms
                         $yearEnd = $cDateEnd->year;
                         $week = $cDate->weekOfYear;
                         $day = $cDate->day;
-                        $shortDayName = $cDate->locale('fr')->shortDayName;
                         $dayName = $cDate->locale('fr')->dayName;
                         $type = $get('type');
                         $group = $get('athlete_group_id') ? AthleteGroup::find($get('athlete_group_id'))->name : null;
@@ -146,6 +159,29 @@ class CreateResource extends Component implements HasForms
                     ->label('Auteur')
                     ->helperText('Auteur de la ressource')
                     ->maxLength(255),
+                Section::make('Accès')
+                    ->description('Protéger l\'accès à la resource avec différentes options.')
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        Toggle::make('is_protected')
+                            ->label('Protéger')
+                            ->helperText('La resource est reste toujours accessible avec le mot de passe.')
+                            ->live(),
+                        TimePicker::make('available_time_start')
+                            ->label('Accessible dès')
+                            ->hint('Heure depuis laquelle la ressource est accessible')
+                            ->helperText('Si laissé vide, la ressource reste protégée.')
+                            ->seconds(false)
+                            ->visible(fn (Get $get): bool => $get('is_protected')),
+                        Select::make('available_weekdays')
+                            ->label('Accessible les')
+                            ->hint('Jours pour lesquelles la ressource est accessible')
+                            ->helperText('Si laissé vide, la ressource reste protégée.')
+                            ->visible(fn (Get $get): bool => $get('is_protected'))
+                            ->multiple()
+                            ->options(config('youpi.weekdays')),
+                    ]),
 
                 // TextInput::make('description')
                 //     ->label('Description ou indication'),

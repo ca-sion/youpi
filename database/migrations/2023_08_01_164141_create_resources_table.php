@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->string('description')->nullable();
+            $table->string('attachment_type')->nullable();
             $table->string('file')->nullable();
             $table->text('text')->nullable();
             $table->string('url')->nullable();
@@ -23,6 +24,9 @@ return new class extends Migration
             $table->date('date_end')->nullable();
             $table->foreignId('athlete_group_id')->nullable()->constrained()->nullOnDelete();
             $table->string('author')->nullable();
+            $table->boolean('is_protected')->nullable();
+            $table->string('available_time_start')->nullable();
+            $table->string('available_weekdays')->nullable();
             $table->timestamps();
         });
     }

@@ -23,6 +23,16 @@ class Resource extends Model implements HasMedia
     protected $guarded = [];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_protected' => 'boolean',
+        'available_weekdays' => 'array',
+    ];
+
+    /**
      * Get the athlete group that owns the resource.
      */
     public function athleteGroup(): BelongsTo
@@ -87,7 +97,6 @@ class Resource extends Model implements HasMedia
         $yearEnd = $cDateEnd->year;
         $week = $cDate->weekOfYear;
         $day = $cDate->day;
-        $shortDayName = $cDate->locale('fr')->shortDayName;
         $dayName = $cDate->locale('fr')->dayName;
         $type = $this->type;
         $group = data_get($this, 'athleteGroup.name');
@@ -155,6 +164,47 @@ class Resource extends Model implements HasMedia
     {
         return Attribute::make(
             get: fn () => $this->computedNameService(true, false),
+        );
+    }
+
+    /**
+     * Check if the resource is accessible.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function isAccessible(): Attribute
+    {
+        $value = true;
+        $now = now();
+        $nowTime = $now->timezone(config('youpi.timezone'))->isoFormat('hhmm');
+
+        $checkTime = Carbon::parse($this->available_time_start)->isoFormat('hhmm') <= $nowTime;
+        $checkWeekdays = in_array($now->weekday(), $this->available_weekdays ?? []);
+
+        if ($this->is_protected) {
+            $value = false;
+            $valueTime = false;
+            $valueWeekday = false;
+
+            if ($checkTime) {
+                $valueTime = true;
+                if (empty($this->available_time_start)) {
+                    $valueTime = false;
+                }
+            }
+            if ($checkWeekdays) {
+                $valueWeekday = true;
+            }
+            if (empty($this->available_weekdays)) {
+                $valueWeekday = true;
+            }
+            if ($valueTime && $valueWeekday) {
+                $value = true;
+            }
+        }
+
+        return Attribute::make(
+            get: fn () => $value,
         );
     }
 }

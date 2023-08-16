@@ -1,10 +1,11 @@
 <?php
 
-use App\Http\Controllers\HomeController;
 use App\Livewire\ViewResource;
 use App\Livewire\ListResources;
 use App\Livewire\CreateResource;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProtectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +20,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'welcome']);
 
-Route::get('resources', ListResources::class)->name('resources.list');
+Route::get('protect', [ProtectController::class, 'password'])->name('protect');
+Route::post('protect/check', [ProtectController::class, 'check'])->name('protect.check');
+
+Route::get('resources', ListResources::class)->name('resources.list')->middleware('protect');
 Route::get('resources/create', CreateResource::class)->name('resources.create');
-Route::get('resources/{resource}', ViewResource::class)->name('resources.view');
+Route::get('resources/{resource}', ViewResource::class)->name('resources.view')->middleware('protect');

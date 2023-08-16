@@ -49,7 +49,7 @@ class HomeController extends Controller
         ->merge($sessions_exercises)
         ->merge($year_plans)
         ->filter(function ($resource) {
-            return $resource->text;
+            return $resource->text && $resource->isAccessible;
         });
 
         return view('welcome', compact('today_resources', 'week_resources', 'all_week_resources', 'sessions_exercises', 'year_plans', 'allForModal'));
