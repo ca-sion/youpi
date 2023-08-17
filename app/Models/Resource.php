@@ -65,7 +65,7 @@ class Resource extends Model implements HasMedia
     }
 
     /**
-     * Get the resource url.
+     * Get the resource attachment.
      *
      * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
@@ -77,6 +77,24 @@ class Resource extends Model implements HasMedia
             $value = 'https://drive.google.com/viewer?embedded=true&hl=fr-CH&url=' . $this->firstMediaUrl;
         } else {
             $value = null;
+        }
+
+        return Attribute::make(
+            get: fn () => $value,
+        );
+    }
+
+    /**
+     * Get the resource url to share.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function shareUrl(): Attribute
+    {
+        if (! empty($this->attachment)) {
+            $value = $this->attachment;
+        } else {
+            $value = route('resources.view', ['resource' => $this]);
         }
 
         return Attribute::make(

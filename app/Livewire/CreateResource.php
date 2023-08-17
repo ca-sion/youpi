@@ -2,27 +2,23 @@
 
 namespace App\Livewire;
 
-use App\Models\AthleteGroup;
 use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Resource;
 use Filament\Forms\Form;
+use App\Models\AthleteGroup;
 use Illuminate\Support\Carbon;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Redirect;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Components\Toggle;
 
 class CreateResource extends Component implements HasForms
 {
@@ -198,11 +194,6 @@ class CreateResource extends Component implements HasForms
         // Save the relationships from the form to the post after it is created.
         $this->form->model($resource)->saveRelationships();
 
-        Notification::make()
-        ->title('Ressource créée')
-        ->success()
-        ->send();
-
-        return $this->redirect(ListResources::class);
+        return $this->redirect(route('resources.success', ['resource' => $resource]));
     }
 }
