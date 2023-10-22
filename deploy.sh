@@ -26,12 +26,12 @@ php artisan storage:link
 
 # Run database migrations with seed
 # echo 'Command: migrate'
-php artisan migrate --force --seed
+# php artisan migrate --force --seed
 # --force  Required to run when in production.
 
 # Run database migrations
 # echo 'Command: migrate'
-# php artisan migrate --force
+php artisan migrate --force
 # --force  Required to run when in production.
 
 # Run database migrations with a new database
