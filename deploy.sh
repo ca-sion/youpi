@@ -2,7 +2,7 @@
 
 # Turn on maintenance mode
 echo 'Command: down'
-php artisan down --render="errors::maintenance" --secret="1630542a-246b-4b66-afa1-dd72a4c43515"
+php artisan down --secret="1630542a-246b-4b66-afa1-dd72a4c43515"
 
 # Pull the latest changes from the git repository
 # git reset --hard
