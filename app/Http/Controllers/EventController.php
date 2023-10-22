@@ -31,9 +31,12 @@ class EventController extends Controller
         $acg = request()->input('acg');
 
         if ($acg) {
-            $events = Event::whereJsonContains('athlete_category_groups', $acg)->get();
+            $events = Event::whereJsonContains('athlete_category_groups', $acg)
+            ->whereDate('starts_at', '>', now()->subDays(10)->startOfDay())
+            ->get();
         } else {
-            $events = Event::all();
+            $events = Event::whereDate('starts_at', '>', now()->subDays(10)->startOfDay())
+            ->get();
         }
 
         SEOMeta::setTitle('Calendrier');
