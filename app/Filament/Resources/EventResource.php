@@ -83,7 +83,8 @@ class EventResource extends Resource
                             'url' => 'URL',
                         ]),
                     Forms\Components\DateTimePicker::make('deadline_at')
-                        ->visible(fn (Get $get) => $get('has_deadline')),
+                        ->visible(fn (Get $get) => $get('has_deadline'))
+                        ->seconds(false),
                     Forms\Components\TextInput::make('deadline_text')
                         ->visible(fn (Get $get) => $get('deadline_type') == 'text')
                         ->maxLength(255),

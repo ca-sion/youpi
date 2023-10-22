@@ -49,6 +49,7 @@ URL: https://flowbite.com/docs/components/typography/
                     <div class="font-bold min-w-[100px]">Où</div>
                     <div>@if ($event->deadline_type == 'tiiva')sur Tiiva @elseif ($event->deadline_type == 'url'){{ $event->deadline_url }}@elseif ($event->deadline_type == 'text'){{ $event->deadline_text }}@endif</div>
                 </div>
+                <br>
             @endif
 
             @if ($event->has_qualified)
@@ -56,7 +57,7 @@ URL: https://flowbite.com/docs/components/typography/
                 @if ($event->qualified_type == 'url')
                 <a href="{{ $event->qualified_url }}">Liste des qualifiés</a>
                 @elseif ($event->qualified_type == 'list')
-                <p>Les athlète qualifiés sont les suivants :</p>
+                <div>Les athlète qualifiés sont les suivants :</div>
                 {!! nl2br($event->qualified_list) !!}
                 <br>
                 @endif
