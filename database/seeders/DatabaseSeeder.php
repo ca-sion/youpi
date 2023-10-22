@@ -5,6 +5,7 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 use App\Models\AthleteGroup;
+use App\Models\Event;
 use App\Models\Resource;
 use Illuminate\Database\Seeder;
 
@@ -102,6 +103,18 @@ class DatabaseSeeder extends Seeder
 
         foreach ($resources as $resource) {
             Resource::create($resource);
+        }
+
+        $events = [
+            [
+                'name' => 'Compétition du soleil',
+                'starts_at' => now()->addDays(60),
+                'status' => true,
+            ],
+        ];
+
+        foreach ($events as $event) {
+            Event::create($event);
         }
     }
 }
