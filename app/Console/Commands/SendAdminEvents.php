@@ -28,9 +28,9 @@ class SendAdminEvents extends Command
      */
     public function handle()
     {
-        $inTenDays = now()->startOfDay()->addDays(10);
+        $inTwoWeeks = now()->startOfDay()->addDays(14);
 
-        $events = Event::where('starts_at', $inTenDays)->get();
+        $events = Event::where('starts_at', $inTwoWeeks)->get();
 
         foreach ($events as $event) {
             Mail::to('technique@casion.ch')->send(new AdminEventReminder($event));
