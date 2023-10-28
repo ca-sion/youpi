@@ -40,7 +40,7 @@ return [
             'description' => 'Outil d\'administration du Centre athlétique de Sion', // set false to total remove
             'url'         => false, // Set null for using Url::current(), set false to total remove
             'type'        => false,
-            'site_name'   => false,
+            'site_name'   => 'Youpi',
             'images'      => [],
         ],
     ],

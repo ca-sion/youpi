@@ -6,6 +6,7 @@ use App\Models\Event;
 use Illuminate\View\View;
 use App\Enums\AthleteCategoryGroup;
 use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
 
 class EventController extends Controller
 {
@@ -17,6 +18,7 @@ class EventController extends Controller
         $event = Event::findOrFail($event);
 
         SEOMeta::setTitle($event->name);
+        OpenGraph::setTitle($event->name);
 
         return view('events.show', [
             'event' => $event,

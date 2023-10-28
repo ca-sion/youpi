@@ -5,14 +5,16 @@ namespace App\Livewire;
 use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Resource;
+use Artesaos\SEOTools\Facades\OpenGraph;
 use Filament\Infolists\Infolist;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Contracts\HasInfolists;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Infolists\Components\Actions\Action;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Concerns\InteractsWithInfolists;
 
 class ViewResource extends Component implements HasForms, HasInfolists
@@ -24,6 +26,8 @@ class ViewResource extends Component implements HasForms, HasInfolists
 
     public function render()
     {
+        SEOMeta::setTitle($this->resource->computedName);
+        OpenGraph::setTitle($this->resource->computedName);
         return view('livewire.view-resource');
     }
 

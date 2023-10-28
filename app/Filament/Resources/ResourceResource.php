@@ -155,11 +155,10 @@ class ResourceResource extends Resource
                     ->preload(),
             ])
             ->actions([
-                Action::make('open')
-                    ->icon('heroicon-s-arrow-top-right-on-square')
-                    ->label('Ouvrir')
-                    ->url(fn (Model $record): string|null => $record->attachment)
-                    ->hidden(fn (Model $record): bool => empty($record->attachment))
+                Action::make('share')
+                    ->icon('heroicon-s-share')
+                    ->label('Partager')
+                    ->url(fn (Model $record): string|null => $record->shareUrl)
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
             ])

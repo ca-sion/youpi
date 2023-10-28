@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Resource;
 use Illuminate\Http\Request;
 use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
 
 class HomeController extends Controller
 {
@@ -102,6 +103,7 @@ class HomeController extends Controller
         });
 
         SEOMeta::setTitle('Programme');
+        OpenGraph::setTitle('Programme');
 
         return view('program', compact('today_resources', 'week_resources', 'all_week_resources', 'sessions_exercises', 'year_plans', 'allForModal'));
     }
