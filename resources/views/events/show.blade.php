@@ -7,7 +7,7 @@
                 <div class="mb-4 lg:mb-6">
                     <h1 class="text-3xl font-extrabold leading-tight text-gray-900 lg:text-4xl dark:text-white">{{ $event->name }} {{ $event->codes }}</h1>
                     @if (data_get($event, 'status.value') != 'planned')
-                    <div>{{ $event->status->getLabel() }}</div>
+                    <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-400 border border-gray-500">{{ $event->status->getLabel() }}</span>
                     @endif
                 </div>
 

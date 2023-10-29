@@ -41,6 +41,9 @@
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                             <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                 <a href="{{ $event->url }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">{{ $event->name }}</a>
+                                @if (data_get($event, 'status.value') != 'planned')
+                                <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-400 border border-gray-500">{{ $event->status->getLabel() }}</span>
+                                @endif
                             </th>
                             <td class="px-6 py-4">
                                 {{ $event->starts_at->isoFormat('DD.MM.YYYY') }}
