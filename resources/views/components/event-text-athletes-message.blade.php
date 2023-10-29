@@ -2,7 +2,7 @@
     <div>
         *Aux athlètes {{ $event->getAthleteCategories }}*
         <br>
-        Le {{ $event->starts_at->isoFormat('dddd') }} {{ $event->starts_at->isoFormat('DD.MM.YYYY') }} a lieu l'événement *{{ $event->name }}* {{ $event->codes }}@if ($event->location)à {{ $event->location }}@endif. Vous trouverez ci-après les informations nécessaires pour vous inscrire.
+        Le {{ $event->starts_at->isoFormat('dddd') }} {{ $event->starts_at->isoFormat('DD.MM.YYYY') }} a lieu l'événement *{{ $event->name }}* {{ $event->codes }}@if ($event->location)à {{ $event->location }}@endif. Tu trouvereas ci-après les informations nécessaires pour t'inscrire.
         <br>
     </div>
 
@@ -20,7 +20,7 @@
         <br>
         - Délai : @if ($event->deadline_at){{ $event->deadline_at->isoFormat('LLLL') }}@endif
         <br>
-        - Où : Auprès de ton entraîneur responsable
+        - Où : Auprès de ton entraîneur
         <br>
         <br>
     </div>
@@ -60,7 +60,7 @@
         ---- ✅ Liste des inscrits
         <br>
         @if ($event->entrants_type == 'url')
-        Merci de contrôler la liste des athlètes inscrits : {{ $event->entrants_url }}
+        Merci de contrôler si tu es présent sur la liste des athlètes inscrits : {{ $event->entrants_url }}
         <br>
         @elseif ($event->entrants_type == 'text')
         {!! nl2br($event->entrants_text) !!}
