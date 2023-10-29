@@ -43,7 +43,11 @@
                 <h2>📝 Inscription</h2>
                 <div class="flex">
                     <div class="font-bold min-w-[100px]">Délai</div>
-                    <div>@if ($event->deadline_at){{ $event->deadline_at->isoFormat('LLLL') }}@endif @if ($event->deadline_type == 'tiiva')délai donné sur Tiiva @endif</div>
+                    <div>
+                        @if ($event->deadline_at){{ $event->deadline_at->isoFormat('LLLL') }}@endif
+                        @if ($event->deadline_at && $event->deadline_type == 'tiiva') · @endif
+                        @if ($event->deadline_type == 'tiiva')Délai donné sur Tiiva @endif
+                    </div>
                 </div>
                 <div class="flex">
                     <div class="font-bold min-w-[100px]">Où</div>
