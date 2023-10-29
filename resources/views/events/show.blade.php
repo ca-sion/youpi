@@ -1,15 +1,15 @@
 <x-layouts.app>
-    <!--
-Install the "flowbite-typography" NPM package to apply styles and format the article content:
-
-URL: https://flowbite.com/docs/components/typography/
--->
 
 <main class="pt-8 pb-16 lg:pt-16 lg:pb-24 bg-white dark:bg-gray-900 antialiased">
     <div class="flex justify-between px-4 mx-auto max-w-screen-xl">
         <article class="mx-auto w-full max-w-2xl format format-sm sm:format-base lg:format-lg format-blue dark:format-invert">
             <header class="mb-4 lg:mb-6 not-format">
-                <h1 class="mb-4 text-3xl font-extrabold leading-tight text-gray-900 lg:mb-6 lg:text-4xl dark:text-white">{{ $event->name }} {{ $event->codes }}</h1>
+                <div class="mb-4 lg:mb-6">
+                    <h1 class="text-3xl font-extrabold leading-tight text-gray-900 lg:text-4xl dark:text-white">{{ $event->name }} {{ $event->codes }}</h1>
+                    @if (data_get($event, 'status.value') != 'planned')
+                    <div>{{ $event->status->getLabel() }}</div>
+                    @endif
+                </div>
 
                 <div class="text-gray-900">
                     <div class="flex">

@@ -84,21 +84,21 @@
     <div>
         ---- 🕔 Horaire définitif : {{ $event->final_timetable_url }} @if ($event->final_timetable_text) / {{ $event->final_timetable_text }}@endif
         <br>
-    <div>
+    </div>
     @endif
 
     @if ($event->has_publication)
     <div>
         ---- ℹ️ Informations : {{ $event->publication_url }}
         <br>
-    <div>
+    </div>
     @endif
 
     @if ($event->has_rules)
     <div>
         ---- 📐 Règlement : {{ $event->rules_url }}
         <br>
-    <div>
+    </div>
     @endif
 
     <div>

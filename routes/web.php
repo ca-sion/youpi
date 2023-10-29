@@ -36,6 +36,7 @@ Route::get('resources/{resource}/share', [ResourceController::class, 'share'])->
 
 Route::get('events', [EventController::class, 'index'])->name('events.index');
 Route::get('events/{event}', [EventController::class, 'show'])->name('events.show');
+Route::get('events/{event}/text', [EventController::class, 'text'])->name('events.text');
 
 Route::get('/run/schedule', function () {
     Artisan::call('schedule:run');

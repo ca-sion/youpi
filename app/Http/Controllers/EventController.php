@@ -24,6 +24,20 @@ class EventController extends Controller
             'event' => $event,
         ]);
     }
+    /**
+     * Show the page for a given event.
+     */
+    public function text(string $event): View
+    {
+        $event = Event::findOrFail($event);
+
+        SEOMeta::setTitle($event->name);
+        OpenGraph::setTitle($event->name);
+
+        return view('events.text', [
+            'event' => $event,
+        ]);
+    }
 
     /**
      * Show the page for all events.
@@ -35,9 +49,11 @@ class EventController extends Controller
         if ($acg) {
             $events = Event::whereJsonContains('athlete_category_groups', $acg)
             ->whereDate('starts_at', '>', now()->subDays(10)->startOfDay())
+            ->orderBy('starts_at')
             ->get();
         } else {
             $events = Event::whereDate('starts_at', '>', now()->subDays(10)->startOfDay())
+            ->orderBy('starts_at')
             ->get();
         }
 

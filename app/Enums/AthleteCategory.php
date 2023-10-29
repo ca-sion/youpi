@@ -15,8 +15,7 @@ enum AthleteCategory: string implements HasLabel, HasColor
     case U18 = 'u18';
     case U20 = 'u20';
     case U23 = 'u23';
-    case MAN = 'man';
-    case WOMAN = 'woman';
+    case SENIOR = 'senior';
 
     public function getLabel(): ?string
     {
@@ -29,8 +28,7 @@ enum AthleteCategory: string implements HasLabel, HasColor
             self::U18 => 'U18',
             self::U20 => 'U20',
             self::U23 => 'U23',
-            self::MAN => 'Homme',
-            self::WOMAN => 'Femme',
+            self::SENIOR => 'Actif',
         };
     }
 
@@ -44,8 +42,7 @@ enum AthleteCategory: string implements HasLabel, HasColor
             self::U18 => 'success',
             self::U20 => 'success',
             self::U23 => 'success',
-            self::MAN => 'success',
-            self::WOMAN => 'success',
+            self::SENIOR => 'success',
         };
     }
 
@@ -59,8 +56,7 @@ enum AthleteCategory: string implements HasLabel, HasColor
             self::U18 => AthleteCategoryGroup::U16P,
             self::U20 => AthleteCategoryGroup::U16P,
             self::U23 => AthleteCategoryGroup::U16P,
-            self::MAN => AthleteCategoryGroup::U16P,
-            self::WOMAN => AthleteCategoryGroup::U16P,
+            self::SENIOR => AthleteCategoryGroup::U16P,
         };
     }
 }
