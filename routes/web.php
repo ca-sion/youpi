@@ -38,6 +38,6 @@ Route::get('events', [EventController::class, 'index'])->name('events.index');
 Route::get('events/{event}', [EventController::class, 'show'])->name('events.show');
 Route::get('events/{event}/text', [EventController::class, 'text'])->name('events.text');
 
-Route::get('/run/schedule', function () {
-    Artisan::call('schedule:run');
+Route::get('/run/schedule/daily', function () {
+    Artisan::call('app:send-admin-events');
 });
