@@ -18,7 +18,10 @@
         <br>
         ---- 📝 Inscription
         <br>
-        - Délai : @if ($event->deadline_at){{ $event->deadline_at->isoFormat('LLLL') }}@endif @if ($event->deadline_type == 'tiiva')délai donné sur Tiiva @endif
+        - Délai :
+        @if ($event->deadline_at){{ $event->deadline_at->isoFormat('LLLL') }}@endif
+        @if ($event->deadline_at && $event->deadline_type == 'tiiva') · @endif
+        @if ($event->deadline_type == 'tiiva')Délai donné sur Tiiva @endif
         <br>
         - Où : @if ($event->deadline_type == 'tiiva')sur Tiiva @elseif ($event->deadline_type == 'url'){{ $event->deadline_url }}@elseif ($event->deadline_type == 'text'){{ $event->deadline_text }}@endif
         <br>
