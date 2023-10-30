@@ -36,6 +36,7 @@ enum AthleteCategory: string implements HasLabel, HasColor
     {
         return match ($this) {
             // self::U8 => 'gray',
+            self::U10 => 'warning',
             self::U12 => 'warning',
             self::U14 => 'warning',
             self::U16 => 'info',
@@ -50,9 +51,10 @@ enum AthleteCategory: string implements HasLabel, HasColor
     {
         return match ($this) {
             // self::U8 => AthleteCategoryGroup::U14M,
+            self::U10 => AthleteCategoryGroup::U14M,
             self::U12 => AthleteCategoryGroup::U14M,
             self::U14 => AthleteCategoryGroup::U14M,
-            self::U16 => AthleteCategoryGroup::U14M,
+            self::U16 => AthleteCategoryGroup::U16P,
             self::U18 => AthleteCategoryGroup::U16P,
             self::U20 => AthleteCategoryGroup::U16P,
             self::U23 => AthleteCategoryGroup::U16P,
