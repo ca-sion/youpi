@@ -67,8 +67,8 @@ class ResourceResource extends Resource
                 DatePicker::make('date_end')
                     ->label('Date de fin')
                     ->helperText('Date à laquelle se termine le plan')
-                    ->hidden(fn (Get $get): bool => ! in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
-                    ->required(fn (Get $get): bool => in_array($get('type'), ['year_plan', 'macro_plan', 'micro_plan']))
+                    ->hidden(fn (Get $get): bool => ! in_array($get('type'), ['year_plan', 'macro_plan', 'meso_plan', 'micro_plan']))
+                    ->required(fn (Get $get): bool => in_array($get('type'), ['year_plan', 'macro_plan', 'meso_plan', 'micro_plan']))
                     ->live(),
                 Select::make('athlete_group_id')
                     ->label('Groupe d\'athlètes')
