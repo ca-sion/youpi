@@ -72,11 +72,11 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($event);
         if ($event->athlete_categories) {
-            $trainers = Trainer::all()->filter(function ($trainer) use ($event) {
+            $trainers = Trainer::orderBy('name')->get()->filter(function ($trainer) use ($event) {
                 return count($event->athlete_categories->pluck('value')->intersect($trainer->athleteGroupsCategories->pluck('value'))) > 0;
             });
         } else {
-            $trainers = Trainer::all();
+            $trainers = Trainer::orderBy('name')->get();
         }
 
         SEOMeta::setTitle('Présences · '.$event->name);
