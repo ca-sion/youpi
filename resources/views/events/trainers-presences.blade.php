@@ -54,18 +54,18 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @foreach ($trainers as $trainer)
                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                @foreach ($trainers as $trainer)
-                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {{ $trainer->name }}
+                                <th scope="row" class="px-2 py-2 md:px-6 md:py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    <div class="block md:inline">{{ $trainer->name }}</div>
                                     @foreach ($trainer->athleteGroups->pluck('name') as $ag)
                                     <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $ag }}</span>
                                     @endforeach
                                 </th>
-                                <td class="px-6 py-4">
+                                <td class="px-2 py-2 md:px-6 md:py-4">
                                     <livewire:trainers-presences-presence :trainer="$trainer->id" :event="$event->id" />
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-2 py-2 md:px-6 md:py-4">
                                     <livewire:trainers-presences-note :trainer="$trainer->id" :event="$event->id" />
                                 </td>
                             </tr>
