@@ -44,6 +44,12 @@
                                             <i class="bi bi-arrow-right ml-2"></i>
                                         </a>
                                         @endif
+                                        @if ($resource->firstMediaUrl)
+                                        <a href="{{ $resource->firstMediaUrl }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                                            Télécharger
+                                            <i class="bi bi-box-arrow-down ml-2"></i>
+                                        </a>
+                                        @endif
                                     @else
                                     <span data-tooltip-target="tooltip-lock-{{ $resource->id }}" data-tooltip-placement="left">
                                         <i class="bi bi-lock-fill"></i>
