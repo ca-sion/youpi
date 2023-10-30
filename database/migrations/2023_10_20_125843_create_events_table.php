@@ -66,7 +66,7 @@ return new class extends Migration
             $table->string('trip_id')->nullable();
 
             $table->boolean('has_trainers_presences')->nullable();
-            $table->boolean('trainers_presences_type')->nullable();
+            $table->string('trainers_presences_type')->nullable();
             $table->string('trainers_presences_id')->nullable();
             $table->string('trainers_presences_data')->nullable();
 

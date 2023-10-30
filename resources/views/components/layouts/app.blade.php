@@ -21,6 +21,7 @@
         @filamentStyles
         @vite('resources/css/app.css')
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+        @stack('head')
     </head>
 
     <body class="antialiased bg-gray-50 dark:bg-gray-900">
@@ -79,10 +80,12 @@
 
 
         @stack('modal')
+        @livewire('notifications')
 
         @filamentScripts
         @vite('resources/js/app.js')
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.8.0/flowbite.min.js"></script>
+        @stack('bottom')
     </body>
 </html>

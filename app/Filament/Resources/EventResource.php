@@ -21,12 +21,23 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\EventResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\EventResource\RelationManagers;
+use App\Models\Trainer;
 
 class EventResource extends Resource
 {
     protected static ?string $model = Event::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function getModelLabel(): string
+    {
+        return 'Événement';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Événements';
+    }
 
     public static function form(Form $form): Form
     {
@@ -250,8 +261,19 @@ class EventResource extends Resource
                         ->visible(fn (Get $get) => $get('has_trainers_presences'))
                         ->live()
                         ->options([
-                            //
+                            'text' => 'Texte',
+                            'table' => 'Tableau',
                         ]),
+                    Forms\Components\Repeater::make('trainersPresences')
+                        ->visible(fn (Get $get) => $get('trainers_presences_type') == 'table')
+                        ->relationship()
+                        ->schema([
+                            Forms\Components\Select::make('trainer_id')->options(Trainer::all()->pluck('name', 'id'))->columnSpan(4),
+                            Forms\Components\Radio::make('presence')->options([true => 'Présent', false => 'Absent'])->inline(false)->columnSpan(5),
+                            Forms\Components\TextInput::make('note')->columnSpan(3),
+                        ])
+                        ->columns(12)
+                        ->columnSpanFull(),
                         /*
                     Forms\Components\TextInput::make('trainers_presences_id')
                         ->maxLength(255),

@@ -2,16 +2,17 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\AthleteGroupResource\Pages;
-use App\Filament\Resources\AthleteGroupResource\RelationManagers;
-use App\Models\AthleteGroup;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Models\AthleteGroup;
+use App\Enums\AthleteCategory;
+use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\AthleteGroupResource\Pages;
+use App\Filament\Resources\AthleteGroupResource\RelationManagers;
 
 class AthleteGroupResource extends Resource
 {
@@ -38,6 +39,11 @@ class AthleteGroupResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('description')
                     ->maxLength(255),
+                Forms\Components\CheckboxList::make('categories')
+                    ->options(AthleteCategory::class)
+                    ->columns(11)
+                    ->gridDirection('row')
+                    ->columnSpanFull(),
             ]);
     }
 

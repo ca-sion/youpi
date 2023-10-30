@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\AthleteGroup;
 use App\Models\Event;
 use App\Models\Resource;
+use App\Models\Trainer;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -25,8 +26,18 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $athleteGroups = [
-            ['name' => 'Sauts'],
-            ['name' => 'Multiples'],
+            [
+                'name' => 'Sauts',
+                'categories' => ['u18', 'u20', 'u23', 'senior'],
+            ],
+            [
+                'name' => 'Multiples',
+                'categories' => ['u18', 'u20', 'u23', 'senior'],
+            ],
+            [
+                'name' => now()->subYears(13)->format('Y'),
+                'categories' => ['u14'],
+            ],
         ];
 
         foreach ($athleteGroups as $athleteGroup) {
@@ -109,12 +120,61 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Compétition du soleil',
                 'starts_at' => now()->addDays(60),
-                'status' => true,
+                'status' => 'planned',
+                'types' => ['competition','club_life'],
+                'athlete_categories' => ['u10','u12','u14'],
+                'athlete_category_groups' => ['u14m'],
+                'has_deadline' => true,
+                'deadline_type' => 'tiiva',
+                'deadline_at' => now()->addDays(40),
+                'has_entrants' => true,
+                'entrants_type' => 'url',
+                'entrants_url' => 'https://example.com',
+                'has_provisional_timetable' => true,
+                'provisional_timetable_url' => 'https://example.com',
+                'provisional_timetable_text' => 'Horaire à vérifier le jeudi avant la compétition.',
+                'has_trainers_presences' => true,
+                'trainers_presences_type' => 'table',
+            ],
+            [
+                'name' => 'Compétition du soir',
+                'starts_at' => now()->addDays(30),
+                'status' => 'planned',
+                'athlete_category_groups' => ['u16p'],
+            ],
+            [
+                'name' => 'Sortie du soleil',
+                'starts_at' => now()->addDays(5),
+                'status' => 'provisional',
+                'types' => ['club_life'],
+                'athlete_category_groups' => ['u14m', 'u16p'],
             ],
         ];
 
         foreach ($events as $event) {
             Event::create($event);
+        }
+
+        $trainers = [
+            [
+                'name' => 'Arthur Rimbaud',
+                'email' => 'arthur@gmail.com',
+                'phone' => '+41791231212',
+            ],
+            [
+                'name' => 'Ana Lunay',
+                'email' => null,
+                'phone' => null,
+            ],
+            [
+                'name' => 'David Lunay',
+                'email' => null,
+                'phone' => null,
+            ]
+        ];
+
+        foreach ($trainers as $trainer) {
+            Trainer::create($trainer);
         }
     }
 }

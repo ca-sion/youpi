@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Trainer;
 use Illuminate\View\View;
-use App\Enums\AthleteCategoryGroup;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\OpenGraph;
 
@@ -24,6 +24,7 @@ class EventController extends Controller
             'event' => $event,
         ]);
     }
+
     /**
      * Show the page for a given event.
      */
@@ -61,6 +62,29 @@ class EventController extends Controller
 
         return view('events.index', [
             'events' => $events,
+        ]);
+    }
+
+    /**
+     * Show the trainers presences page for a given event.
+     */
+    public function trainersPresences(string $event): View
+    {
+        $event = Event::findOrFail($event);
+        if ($event->athlete_categories) {
+            $trainers = Trainer::all()->filter(function ($trainer) use ($event) {
+                return count($event->athlete_categories->pluck('value')->intersect($trainer->athleteGroupsCategories->pluck('value'))) > 0;
+            });
+        } else {
+            $trainers = Trainer::all();
+        }
+
+        SEOMeta::setTitle('Présences · '.$event->name);
+        OpenGraph::setTitle('Présences · '.$event->name);
+
+        return view('events.trainers-presences', [
+            'event' => $event,
+            'trainers' => $trainers,
         ]);
     }
 }

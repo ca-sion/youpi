@@ -128,7 +128,11 @@
     <div>
         ---- ⏱ Accompagnement/présence
         <br>
+        @if ($event->trainers_presences_type == 'table')
+        Merci de remplir ⚠️ le tableau de présences suivant : {{ route('events.trainers.presences', compact('event')) }}
+        @else
         Merci de me communiquer ⚠️ si vous ne pouvez pas être présent pour accompagner les athlètes inscrits pour la compétition.
+        @endif
         <br>
         <br>
     </div>

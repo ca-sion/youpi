@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\AthleteGroup;
+use App\Models\Trainer;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,13 +13,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('athlete_groups', function (Blueprint $table) {
+        Schema::create('athlete_group_trainer', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('description')->nullable();
-            $table->json('categories')->nullable();
+            $table->foreignIdFor(Trainer::class)->constrained()->nullOnUpdate()->cascadeOnDelete();
+            $table->foreignIdFor(AthleteGroup::class)->constrained()->nullOnUpdate()->cascadeOnDelete();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('athlete_groups');
+        Schema::dropIfExists('athlete_group_trainer');
     }
 };

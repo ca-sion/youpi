@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\EventType;
+use App\Enums\EventStatus;
 use App\Enums\AthleteCategory;
 use App\Enums\AthleteCategoryGroup;
-use App\Enums\EventStatus;
-use App\Enums\EventType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 
@@ -40,6 +41,14 @@ class Event extends Model
     ];
 
     /**
+     * Get the trainers presences for the event.
+     */
+    public function trainersPresences(): HasMany
+    {
+        return $this->hasMany(TrainerPresence::class);
+    }
+
+    /**
      * Get the event's unicodes.
      */
     protected function url(): Attribute
@@ -54,10 +63,13 @@ class Event extends Model
      */
     protected function codes(): Attribute
     {
-        $value = '';
-        foreach ($this->types as $type) {
-            $value .= $type->code();
+        $value = null;
+        if (is_countable($this->types)) {
+            foreach ($this->types as $type) {
+                $value .= $type->code();
+            }
         }
+
         return Attribute::make(
             get: fn () => $value,
         );
@@ -69,9 +81,12 @@ class Event extends Model
     protected function getAthleteCategories(): Attribute
     {
         $array = [];
-        foreach ($this->athlete_categories as $cat) {
-            $array[] = $cat->getLabel();
+        if (is_countable($this->athlete_categories)) {
+            foreach ($this->athlete_categories as $cat) {
+                $array[] = $cat->getLabel();
+            }
         }
+
         return Attribute::make(
             get: fn () => implode('-', $array),
         );
