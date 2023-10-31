@@ -62,6 +62,7 @@ class EventController extends Controller
 
         return view('events.index', [
             'events' => $events,
+            'acg' => $acg,
         ]);
     }
 
