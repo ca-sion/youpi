@@ -22,6 +22,7 @@ use App\Filament\Resources\EventResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\EventResource\RelationManagers;
 use App\Models\Trainer;
+use Filament\Tables\Filters\TernaryFilter;
 
 class EventResource extends Resource
 {
@@ -313,13 +314,41 @@ class EventResource extends Resource
                 Tables\Columns\TextColumn::make('athlete_category_groups')
                     ->badge(),
             ])
+            ->defaultSort('starts_at', 'asc')
             ->filters([
                 SelectFilter::make('types')
                     ->label('Type')
-                    ->options(EventType::class),
+                    ->options(EventType::class)
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['value'],
+                                fn (Builder $query, $date): Builder => $query->whereJsonContains('types', $data['value']),
+                            );
+                    }),
+                SelectFilter::make('athlete_category_groups')
+                    ->label('Catégorie de groupe d\'athlètes')
+                    ->options(AthleteCategoryGroup::class)
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['value'],
+                                fn (Builder $query, $date): Builder => $query->whereJsonContains('athlete_category_groups', $data['value']),
+                            );
+                    }),
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(EventStatus::class),
+                TernaryFilter::make('temporality')
+                    ->label('Temporalité')
+                    ->placeholder('Actuels')
+                    ->trueLabel('Passés')
+                    ->falseLabel('Futurs uniquement')
+                    ->queries(
+                        true: fn (Builder $query) => $query->where('starts_at', '<', now()->startOfDay()),
+                        false: fn (Builder $query) => $query->where('starts_at', '>', now()->endOfDay()),
+                        blank: fn (Builder $query) => $query->where('starts_at', '>', now()->subDays(7)->startOfDay()),
+                    ),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

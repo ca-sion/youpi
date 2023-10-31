@@ -149,6 +149,12 @@ class DatabaseSeeder extends Seeder
                 'types' => ['club_life'],
                 'athlete_category_groups' => ['u14m', 'u16p'],
             ],
+            [
+                'name' => 'Evénement passé',
+                'starts_at' => now()->subDays(10),
+                'status' => 'planned',
+                'athlete_category_groups' => ['u16p'],
+            ],
         ];
 
         foreach ($events as $event) {
