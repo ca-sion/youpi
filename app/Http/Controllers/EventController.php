@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Trainer;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\View\View;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\OpenGraph;
+use Illuminate\Http\Response;
 
 class EventController extends Controller
 {
@@ -38,6 +40,21 @@ class EventController extends Controller
         return view('events.text', [
             'event' => $event,
         ]);
+    }
+
+    /**
+     * Show the pdf for a given event.
+     */
+    public function pdf(string $event): Response
+    {
+        $event = Event::findOrFail($event);
+
+        $pdf = PDF::loadView('events.pdf', compact('event'))
+            ->setPaper('a4', 'portrait')
+            ->setWarnings(false)
+            ->set_option("isPhpEnabled", true);
+
+        return $pdf->stream($event->starts_at->format('Ymd').'-'.str($event->name)->slug('_', 'fr').'.pdf');
     }
 
     /**
