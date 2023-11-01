@@ -19,19 +19,19 @@
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-2 py-2 md:px-6 md:py-4">
                                 Nom
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-2 py-2 md:px-6 md:py-4">
                                 Date
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-2 py-2 md:px-6 md:py-4">
                                 Lieu
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-2 py-2 md:px-6 md:py-4">
                                  
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-2 py-2 md:px-6 md:py-4">
                                 Concerne
                             </th>
                         </tr>
@@ -39,23 +39,23 @@
                     <tbody>
                         @foreach ($events as $event)
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                <a href="{{ $event->url }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">{{ $event->name }}</a>
+                            <th scope="row" class="px-2 py-2 md:px-6 md:py-4 font-medium text-gray-900 dark:text-white">
+                                <a href="{{ $event->url }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline block max-w-[200px] truncate md:inline md:mx-w-none md:overflow-visible">{{ $event->name }}</a>
                                 @if (data_get($event, 'status.value') != 'planned')
                                 <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-400 border border-gray-500">{{ $event->status->getLabel() }}</span>
                                 @endif
                             </th>
-                            <td class="px-6 py-4">
+                            <td class="px-2 py-2 md:px-6 md:py-4">
                                 {{ $event->starts_at->isoFormat('DD.MM.YYYY') }}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-2 py-2 md:px-6 md:py-4">
                                 {{ $event->location }}
                             </td>
-                            <td class="px-6 py-4">
-                                {{ $event->codes }}
+                            <td class="px-2 py-2 md:px-6 md:py-4">
+                                <span class="whitespace-nowrap">{{ $event->codes }}</span>
                             </td>
-                            <td class="px-6 py-4">
-                                {{ $event->getAthleteCategories }}
+                            <td class="px-2 py-2 md:px-6 md:py-4">
+                                <span class="whitespace-nowrap">{{ $event->getAthleteCategories }}</span>
                             </td>
                         </tr>
                         @endforeach
