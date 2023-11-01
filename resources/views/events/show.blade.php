@@ -105,27 +105,27 @@
 
                 @if ($event->has_provisional_timetable)
                 <div>
-                    🕔 <a href="{{ $event->provisional_timetable_url }}">Horaire provisoire</a>
+                    <a href="{{ $event->provisional_timetable_url }}">Horaire provisoire</a>
                     {{ $event->provisional_timetable_text }}
                 </div>
                 @endif
 
                 @if ($event->has_final_timetable)
                 <div>
-                    🕔 <a href="{{ $event->final_timetable_url }}">Horaire définitif</a>
+                    <a href="{{ $event->final_timetable_url }}">Horaire définitif</a>
                     {{ $event->final_timetable_text }}
                 </div>
                 @endif
 
                 @if ($event->has_publication)
                 <div>
-                    ℹ️ <a href="{{ $event->publication_url }}">Publication</a>
+                    <a href="{{ $event->publication_url }}">Publication</a>
                 </div>
                 @endif
 
                 @if ($event->has_rules)
                 <div>
-                    📐 <a href="{{ $event->rules_url }}">Règlement</a>
+                    <a href="{{ $event->rules_url }}">Règlement</a>
                 </div>
                 @endif
             <br>
