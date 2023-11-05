@@ -124,8 +124,7 @@
             </td>
             <td align="left" class="ca-table-content">
                 @if ($event->deadline_at){{ $event->deadline_at->isoFormat('LLLL') }}@endif
-                @if ($event->deadline_at && $event->deadline_type == 'tiiva') · @endif
-                @if ($event->deadline_type == 'tiiva')Délai donné sur Tiiva @endif
+                @if (! $event->deadline_at && $event->deadline_type == 'tiiva')Délai donné sur Tiiva @endif
 
                 @if ($event->deadline_type == 'url')<br>Sur <a href="{{ $event->deadline_url }}">{{ $event->deadline_url }}<i class="unicode"> ➝</i></a>@elseif ($event->deadline_type == 'text')<br>{{ $event->deadline_text }}@endif
             </td>
