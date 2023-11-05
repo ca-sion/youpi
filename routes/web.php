@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProtectController;
 use App\Http\Controllers\ResourceController;
+use App\Http\Controllers\TrainersController;
 use App\Livewire\SuccessResource;
 use Illuminate\Support\Facades\Artisan;
 
@@ -39,6 +40,8 @@ Route::get('events/{event}', [EventController::class, 'show'])->name('events.sho
 Route::get('events/{event}/pdf', [EventController::class, 'pdf'])->name('events.pdf');
 Route::get('events/{event}/text', [EventController::class, 'text'])->name('events.text');
 Route::get('events/{event}/trainers-presences', [EventController::class, 'trainersPresences'])->name('events.trainers.presences');
+
+Route::get('trainers/presences', [TrainersController::class, 'presences'])->name('trainers.presences');
 
 Route::get('/run/schedule/daily', function () {
     Artisan::call('app:send-admin-events');
