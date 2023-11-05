@@ -2,29 +2,13 @@
     <div>
         *Aux entraîneurs {{ $event->getAthleteCategories }}*
         <br>
-        Le {{ $event->starts_at->isoFormat('dddd') }} {{ $event->starts_at->isoFormat('DD.MM.YYYY') }} a lieu l'événement *{{ $event->name }}* {{ $event->codes }}@if ($event->location)à {{ $event->location }}@endif. Vous trouverez ci-après les informations nécessaires.
+        *{{ $event->name }}* {{ $event->codes }}@if ($event->location)à {{ $event->location }}@endif du {{ $event->starts_at->isoFormat('dddd') }} {{ $event->starts_at->isoFormat('DD.MM.YYYY') }}
         <br>
     </div>
 
     @if ($event->description)
     <div>
         {!! nl2br($event->description) !!}
-        <br>
-    </div>
-    @endif
-
-    @if ($event->has_deadline)
-    <div>
-        <br>
-        ---- 📝 Inscription
-        <br>
-        - Délai :
-        @if ($event->deadline_at){{ $event->deadline_at->isoFormat('LLLL') }}@endif
-        @if ($event->deadline_at && $event->deadline_type == 'tiiva') · @endif
-        @if ($event->deadline_type == 'tiiva')Délai donné sur Tiiva @endif
-        <br>
-        - Où : @if ($event->deadline_type == 'tiiva')sur Tiiva @elseif ($event->deadline_type == 'url'){{ $event->deadline_url }}@elseif ($event->deadline_type == 'text'){{ $event->deadline_text }}@endif
-        <br>
         <br>
     </div>
     @endif
@@ -129,12 +113,19 @@
         ---- ⏱ Accompagnement/présence
         <br>
         @if ($event->trainers_presences_type == 'table')
-        Merci de remplir ⚠️ le tableau de présences suivant : {{ route('events.trainers.presences', compact('event')) }}
-        @else
-        Merci de me communiquer ⚠️ si vous ne pouvez pas être présent pour accompagner les athlètes inscrits pour la compétition.
+        @if ($event->trainersPresences->count() > 0)
+            <div>
+                @foreach ($event->trainersPresences as $tp)
+                @if ($tp->presence)
+                - {{ $tp->trainer->name }}@if ($tp->note) · {{ $tp->note }}@endif<br>
+                @endif
+                @endforeach
+            </div>
+            <p>Les autres moniteurs sont absents ou n'ont pas donnés réponses.</p>
+            @else
+            <p>Aucun entraîneur présent</p>
         @endif
-        <br>
-        <br>
+        @endif
     </div>
     @endif
 

@@ -30,8 +30,8 @@
 
             </header>
             @if ($event->description)
-            <p class="lead">
-                {{ $event->description }}
+            <p class="lead text-gray-900">
+                {!! nl2br($event->description) !!}
             </p>
             @else
             <p class="lead">
@@ -131,7 +131,6 @@
             <br>
             @endif
 
-
             @if ($event->has_trip)
             <h2>🚘 Déplacement</h2>
                 @if ($event->trip_type == 'url')
@@ -139,6 +138,25 @@
                 @elseif ($event->trip_type == 'text')
                     <div>{{ $event->trip_text }}</div>
                 @endif
+            @endif
+
+
+            @if ($event->has_trainers_presences && $event->trainers_presences_type == 'table')
+            <h2>⏱ Entraîneurs</h2>
+            @if ($event->trainersPresences->count() > 0)
+            <div class="not-format">
+                <ul class="list-disc mt-0">
+                @foreach ($event->trainersPresences as $tp)
+                @if ($tp->presence)
+                <li class="ml-4 mb-0">{{ $tp->trainer->name }}@if ($tp->note) <span class="text-sm">· {{ $tp->note }}</span>@endif</li>
+                @endif
+                @endforeach
+                </ul>
+            </div>
+            <p>Les autres moniteurs sont absents ou n'ont pas donnés réponses.</p>
+            @else
+            <p>Aucun entraîneur présent</p>
+            @endif
             @endif
 
         </article>

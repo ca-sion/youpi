@@ -87,7 +87,12 @@
             <td align="left" style="width: 70%;">
                 <div style="font-size: 24px;font-weight: bold;margin-bottom: 4px;">{{ $event->name }}</div>
                 <div style="font-size: 16px;">{{ $event->starts_at->isoFormat('LL') }}</div>
+                @if ($event->location)
                 <div style="font-size: 16px;">{{ $event->location }}</div>
+                @endif
+                @if ($event->description)
+                <div style="margin-top: 1rem;">{!! nl2br($event->description) !!}</div>
+                @endif
             </td>
         </tr>
     </table>
@@ -102,21 +107,13 @@
                 @if ($event->location) · {{ $event->location }}@endif
             </td>
         </tr>
+        @if ($event->getAthleteCategories)
         <tr class="ca-table-row">
             <td align="left" class="ca-table-heading">
                 Catégories
             </td>
             <td align="left" class="ca-table-content">
                 {{ $event->getAthleteCategories }}
-            </td>
-        </tr>
-        @if ($event->description)
-        <tr class="ca-table-row">
-            <td align="left" class="ca-table-heading">
-                 
-            </td>
-            <td align="left" class="ca-table-content">
-                {{ $event->description }}
             </td>
         </tr>
         @endif
@@ -216,6 +213,24 @@
                     <a href="{{ $event->rules_url }}">Règlement<i class="unicode"> ➝</i></a>
                 </div>
                 @endif
+            </td>
+        </tr>
+        @endif
+        @if ($event->has_trainers_presences && $event->trainers_presences_type == 'table')
+        <tr class="ca-table-row">
+            <td align="left" class="ca-table-heading">
+                Entraîneurs
+            </td>
+            <td align="left" class="ca-table-content">
+                <div>Présences :</div>
+                <ul style="margin-top: 0;">
+                @foreach ($event->trainersPresences as $tp)
+                @if ($tp->presence)
+                   <li>{{ $tp->trainer->name }}@if ($tp->note) <span style="font-size: x-small;">· {{ $tp->note }}</span>@endif</li>
+                @endif
+                @endforeach
+                </ul>
+                <p>Les autres moniteurs sont absents ou n'ont pas donnés réponses.</p>
             </td>
         </tr>
         @endif

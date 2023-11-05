@@ -8,7 +8,7 @@
 
     @if ($event->description)
     <div>
-        {{ $event->description }}
+        {!! nl2br($event->description) !!}
         <br>
     </div>
     @endif

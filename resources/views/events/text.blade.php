@@ -12,12 +12,16 @@
                 </div>
             </header>
             <strong>Entraîneurs</strong>
-            <div class="w-full" style="border: solid 1px black;" id="copy_a">
+            <div class="w-full p-4" style="border: solid 1px black;" id="copy_a">
                 <x-event-text-trainers-message :event="$event" />
             </div>
             <strong>Athlètes/Parents</strong>
-            <div class="w-full" style="border: solid 1px black;">
+            <div class="w-full p-4" style="border: solid 1px black;">
                 <x-event-text-athletes-message :event="$event" />
+            </div>
+            <strong>Résumé</strong>
+            <div class="w-full p-4" style="border: solid 1px black;">
+                <x-event-text-resume-message :event="$event" />
             </div>
 
         </article>
