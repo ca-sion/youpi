@@ -15,6 +15,7 @@ export default {
         'bg-gray-900',
         'bg-opacity-50',
         'dark:bg-opacity-80',
+        'text-red-600',
         'fixed',
         'inset-0',
         'z-40'

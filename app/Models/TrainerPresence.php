@@ -20,6 +20,15 @@ class TrainerPresence extends Model
     protected $guarded = [];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'presence' => 'boolean',
+    ];
+
+    /**
      * Get the event that owns the trainer presence.
      */
     public function event(): BelongsTo

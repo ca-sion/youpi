@@ -19,7 +19,7 @@ class TrainersController extends Controller
     public function presences(): View
     {
         $events = Event::whereDate('starts_at', '>', now()->subDays(1)->startOfDay())
-            ->with('trainersPresences')
+            ->with('trainersPresences.trainer')
             ->orderBy('starts_at')
             ->get();
 
