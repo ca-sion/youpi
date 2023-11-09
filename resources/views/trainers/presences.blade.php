@@ -23,9 +23,11 @@
                             @foreach ($events as $event)
                             <td class="px-2 py-2 md:px-6 md:py-4 text-center">
                                 @php
-                                    $hasNote = data_get($event->trainersPresences->firstWhere('trainer_id', $trainer->id), 'note', false);
+                                    $eventTrainerPresence = $event->trainersPresences->firstWhere('trainer_id', $trainer->id);
+                                    $hasNote = ! empty(data_get($eventTrainerPresence, 'note'));
                                 @endphp
-                                <span @if ($hasNote) data-tooltip-target="tooltip-default" @endif class="relative">
+
+                                <span @if ($hasNote) data-tooltip-target="tooltip-note-{{ $event->id }}-{{ $trainer->id }}" @endif class="relative">
                                 @if (data_get($event->trainersPresences->firstWhere('trainer_id', $trainer->id), 'presence') === true)
                                     <i class="bi bi-check-circle text-green-600"></i>
                                 @elseif (data_get($event->trainersPresences->firstWhere('trainer_id', $trainer->id), 'presence') === false)
@@ -37,12 +39,11 @@
                                 @if ($hasNote)
                                 <span class="absolute -top-1 left-2 inline-block w-3 h-3 bg-yellow-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
                                 @endif
-
                                 </span>
 
                                 @if ($hasNote)
-                                <div id="tooltip-default" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
-                                    {{ data_get($event->trainersPresences->firstWhere('trainer_id', $trainer->id), 'note') }}
+                                <div id="tooltip-note-{{ $event->id }}-{{ $trainer->id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                    {{ data_get($eventTrainerPresence, 'note') }}
                                     <div class="tooltip-arrow" data-popper-arrow></div>
                                 </div>
                                 @endif
