@@ -23,7 +23,7 @@
                             @foreach ($events as $event)
                             <td class="px-2 py-2 md:px-6 md:py-4 text-center">
                                 @php
-                                    $hasNote = data_get($event->trainersPresences->firstWhere('trainer_id', $trainer->id), 'note');
+                                    $hasNote = data_get($event->trainersPresences->firstWhere('trainer_id', $trainer->id), 'note', false);
                                 @endphp
                                 <span @if ($hasNote) data-tooltip-target="tooltip-default" @endif class="relative">
                                 @if (data_get($event->trainersPresences->firstWhere('trainer_id', $trainer->id), 'presence') === true)
