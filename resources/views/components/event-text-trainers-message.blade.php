@@ -104,28 +104,24 @@
     </div>
     @endif
 
+    @if ($event->has_trip)
     <div>
         <br>
         ---- 🚘 Déplacement
         <br>
-        @if (! $event->has_trip)
-        Aucun déplacement organisé n'est prévu.
-        <br>
-        <br>
-        @else
         @if ($event->trip_type == 'url')
             Lien : {{ $event->trip_url }}
             <br>
             @elseif ($event->trip_type == 'text')
-            {{ $event->trip_text }}
+            {!! nl2br($event->trip_text) !!}
             <br>
         @endif
-        <br>
-        @endif
     </div>
+    @endif
 
     @if ($event->has_trainers_presences)
     <div>
+        <br>
         ---- ⏱ Accompagnement/présence
         <br>
         @if ($event->trainers_presences_type == 'table')
