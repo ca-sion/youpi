@@ -65,6 +65,8 @@ return new class extends Migration
             $table->string('trip_text')->nullable();
             $table->string('trip_id')->nullable();
 
+            $table->json('sections')->nullable();
+
             $table->boolean('has_trainers_presences')->nullable();
             $table->string('trainers_presences_type')->nullable();
             $table->string('trainers_presences_id')->nullable();

@@ -45,6 +45,12 @@
         .ca-table-row td {
             padding-bottom: .5rem;
         }
+        .ca-table-row-block {
+            background-color: #eeeeee;
+        }
+        .ca-table-row-block td {
+            padding: .5rem;
+        }
         .ca-table-heading {
             vertical-align: top;
             width: 30%;
@@ -117,6 +123,20 @@
             </td>
         </tr>
         @endif
+
+        @if ($event->sections)
+        @foreach ($event->sections as $section)
+        <tr class="ca-table-row @if (data_get($section, 'type') == 'block') ca-table-row-block @endif">
+            <td align="left" class="ca-table-heading">
+                {{ data_get($section, 'heading') }}
+            </td>
+            <td align="left" class="ca-table-content">
+                {!! nl2br(data_get($section, 'content')) !!}
+            </td>
+        </tr>
+        @endforeach
+        @endif
+
         @if ($event->has_deadline)
         <tr class="ca-table-row">
             <td align="left" class="ca-table-heading">

@@ -13,6 +13,24 @@
     </div>
     @endif
 
+    @if ($event->sections)
+    <div>
+        @foreach ($event->sections as $section)
+        <br>
+        @if (data_get($section, 'type') == 'block')
+        ---- {{ data_get($section, 'heading') }}
+        <br>
+        @else
+        *{{ data_get($section, 'heading') }}* :
+        @endif
+
+        {!! nl2br(data_get($section, 'content')) !!}
+
+        @endforeach
+        <br>
+    </div>
+    @endif
+
     @if ($event->has_qualified)
     <div>
         @if ($event->qualified_type == 'url')

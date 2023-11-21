@@ -39,6 +39,25 @@
             </p>
             @endif
 
+            @if ($event->sections)
+            <div>
+                @foreach ($event->sections as $section)
+                @if (data_get($section, 'type') == 'block')
+                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300">
+                <div class="font-bold min-w-[100px]">{{ data_get($section, 'heading') }}</div>
+                @else
+                <div class="font-bold min-w-[100px]">{{ data_get($section, 'heading') }}</div>
+                @endif
+
+                <div>{!! nl2br(data_get($section, 'content')) !!}</div>
+
+                @if (data_get($section, 'type') == 'block')</div>@endif
+
+                @endforeach
+                <br>
+            </div>
+            @endif
+
             @if ($event->has_deadline)
                 <h2>📝 Inscription</h2>
                 <div class="flex">

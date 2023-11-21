@@ -253,6 +253,25 @@ class EventResource extends Resource
                         ->maxLength(255),
                 ]),
 
+                Forms\Components\Repeater::make('sections')
+                    ->columns(12)
+                    ->columnSpanFull()
+                    ->schema([
+                        Forms\Components\TextInput::make('heading')
+                            ->columnSpan(3),
+                        Forms\Components\Textarea::make('content')
+                            ->autosize()
+                            ->rows(1)
+                            ->columnSpan(7),
+                        Forms\Components\Select::make('type')
+                            ->columnSpan(2)
+                            ->options([
+                                'default' => 'Normal',
+                                'block' => 'Block',
+                            ])
+                            ->default('default'),
+                    ]),
+
                 Fieldset::make('Présences')
                 ->schema([
                     Forms\Components\Toggle::make('has_trainers_presences')
@@ -282,7 +301,6 @@ class EventResource extends Resource
                         ->maxLength(255),
                         */
                 ]),
-
 
                 /*
                 Fieldset::make('LABEL')

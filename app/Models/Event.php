@@ -38,6 +38,7 @@ class Event extends Model
         'types' => AsEnumCollection::class.':'.EventType::class,
         'athlete_categories' => AsEnumCollection::class.':'.AthleteCategory::class,
         'athlete_category_groups' => AsEnumCollection::class.':'.AthleteCategoryGroup::class,
+        'sections' => 'array',
     ];
 
     /**

@@ -2,13 +2,31 @@
     <div>
         *Aux athlètes {{ $event->getAthleteCategories }}*
         <br>
-        Le {{ $event->starts_at->isoFormat('dddd') }} {{ $event->starts_at->isoFormat('DD.MM.YYYY') }} a lieu l'événement *{{ $event->name }}* {{ $event->codes }}@if ($event->location)à {{ $event->location }}@endif. Tu trouvereas ci-après les informations nécessaires pour t'inscrire.
+        Le {{ $event->starts_at->isoFormat('dddd') }} {{ $event->starts_at->isoFormat('DD.MM.YYYY') }} a lieu l'événement *{{ $event->name }}* {{ $event->codes }}@if ($event->location)à {{ $event->location }}@endif.
         <br>
     </div>
 
     @if ($event->description)
     <div>
         {!! nl2br($event->description) !!}
+        <br>
+    </div>
+    @endif
+
+    @if ($event->sections)
+    <div>
+        @foreach ($event->sections as $section)
+        <br>
+        @if (data_get($section, 'type') == 'block')
+        ---- {{ data_get($section, 'heading') }}
+        <br>
+        @else
+        *{{ data_get($section, 'heading') }}* :
+        @endif
+
+        {!! nl2br(data_get($section, 'content')) !!}
+
+        @endforeach
         <br>
     </div>
     @endif
