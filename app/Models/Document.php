@@ -28,7 +28,7 @@ class Document extends Model
      */
     protected $casts = [
         'published_on' => 'datetime',
-        'expired_on' => 'datetime',
+        'expires_on' => 'datetime',
         'type' => DocumentType::class,
         'status' => DocumentStatus::class,
         'sections' => 'array',

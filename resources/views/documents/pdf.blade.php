@@ -107,7 +107,12 @@
     <table width="100%" style="margin-top: 2rem;">
         <tr>
             <td align="left" style="width: 70%;">
-                <div style="font-size: 11px;">{{ $document->published_on->isoFormat('LL') }}</div>
+                <div style="font-size: 11px;">
+                    {{ $document->published_on->isoFormat('LL') }}
+                    @if ($document->expires_on)
+                        – {{ $document->expires_on->isoFormat('LL') }}
+                    @endif
+                </div>
                 <div style="font-size: 24px;font-weight: bold;">{{ $document->name }}</div>
 
                 @if ($document->status->value != 'validated')
@@ -124,7 +129,7 @@
         </tr>
     </table>
 
-    <table width="100%" style="margin-top: .5rem;">
+    <table width="100%" style="margin-top: 2rem;">
 
         @if ($document->sections)
         @foreach ($document->sections as $section)
