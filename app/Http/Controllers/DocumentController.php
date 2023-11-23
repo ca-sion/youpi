@@ -44,4 +44,20 @@ class DocumentController extends Controller
 
         return $pdf->stream($document->slugName.'-'.str($document->name)->slug('_', 'fr').'.pdf');
     }
+    /**
+     * Show the page for all documents.
+     */
+    public function index(): View
+    {
+        $documents = Document::whereNotIn('type', ['letter', 'travel'])
+        ->orderBy('id', 'desc')
+        ->get();
+
+        SEOMeta::setTitle('Documents');
+        OpenGraph::setTitle('Documents');
+
+        return view('documents.index', [
+            'documents' => $documents,
+        ]);
+    }
 }

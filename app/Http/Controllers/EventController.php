@@ -76,6 +76,7 @@ class EventController extends Controller
         }
 
         SEOMeta::setTitle('Calendrier');
+        OpenGraph::setTitle('Calendrier');
 
         return view('events.index', [
             'events' => $events,

@@ -108,6 +108,10 @@ class DocumentResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('show document')
+                    ->label('Afficher')
+                    ->url(fn (Document $record): string => route('documents.show', ['document' => $record]))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
