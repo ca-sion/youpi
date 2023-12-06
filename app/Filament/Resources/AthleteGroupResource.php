@@ -18,7 +18,7 @@ class AthleteGroupResource extends Resource
 {
     protected static ?string $model = AthleteGroup::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public static function getModelLabel(): string
     {

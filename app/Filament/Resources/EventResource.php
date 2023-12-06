@@ -28,7 +28,7 @@ class EventResource extends Resource
 {
     protected static ?string $model = Event::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-s-calendar-days';
 
     public static function getModelLabel(): string
     {
@@ -370,19 +370,17 @@ class EventResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Action::make('view trainers message')
-                    ->label('Mess. entraîneurs')
-                    ->action(fn (Event $record) => $record->advance())
-                    ->modalContent(fn (Event $record): View => view(
-                        'components.event-text-trainers-message',
-                        ['event' => $record],
-                    ))
-                    ->modalSubmitAction(false),
+                Action::make('show messages')
+                    ->label('Messages')
+                    ->url(fn (Event $record): string => route('events.text', ['event' => $record]))
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-chat-bubble-bottom-center-text'),
                 Action::make('show event')
                     ->label('Afficher')
                     ->url(fn (Event $record): string => route('events.show', ['event' => $record]))
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-arrow-top-right-on-square'),
+                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

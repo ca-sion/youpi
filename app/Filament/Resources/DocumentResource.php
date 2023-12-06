@@ -19,7 +19,7 @@ class DocumentResource extends Resource
 {
     protected static ?string $model = Document::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
 
     public static function form(Form $form): Form
     {
@@ -111,7 +111,8 @@ class DocumentResource extends Resource
                 Tables\Actions\Action::make('show document')
                     ->label('Afficher')
                     ->url(fn (Document $record): string => route('documents.show', ['document' => $record]))
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-arrow-top-right-on-square'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
