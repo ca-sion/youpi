@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Event;
+use App\Models\Trainer;
 use Filament\Forms\Get;
 use App\Enums\EventType;
 use Filament\Forms\Form;
@@ -16,13 +17,13 @@ use App\Enums\AthleteCategoryGroup;
 use Filament\Tables\Actions\Action;
 use Illuminate\Contracts\View\View;
 use Filament\Forms\Components\Fieldset;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TernaryFilter;
 use App\Filament\Resources\EventResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\EventResource\RelationManagers;
-use App\Models\Trainer;
-use Filament\Tables\Filters\TernaryFilter;
 
 class EventResource extends Resource
 {
@@ -380,7 +381,23 @@ class EventResource extends Resource
                     ->url(fn (Event $record): string => route('events.show', ['event' => $record]))
                     ->openUrlInNewTab()
                     ->icon('heroicon-o-arrow-top-right-on-square'),
-                Tables\Actions\EditAction::make(),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\ReplicateAction::make()
+                    ->excludeAttributes(['name', 'starts_at', 'status'])
+                    ->form([
+                        Forms\Components\TextInput::make('name')->required(),
+                        Forms\Components\DatePicker::make('starts_at')->required(),
+                        Forms\Components\Select::make('status')
+                        ->required()
+                        ->options(EventStatus::class)
+                        ->default(EventStatus::PLANNED),
+                    ])
+                    ->beforeReplicaSaved(function (Event $replica, array $data): void {
+                        $replica->fill($data);
+                    }),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
