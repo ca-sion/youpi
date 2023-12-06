@@ -129,7 +129,7 @@
         @if ($event->trainers_presences_type == 'table')
         @if ($event->trainersPresences->count() > 0)
             <div>
-                @foreach ($event->trainersPresences as $tp)
+                @foreach ($event->trainersPresences->sortBy('trainer.name') as $tp)
                 @if ($tp->presence)
                 - {{ $tp->trainer->name }}@if ($tp->note) · {{ $tp->note }}@endif<br>
                 @endif

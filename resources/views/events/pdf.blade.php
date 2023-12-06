@@ -243,7 +243,7 @@
             <td align="left" class="ca-table-content">
                 <div>Présences :</div>
                 <ul style="margin-top: 0;">
-                @foreach ($event->trainersPresences as $tp)
+                @foreach ($event->trainersPresences->sortBy('trainer.name') as $tp)
                 @if ($tp->presence)
                    <li>{{ $tp->trainer->name }}@if ($tp->note) <span style="font-size: x-small;">· {{ $tp->note }}</span>@endif</li>
                 @endif

@@ -164,7 +164,7 @@
             @if ($event->trainersPresences->count() > 0)
             <div class="not-format">
                 <ul class="list-disc mt-0">
-                @foreach ($event->trainersPresences as $tp)
+                @foreach ($event->trainersPresences->sortBy('trainer.name') as $tp)
                 @if ($tp->presence)
                 <li class="ml-4 mb-0">{{ $tp->trainer->name }}@if ($tp->note) <span class="text-sm">· {{ $tp->note }}</span>@endif</li>
                 @endif
