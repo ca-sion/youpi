@@ -87,6 +87,8 @@ class DocumentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->wrap()
+                    ->limit(90)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('identifier')
                     ->searchable(['id'])

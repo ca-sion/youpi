@@ -320,6 +320,8 @@ class EventResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->wrap()
+                    ->limit(90)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('starts_at')
                     ->date('d.m.Y')

@@ -134,6 +134,8 @@ class ResourceResource extends Resource
             ->columns([
                 TextColumn::make('computedName')
                     ->label('Nom')
+                    ->wrap()
+                    ->limit(90)
                     ->searchable(['name', 'date']),
                 TextColumn::make('date')
                     ->label('Date')
