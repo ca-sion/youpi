@@ -52,7 +52,15 @@
                                 {{ $event->location }}
                             </td>
                             <td class="px-2 py-2 md:px-6 md:py-4">
-                                <span class="whitespace-nowrap">{{ $event->codes }}</span>
+                                <span class="whitespace-nowrap">
+                                    {{ $event->codes }}
+                                    @if ($event->has_publication)
+                                    <a href="{{ $event->publication_url }}" class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500 w-4 h-4"><i class="bi bi-info"></i></a>
+                                    @endif
+                                    @if ($event->has_provisional_timetable || $event->has_final_timetable)
+                                    <a href="{{ $event->has_final_timetable ?? $event->has_provisional_timetable }}" class="text-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm text-center inline-flex items-center dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500 w-4 h-4"><i class="bi bi-clock"></i></a>
+                                    @endif
+                                </span>
                             </td>
                             <td class="px-2 py-2 md:px-6 md:py-4">
                                 <span class="whitespace-nowrap">{{ $event->getAthleteCategories }}</span>
