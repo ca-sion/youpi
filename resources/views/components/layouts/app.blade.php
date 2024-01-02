@@ -26,7 +26,7 @@
 
     <body class="antialiased bg-gray-50 dark:bg-gray-900">
 
-        <header>
+        <header class="print:hidden">
             <nav class="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800">
                 <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
                     <a href="/" class="flex items-center">
@@ -69,7 +69,7 @@
         {{ $slot }}
         </main>
 
-        <footer class="bg-white rounded-lg shadow m-4 dark:bg-gray-800">
+        <footer class="bg-white rounded-lg shadow m-4 dark:bg-gray-800 print:hidden">
             <div class="w-full mx-auto max-w-screen-xl p-4 md:flex md:items-center md:justify-between">
             <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">CA Sion <a href="https://casion.ch/" class="hover:underline">➝</a>
             </span>

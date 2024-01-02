@@ -1,7 +1,7 @@
 <x-layouts.app>
 
     <main class="pt-8 pb-16 lg:pt-16 lg:pb-24 bg-white dark:bg-gray-900 antialiased">
-        <section class="table px-4 mx-auto mb-6 max-w-screen-xl">
+        <section class="table px-4 mx-auto mb-6 max-w-screen-xl print:hidden">
             <div class="inline-flex rounded-md shadow-sm" role="group">
                 <a href="{{ route('events.index', ['acg' => null]) }}" class="px-4 py-2 text-sm font-medium text-gray-900 border border-gray-900 rounded-l-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700 @if (! $acg)bg-gray-900 text-white @else bg-transparent @endif">
                 Tout
