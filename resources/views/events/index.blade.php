@@ -35,7 +35,7 @@
                                  
                             </th>
                             <th scope="col" class="px-2 py-2 md:px-6 md:py-4">
-                                Concerne
+                                 
                             </th>
                         </tr>
                     </thead>
@@ -66,7 +66,20 @@
                                 </span>
                             </td>
                             <td class="px-2 py-2 md:px-6 md:py-4">
-                                <span class="whitespace-nowrap">{{ $event->getAthleteCategories }}</span>
+                                <span class="whitespace-nowrap">
+                                    @if ($event->has_deadline)
+                                    <span data-tooltip-target="tooltip-event-{{ $event->id }}">
+                                        <i class="bi bi-alarm"></i> {{ $event->deadline_at->diffForHumans() }}
+                                    </span>
+                                    <div id="tooltip-event-{{ $event->id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                        Délai d'inscription au {{ $event->deadline_at->isoFormat('DD.MM.YYYY') }}
+                                        <div class="tooltip-arrow" data-popper-arrow></div>
+                                    </div>
+                                    @endif
+                                    @if ($event->has_deadline && $event->description) · @endif
+                                    @if ($event->description)
+                                    {{ str($event->description)->limit('20') }}</span>
+                                    @endif
                             </td>
                         </tr>
                         @endforeach
