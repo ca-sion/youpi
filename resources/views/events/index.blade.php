@@ -9,8 +9,11 @@
                 <a href="{{ route('events.index', ['acg' => 'u14m']) }}" class="px-4 py-2 text-sm font-medium text-gray-900 border-t border-b border-gray-900 hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700 @if ($acg == 'u14m')bg-gray-900 text-white  @else bg-transparent @endif">
                     U14 et plus jeunes
                 </a>
-                <a href="{{ route('events.index', ['acg' => 'u16p']) }}" class="px-4 py-2 text-sm font-medium text-gray-900 border border-gray-900 rounded-r-md hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700 @if ($acg == 'u16p')bg-gray-900 text-white @else bg-transparent @endif">
+                <a href="{{ route('events.index', ['acg' => 'u16p']) }}" class="px-4 py-2 text-sm font-medium text-gray-900 border-l border-t border-b border-gray-900 hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700 @if ($acg == 'u16p')bg-gray-900 text-white  @else bg-transparent @endif">
                     U16 et plus âgés
+                </a>
+                <a href="{{ route('events.index', ['acg' => 'u18p_mid_dist']) }}" class="px-4 py-2 text-sm font-medium text-gray-900 border border-gray-900 rounded-r-md hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700 @if ($acg == 'u18p_mid_dist')bg-gray-900 text-white @else bg-transparent @endif">
+                    Demi-fond U18+
                 </a>
             </div>
         </section>
