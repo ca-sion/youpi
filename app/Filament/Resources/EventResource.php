@@ -72,9 +72,8 @@ class EventResource extends Resource
                         ->gridDirection('row'),
                     Forms\Components\CheckboxList::make('athlete_category_groups')
                         ->options(AthleteCategoryGroup::class)
-                        ->columns(11)
-                        ->gridDirection('row')
-                        ->columnSpanFull(),
+                        ->columns(3)
+                        ->gridDirection('row'),
                     Forms\Components\CheckboxList::make('athlete_categories')
                         ->options(AthleteCategory::class)
                         ->columns(11)
