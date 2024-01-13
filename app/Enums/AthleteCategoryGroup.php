@@ -25,7 +25,7 @@ enum AthleteCategoryGroup: string implements HasLabel, HasColor
         return match ($this) {
             self::U16P => 'info',
             self::U14M => 'warning',
-            self::U14M => 'danger',
+            self::U18P_MID_DIST => 'danger',
         };
     }
 }
