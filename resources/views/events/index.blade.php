@@ -67,7 +67,7 @@
                             </td>
                             <td class="px-2 py-2 md:px-6 md:py-4">
                                 <span class="whitespace-nowrap">
-                                    @if ($event->has_deadline)
+                                    @if ($event->deadline_at)
                                     <span data-tooltip-target="tooltip-event-{{ $event->id }}">
                                         <i class="bi bi-alarm"></i> {{ $event->deadline_at->diffForHumans() }}
                                     </span>
