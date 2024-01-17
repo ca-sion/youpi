@@ -71,7 +71,13 @@
         }
         .ca-table-content-block-warning {
             background-color: rgb(255, 196, 85);
+            padding: 8px 12px!important;
+        }
+        .ca-table-row-important td {
+            background-color: rgb(253, 227, 227);
             padding: 8px 12px;
+            padding-left: 20%;
+            border-radius: 8px;
         }
         .ca-status {
             padding: 2px 8px;
@@ -297,6 +303,14 @@
                 @endif
             </td>
         </tr>
+
+        @if (data_get($document, 'travel_data.data.competition_informations_important'))
+        <tr class="ca-table-row ca-table-row-block ca-table-row-important">
+            <td align="left" class="ca-table-content" colspan="2">
+                {!! data_get($document, 'travel_data.data.competition_informations_important') !!}
+            </td>
+        </tr>
+        @endif
 
         @if (data_get($document, 'travel_data.data.competition_informations'))
         <tr class="ca-table-row ca-table-row-description">

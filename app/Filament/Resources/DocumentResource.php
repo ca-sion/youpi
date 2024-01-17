@@ -129,6 +129,7 @@ class DocumentResource extends Resource
                         Forms\Components\Section::make('Compétition')
                         ->schema([
                             Forms\Components\TextInput::make('travel_data.data.competition')->label('Nom de la compétition'),
+                            Forms\Components\Textarea::make('travel_data.data.competition_informations_important')->label('Information importante'),
                             Forms\Components\RichEditor::make('travel_data.data.competition_informations')->label('Informations')
                             ->hint('URLs de la publication officielle, de l\'horaire et du règlement'),
                             Forms\Components\Textarea::make('travel_data.data.competition_schedules')->label('Horaires')
