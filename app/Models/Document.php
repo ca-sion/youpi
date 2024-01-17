@@ -32,6 +32,7 @@ class Document extends Model
         'type' => DocumentType::class,
         'status' => DocumentStatus::class,
         'sections' => 'array',
+        'travel_data' => 'array',
     ];
 
     /**

@@ -87,7 +87,7 @@
 
     <table width="100%">
         <tr>
-            <td align="left" style="width: 30%;">
+            <td align="left" style="width: 50%;">
                 <div style="margin-left: -42px;">
                     <span class="ca-ball"></span>
                     <span class="ca-ball-title">
@@ -96,7 +96,7 @@
                     </span>
                 </div>
             </td>
-            <td align="right" style="width: 70%;">
+            <td align="right" style="width: 50%;">
                 <div style="">
                     <img src="https://casion.ch/assets/logo/logo-casion.png" alt="Logo" style="width: 80px;">
                 </div>

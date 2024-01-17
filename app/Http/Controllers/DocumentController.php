@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DocumentType;
 use App\Models\Document;
 use App\Models\Trainer;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -37,10 +38,17 @@ class DocumentController extends Controller
     {
         $document = Document::findOrFail($document);
 
-        $pdf = PDF::loadView('documents.pdf', compact('document'))
-            ->setPaper('a4', 'portrait')
-            ->setWarnings(false)
-            ->set_option("isPhpEnabled", true);
+        if ($document->type == DocumentType::TRAVEL) {
+            $pdf = PDF::loadView('documents.pdf-travel', compact('document'))
+                ->setPaper('a4', 'portrait')
+                ->setWarnings(false)
+                ->set_option("isPhpEnabled", true);
+        } else {
+            $pdf = PDF::loadView('documents.pdf', compact('document'))
+                ->setPaper('a4', 'portrait')
+                ->setWarnings(false)
+                ->set_option("isPhpEnabled", true);
+        }
 
         return $pdf->stream($document->slugName.'-'.str($document->name)->slug('_', 'fr').'.pdf');
     }
