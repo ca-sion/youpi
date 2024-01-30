@@ -95,8 +95,9 @@ class DocumentResource extends Resource
                             Forms\Components\TextInput::make('travel_data.data.date')->label('Date'),
                         ]),
                         Forms\Components\Repeater::make('travel_data.data.departures')
-                        ->label('Départs')
+                        ->label('Allers')
                         ->columns(2)
+                        ->addActionLabel('Ajouter un aller')
                         ->schema([
                             Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
                             Forms\Components\TextInput::make('location')->label('Lieu'),
@@ -106,8 +107,9 @@ class DocumentResource extends Resource
                             Forms\Components\TextInput::make('travelers_number')->label('Nombre de voyageur')->numeric(),
                         ]),
                         Forms\Components\Repeater::make('travel_data.data.arrivals')
-                        ->label('Arrivées')
+                        ->label('Retours')
                         ->columns(2)
+                        ->addActionLabel('Ajouter un retour')
                         ->schema([
                             Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
                             Forms\Components\TextInput::make('location')->label('Lieu'),

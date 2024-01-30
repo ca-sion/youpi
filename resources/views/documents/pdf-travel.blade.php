@@ -191,7 +191,7 @@
         @if (data_get($document, 'travel_data.data.departures'))
         <tr class="ca-table-row ca-table-row-description">
             <td align="left" class="ca-table-heading">
-                Départ
+                Aller
             </td>
             <td align="left" class=ca-table-content">
                 @foreach (data_get($document, 'travel_data.data.departures') as $departure)
