@@ -66,7 +66,7 @@ class EventController extends Controller
 
         if ($acg) {
             $events = Event::whereJsonContains('athlete_category_groups', $acg)
-            ->whereDate('starts_at', '>', now()->subDays(10)->startOfDay())
+            ->whereDate('starts_at', '>', now()->subDays(2)->startOfDay())
             ->orderBy('starts_at')
             ->get();
         } else {

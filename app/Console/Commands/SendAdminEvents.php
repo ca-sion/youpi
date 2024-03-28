@@ -35,5 +35,13 @@ class SendAdminEvents extends Command
         foreach ($events as $event) {
             Mail::to('technique@casion.ch')->send(new AdminEventReminder($event));
         }
+
+        $inOneWeek = now()->startOfDay()->addDays(7);
+
+        $events = Event::where('deadline_at', $inOneWeek)->get();
+
+        foreach ($events as $event) {
+            Mail::to('technique@casion.ch')->send(new AdminEventReminder($event));
+        }
     }
 }

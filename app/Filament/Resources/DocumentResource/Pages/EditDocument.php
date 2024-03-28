@@ -17,6 +17,11 @@ class EditDocument extends EditRecord
                 ->label(__('filament-panels::resources/pages/edit-record.form.actions.save.label'))
                 ->action(fn () => $this->save())
                 ->color('success'),
+            Actions\Action::make('show document')
+                ->label('Afficher')
+                ->url(fn (): string => route('documents.show', ['document' => $this->record]))
+                ->openUrlInNewTab()
+                ->icon('heroicon-o-arrow-top-right-on-square'),
             Actions\DeleteAction::make(),
             Actions\ForceDeleteAction::make(),
             Actions\RestoreAction::make(),
