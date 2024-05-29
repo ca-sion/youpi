@@ -274,9 +274,9 @@
                 <div style="margin-bottom: .5rem">
                     <strong>Par le CA Sion</strong>
                     @if (data_get($document, 'travel_data.data.accomodation'))
-                    <p>Hébergement, repas du soir à l’hôtel et déplacement ci-dessus (défrayement pour les voitures)</p>
+                    <p>Hébergement, repas du soir à l’hôtel et déplacement ci-dessus</p>
                     @else
-                    <p>Déplacement ci-dessus (défrayement pour les voitures)</p>
+                    <p>Déplacement ci-dessus</p>
                     @endif
                 </div>
                 <div style="margin-bottom: .5rem">
