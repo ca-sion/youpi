@@ -65,6 +65,18 @@ class Resource extends Model implements HasMedia
     }
 
     /**
+     * GChecket the resource media is a pdf.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    public function mediaIsPdf(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->firstMedia?->mime_type == 'application/pdf',
+        );
+    }
+
+    /**
      * Get the resource attachment.
      *
      * @return \Illuminate\Database\Eloquent\Casts\Attribute
@@ -74,7 +86,11 @@ class Resource extends Model implements HasMedia
         if (! empty($this->url)) {
             $value = $this->url;
         } elseif (! empty($this->firstMedia) && $this->firstMediaUrl) {
-            $value = 'https://drive.google.com/viewer?embedded=true&hl=fr-CH&url=' . $this->firstMediaUrl;
+            if ($this->mediaIsPdf) {
+                $value = $this->firstMediaUrl;
+            } else {
+                $value = 'https://drive.google.com/viewer?embedded=true&hl=fr-CH&url=' . $this->firstMediaUrl;
+            }
         } else {
             $value = null;
         }
@@ -91,8 +107,8 @@ class Resource extends Model implements HasMedia
      */
     protected function shareUrl(): Attribute
     {
-        if (! empty($this->attachment)) {
-            $value = $this->attachment;
+        if ($this->attachment_type == 'url' || $this->url != null) {
+            $value = $this->url;
         } else {
             $value = route('resources.view', ['resource' => $this]);
         }

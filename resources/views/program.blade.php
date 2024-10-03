@@ -33,6 +33,11 @@
                                 --}}
                                 <td class="px-4 py-2 text-end">
                                     @if ($resource->isAccessible)
+                                        <a href="{{ $resource->shareUrl }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                                            Afficher
+                                            <i class="bi bi-arrow-right ml-2"></i>
+                                        </a>
+                                        {{--
                                         @if ($resource->attachment_type == 'text')
                                         <button data-modal-target="modal-{{ $resource->id }}" data-modal-toggle="modal-{{ $resource->id }}" type="button" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                                             Afficher
@@ -50,6 +55,7 @@
                                             <i class="bi bi-box-arrow-down ml-2"></i>
                                         </a>
                                         @endif
+                                        --}}
                                     @else
                                     <span data-tooltip-target="tooltip-lock-{{ $resource->id }}" data-tooltip-placement="left">
                                         <i class="bi bi-lock-fill"></i>
@@ -112,6 +118,11 @@
                                 </td>
                                 <td class="px-4 py-2 text-end">
                                     @if ($resource->isAccessible)
+                                    <a href="{{ $resource->shareUrl }}" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                                        Afficher
+                                        <i class="bi bi-arrow-right ml-2"></i>
+                                    </a>
+                                        {{--
                                         @if ($resource->attachment_type == 'text')
                                         <button data-modal-target="modal-{{ $resource->id }}" data-modal-toggle="modal-{{ $resource->id }}" type="button" class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                                             Afficher
@@ -123,6 +134,7 @@
                                             <i class="bi bi-arrow-right ml-2"></i>
                                         </a>
                                         @endif
+                                        --}}
                                     @else
                                     <span data-tooltip-target="tooltip-lock-b-{{ $resource->id }}" data-tooltip-placement="left">
                                         <i class="bi bi-lock-fill"></i>

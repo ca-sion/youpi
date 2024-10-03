@@ -15,6 +15,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Contracts\HasInfolists;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Infolists\Components\Actions\Action;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Concerns\InteractsWithInfolists;
 
 class ViewResource extends Component implements HasForms, HasInfolists
@@ -36,31 +37,37 @@ class ViewResource extends Component implements HasForms, HasInfolists
         return $infolist
             ->record($this->resource)
             ->schema([
-                TextEntry::make('computedName')
-                    ->label('')
-                    ->size(TextEntry\TextEntrySize::Large),
                 Section::make('Données')
                 ->compact(true)
-                ->columns(3)
+                ->columns(6)
                 ->schema([
+                    TextEntry::make('computedName')
+                        ->label('Nom')
+                        ->columnSpan(3),
                     TextEntry::make('date')
                         ->date(config('youpi.date_format'))
                         ->hidden(fn (Resource $record): bool => empty($record->date)),
-                    TextEntry::make('type')
-                        ->label('Type')
-                        ->formatStateUsing(fn (string $state): string => data_get(config('youpi.resource_types'), $state)),
                     TextEntry::make('athleteGroup.name')
                         ->label('Groupe')
                         ->hidden(fn (Resource $record): bool => empty($record->athleteGroup)),
+                    TextEntry::make('author')
+                        ->label('Auteur'),
+                    /*
+                    TextEntry::make('type')
+                        ->label('Type')
+                        ->formatStateUsing(fn (string $state): string => data_get(config('youpi.resource_types'), $state)),
                     IconEntry::make('is_protected')
                         ->label('Protégé')
                         ->boolean(),
-                    TextEntry::make('author')
-                        ->label('Auteur'),
+                    /*
                     TextEntry::make('created_at')
                         ->label('Créé le')
                         ->since(config('youpi.timezone')),
+                    */
                 ]),
+                ViewEntry::make('pdf')
+                    ->view('resources.pdf')
+                    ->visible(fn (Resource $record): bool => $record->mediaIsPdf),
                 Section::make()
                 ->compact(false)
                 ->schema([

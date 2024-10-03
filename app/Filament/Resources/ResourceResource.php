@@ -77,23 +77,33 @@ class ResourceResource extends Resource
                     ->hidden(fn (Get $get): bool => in_array($get('type'), ['documentation', null]))
                     ->required(fn (Get $get): bool => in_array($get('type'), ['week_plan', 'day_plan', 'session', null]))
                     ->live(),
+                Select::make('attachment_type')
+                    ->label('Type de pièce-jointe')
+                    ->required()
+                    ->live()
+                    ->options([
+                        'media' => 'Fichier',
+                        'text' => 'Texte',
+                        'url' => 'URL (lien)',
+                    ])
+                    ->default('media'),
                 SpatieMediaLibraryFileUpload::make('media')
                     ->label('Fichier')
                     ->collection('resources')
-                    ->required(fn (Get $get): bool => ! ($get('text') || $get('url')))
-                    ->hidden(fn (Get $get): bool => ($get('text') || $get('url')))
+                    ->required(fn (Get $get): bool => $get('attachment_type') == 'media')
+                    ->hidden(fn (Get $get): bool => $get('attachment_type') != 'media')
                     ->live()
                     ->columnSpanFull(),
                 RichEditor::make('text')
                     ->label('Texte')
-                    ->required(fn (Get $get): bool => ! ($get('media') || $get('url')))
-                    ->hidden(fn (Get $get): bool => ($get('media') || $get('url')))
+                    ->required(fn (Get $get): bool => $get('attachment_type') == 'text')
+                    ->hidden(fn (Get $get): bool => $get('attachment_type') != 'text')
                     ->live()
                     ->columnSpanFull(),
                 TextInput::make('url')
                     ->label('URL')
-                    ->required(fn (Get $get): bool => ! ($get('media') || $get('text')))
-                    ->hidden(fn (Get $get): bool => ($get('media') || $get('text')))
+                    ->required(fn (Get $get): bool => $get('attachment_type') == 'url')
+                    ->hidden(fn (Get $get): bool => $get('attachment_type') != 'url')
                     ->url()
                     ->live()
                     ->columnSpanFull(),
