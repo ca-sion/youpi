@@ -1,17 +1,15 @@
 <?php
 
 use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\EventController;
-use App\Livewire\ViewResource;
-use App\Livewire\ListResources;
-use App\Livewire\CreateResource;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProtectController;
 use App\Http\Controllers\ResourceController;
-use App\Http\Controllers\TrainersController;
+use App\Livewire\CreateResource;
+use App\Livewire\ListResources;
 use App\Livewire\SuccessResource;
+use App\Livewire\ViewResource;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,17 +34,9 @@ Route::get('resources/{resource}', ViewResource::class)->name('resources.view');
 Route::get('resources/{resource}/success', SuccessResource::class)->name('resources.success');
 Route::get('resources/{resource}/share', [ResourceController::class, 'share'])->name('resources.share');
 
-Route::get('events', [EventController::class, 'index'])->name('events.index');
-Route::get('events/{event}', [EventController::class, 'show'])->name('events.show');
-Route::get('events/{event}/pdf', [EventController::class, 'pdf'])->name('events.pdf');
-Route::get('events/{event}/text', [EventController::class, 'text'])->name('events.text');
-Route::get('events/{event}/trainers-presences', [EventController::class, 'trainersPresences'])->name('events.trainers.presences');
-
 Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
 Route::get('documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
 Route::get('documents/{document}/pdf', [DocumentController::class, 'pdf'])->name('documents.pdf');
-
-Route::get('trainers/presences', [TrainersController::class, 'presences'])->name('trainers.presences');
 
 Route::get('/run/schedule/daily', function () {
     Artisan::call('app:send-admin-events');

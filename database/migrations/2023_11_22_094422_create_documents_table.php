@@ -34,6 +34,7 @@ return new class extends Migration
             $table->json('travel_data')->nullable();
 
             $table->boolean('has_sponsors')->nullable();
+            $table->boolean('is_private')->nullable();
 
             $table->json('data')->nullable();
             $table->timestamps();
