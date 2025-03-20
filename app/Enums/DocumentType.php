@@ -2,10 +2,10 @@
 
 namespace App\Enums;
 
-use Filament\Support\Contracts\HasLabel;
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
 
-enum DocumentType: string implements HasLabel, HasColor
+enum DocumentType: string implements HasColor, HasLabel
 {
     case INFORMATION = 'information';
     case LETTER = 'letter';
@@ -16,9 +16,9 @@ enum DocumentType: string implements HasLabel, HasColor
     {
         return match ($this) {
             self::INFORMATION => 'Information',
-            self::LETTER => 'Lettre',
-            self::TRAVEL => 'Déplacement',
-            self::NOTICE => 'Notice',
+            self::LETTER      => 'Lettre',
+            self::TRAVEL      => 'Déplacement',
+            self::NOTICE      => 'Notice',
         };
     }
 
@@ -26,9 +26,9 @@ enum DocumentType: string implements HasLabel, HasColor
     {
         return match ($this) {
             self::INFORMATION => 'gray',
-            self::LETTER => 'gray',
-            self::TRAVEL => 'warning',
-            self::NOTICE => 'primary',
+            self::LETTER      => 'gray',
+            self::TRAVEL      => 'warning',
+            self::NOTICE      => 'primary',
         };
     }
 }

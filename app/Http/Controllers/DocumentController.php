@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\DocumentType;
 use App\Models\Document;
-use App\Models\Trainer;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\View\View;
+use App\Enums\DocumentType;
+use Illuminate\Http\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\OpenGraph;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 
 class DocumentController extends Controller
 {
@@ -42,24 +41,25 @@ class DocumentController extends Controller
             $pdf = PDF::loadView('documents.pdf-travel', compact('document'))
                 ->setPaper('a4', 'portrait')
                 ->setWarnings(false)
-                ->set_option("isPhpEnabled", true);
+                ->set_option('isPhpEnabled', true);
         } else {
             $pdf = PDF::loadView('documents.pdf', compact('document'))
                 ->setPaper('a4', 'portrait')
                 ->setWarnings(false)
-                ->set_option("isPhpEnabled", true);
+                ->set_option('isPhpEnabled', true);
         }
 
         return $pdf->stream($document->slugName.'-'.str($document->name)->slug('_', 'fr').'.pdf');
     }
+
     /**
      * Show the page for all documents.
      */
     public function index(): View
     {
         $documents = Document::whereNotIn('type', ['letter', 'travel'])
-        ->orderBy('id', 'desc')
-        ->get();
+            ->orderBy('id', 'desc')
+            ->get();
 
         SEOMeta::setTitle('Documents');
         OpenGraph::setTitle('Documents');

@@ -25,6 +25,7 @@ class CreateResource extends Component implements HasForms
     use InteractsWithForms;
 
     public ?array $data = [];
+
     public Resource $resource;
 
     public function mount(): void
@@ -75,8 +76,8 @@ class CreateResource extends Component implements HasForms
                     ->live()
                     ->options([
                         'media' => 'Fichier',
-                        'text' => 'Texte',
-                        'url' => 'URL (lien)',
+                        'text'  => 'Texte',
+                        'url'   => 'URL (lien)',
                     ])
                     ->default('media'),
                 SpatieMediaLibraryFileUpload::make('media')
@@ -140,11 +141,11 @@ class CreateResource extends Component implements HasForms
                         if ($hasDay) {
                             $value .= str($dayName)->ucfirst().' '.$day;
                         }
-                        $value .= (($hasGroup && $hasYear) || ($hasGroup && $hasDay) || ($hasGroup && $hasWeek)  ? ' · ' : null);
+                        $value .= (($hasGroup && $hasYear) || ($hasGroup && $hasDay) || ($hasGroup && $hasWeek) ? ' · ' : null);
                         if ($hasGroup) {
                             $value .= $group;
                         }
-                        $value .= (($hasYear || $hasWeek || $hasDay || $hasGroup) && $name  ? ' · ' : null);
+                        $value .= (($hasYear || $hasWeek || $hasDay || $hasGroup) && $name ? ' · ' : null);
                         if (! empty($name) && $whithName) {
                             $value .= $name;
                         }

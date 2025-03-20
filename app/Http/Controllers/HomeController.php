@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Resource;
-use Illuminate\Http\Request;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\OpenGraph;
 
@@ -67,14 +66,14 @@ class HomeController extends Controller
         $week_resources = $week_resources->merge($period_plans);
 
         $allForModal = $today_resources
-        ->merge($all_week_resources)
-        ->merge($week_resources)
-        ->merge($sessions_exercises)
-        ->merge($period_plans)
-        ->merge($year_plans)
-        ->filter(function ($resource) {
-            return $resource->text && $resource->isAccessible;
-        });
+            ->merge($all_week_resources)
+            ->merge($week_resources)
+            ->merge($sessions_exercises)
+            ->merge($period_plans)
+            ->merge($year_plans)
+            ->filter(function ($resource) {
+                return $resource->text && $resource->isAccessible;
+            });
 
         SEOMeta::setTitle('Programme');
         OpenGraph::setTitle('Programme');

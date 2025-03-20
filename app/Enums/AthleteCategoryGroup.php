@@ -2,10 +2,10 @@
 
 namespace App\Enums;
 
-use Filament\Support\Contracts\HasLabel;
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
 
-enum AthleteCategoryGroup: string implements HasLabel, HasColor
+enum AthleteCategoryGroup: string implements HasColor, HasLabel
 {
     case U16P = 'u16p';
     case U14M = 'u14m';
@@ -14,8 +14,8 @@ enum AthleteCategoryGroup: string implements HasLabel, HasColor
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::U16P => 'U16+',
-            self::U14M => 'U14-',
+            self::U16P          => 'U16+',
+            self::U14M          => 'U14-',
             self::U18P_MID_DIST => 'Demi-fond U18+',
         };
     }
@@ -23,8 +23,8 @@ enum AthleteCategoryGroup: string implements HasLabel, HasColor
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::U16P => 'info',
-            self::U14M => 'warning',
+            self::U16P          => 'info',
+            self::U14M          => 'warning',
             self::U18P_MID_DIST => 'danger',
         };
     }

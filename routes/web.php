@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Controllers\DocumentController;
+use App\Livewire\ViewResource;
+use App\Livewire\ListResources;
+use App\Livewire\CreateResource;
+use App\Livewire\SuccessResource;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProtectController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ResourceController;
-use App\Livewire\CreateResource;
-use App\Livewire\ListResources;
-use App\Livewire\SuccessResource;
-use App\Livewire\ViewResource;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

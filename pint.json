@@ -1,0 +1,19 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "ordered_imports": {
+            "sort_algorithm": "length"
+        },
+        "binary_operator_spaces" : {
+            "operators": {
+                "=>": "align_single_space_minimal"
+            }
+        }
+    },
+    "exclude": [
+        "config",
+        "lang",
+        "bootstrap/cache",
+        "storage"
+    ]
+}

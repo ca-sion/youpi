@@ -17,8 +17,8 @@ use Filament\Tables\Concerns\InteractsWithTable;
 
 class ListResources extends Component implements HasForms, HasTable
 {
-    use InteractsWithTable;
     use InteractsWithForms;
+    use InteractsWithTable;
 
     #[Url]
     public bool $isTableReordering = false;
@@ -83,7 +83,7 @@ class ListResources extends Component implements HasForms, HasTable
             ->actions([
                 Action::make('open')
                     ->label('Ouvrir')
-                    ->url(fn (Resource $record): string|null => $record->attachment)
+                    ->url(fn (Resource $record): ?string => $record->attachment)
                     ->hidden(fn (Resource $record): bool => empty($record->attachment))
                     ->openUrlInNewTab(),
             ])

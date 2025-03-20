@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Resource;
-use Illuminate\Http\Request;
-
 class ProtectController extends Controller
 {
     /**
      * Show the password page.
+     *
      * @return \Illuminate\View\View
      */
     public function password()

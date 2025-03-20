@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\AthleteGroupResource\Pages;
 
-use App\Filament\Resources\AthleteGroupResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\AthleteGroupResource;
 
 class ListAthleteGroups extends ListRecords
 {

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\DocumentStatus;
 use App\Enums\DocumentType;
+use App\Enums\DocumentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -28,11 +28,11 @@ class Document extends Model
      */
     protected $casts = [
         'published_on' => 'datetime',
-        'expires_on' => 'datetime',
-        'type' => DocumentType::class,
-        'status' => DocumentStatus::class,
-        'sections' => 'array',
-        'travel_data' => 'array',
+        'expires_on'   => 'datetime',
+        'type'         => DocumentType::class,
+        'status'       => DocumentStatus::class,
+        'sections'     => 'array',
+        'travel_data'  => 'array',
     ];
 
     /**
@@ -48,7 +48,7 @@ class Document extends Model
     protected function number(): Attribute
     {
         return Attribute::make(
-            get: fn() => str_pad($this->id + 100, 3, '0', STR_PAD_LEFT),
+            get: fn () => str_pad($this->id + 100, 3, '0', STR_PAD_LEFT),
         );
     }
 
@@ -58,7 +58,7 @@ class Document extends Model
     protected function identifier(): Attribute
     {
         return Attribute::make(
-            get: fn() => str($this->type->getLabel())->take(1).$this->number,
+            get: fn () => str($this->type->getLabel())->take(1).$this->number,
         );
     }
 
@@ -68,7 +68,7 @@ class Document extends Model
     protected function slugName(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->published_on->format('Ymd').'-'.$this->identifier,
+            get: fn () => $this->published_on->format('Ymd').'-'.$this->identifier,
         );
     }
 }

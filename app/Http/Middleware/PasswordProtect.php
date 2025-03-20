@@ -47,7 +47,6 @@ class PasswordProtect
     }
 
     /**
-     * @param $request
      * @return bool
      */
     protected function isProtectionOpen($request)

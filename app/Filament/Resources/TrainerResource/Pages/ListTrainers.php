@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\TrainerResource\Pages;
 
-use App\Filament\Resources\TrainerResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\TrainerResource;
 
 class ListTrainers extends ListRecords
 {

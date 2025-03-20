@@ -16,7 +16,6 @@ use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\DocumentResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\DocumentResource\RelationManagers;
 
 class DocumentResource extends Resource
 {
@@ -58,29 +57,29 @@ class DocumentResource extends Resource
                 Forms\Components\Builder::make('sections')
                     ->blocks([
                         Forms\Components\Builder\Block::make('paragraph')
-                        ->schema([
-                            Forms\Components\RichEditor::make('content')
-                                ->label('Paragraphe')
-                                ->required(),
-                        ]),
+                            ->schema([
+                                Forms\Components\RichEditor::make('content')
+                                    ->label('Paragraphe')
+                                    ->required(),
+                            ]),
                         Forms\Components\Builder\Block::make('block')
-                        ->schema([
-                            Forms\Components\RichEditor::make('content')
-                                ->label('Paragraphe')
-                                ->required(),
-                        ]),
+                            ->schema([
+                                Forms\Components\RichEditor::make('content')
+                                    ->label('Paragraphe')
+                                    ->required(),
+                            ]),
                         Forms\Components\Builder\Block::make('description')
-                        ->columns(3)
-                        ->schema([
-                            Forms\Components\TextInput::make('heading')
-                                ->label('En-tête')
-                                ->columnSpan(1),
-                            Forms\Components\Textarea::make('content')
-                                ->label('Contenu')
-                                ->hint('Markdown')
-                                ->autosize()
-                                ->columnSpan(2),
-                        ]),
+                            ->columns(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('heading')
+                                    ->label('En-tête')
+                                    ->columnSpan(1),
+                                Forms\Components\Textarea::make('content')
+                                    ->label('Contenu')
+                                    ->hint('Markdown')
+                                    ->autosize()
+                                    ->columnSpan(2),
+                            ]),
                     ])
                     ->columnSpanFull(),
                 Forms\Components\Section::make('Déplacement')
@@ -88,55 +87,55 @@ class DocumentResource extends Resource
                     ->visible(fn (Get $get) => $get('type') == DocumentType::TRAVEL->value)
                     ->schema([
                         Forms\Components\Section::make('Informations')
-                        ->schema([
-                            Forms\Components\DatePicker::make('travel_data.data.modification_deadline')->label('Délai pour informer'),
-                            Forms\Components\TextInput::make('travel_data.data.modification_deadline_phone')->label('Téléphone'),
-                            Forms\Components\TextInput::make('travel_data.data.location')->label('Lieu'),
-                            Forms\Components\TextInput::make('travel_data.data.date')->label('Date'),
-                        ]),
-                        Forms\Components\Repeater::make('travel_data.data.departures')
-                        ->label('Allers')
-                        ->columns(2)
-                        ->addActionLabel('Ajouter un aller')
-                        ->schema([
-                            Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
-                            Forms\Components\TextInput::make('location')->label('Lieu'),
-                            Forms\Components\TextInput::make('means')->label('Moyen de transport'),
-                            Forms\Components\TextInput::make('driver')->label('Chauffeur'),
-                            Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
-                            Forms\Components\TextInput::make('travelers_number')->label('Nombre de voyageur')->numeric(),
-                        ]),
-                        Forms\Components\Repeater::make('travel_data.data.arrivals')
-                        ->label('Retours')
-                        ->columns(2)
-                        ->addActionLabel('Ajouter un retour')
-                        ->schema([
-                            Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
-                            Forms\Components\TextInput::make('location')->label('Lieu'),
-                            Forms\Components\TextInput::make('means')->label('Moyen de transport'),
-                            Forms\Components\TextInput::make('driver')->label('Chauffeur'),
-                            Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
-                            Forms\Components\TextInput::make('travelers_number')->label('Nombre de voyageur')->numeric(),
-                        ]),
-                        Forms\Components\Section::make('Hébergement')
-                        ->schema([
-                            Forms\Components\Textarea::make('travel_data.data.accomodation')->label('Nom, adresse et renseignement'),
-                            Forms\Components\Repeater::make('travel_data.data.nights')
-                            ->columns(2)
                             ->schema([
-                                Forms\Components\TextInput::make('day')->label('Jour'),
-                                Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
+                                Forms\Components\DatePicker::make('travel_data.data.modification_deadline')->label('Délai pour informer'),
+                                Forms\Components\TextInput::make('travel_data.data.modification_deadline_phone')->label('Téléphone'),
+                                Forms\Components\TextInput::make('travel_data.data.location')->label('Lieu'),
+                                Forms\Components\TextInput::make('travel_data.data.date')->label('Date'),
                             ]),
-                        ]),
+                        Forms\Components\Repeater::make('travel_data.data.departures')
+                            ->label('Allers')
+                            ->columns(2)
+                            ->addActionLabel('Ajouter un aller')
+                            ->schema([
+                                Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
+                                Forms\Components\TextInput::make('location')->label('Lieu'),
+                                Forms\Components\TextInput::make('means')->label('Moyen de transport'),
+                                Forms\Components\TextInput::make('driver')->label('Chauffeur'),
+                                Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
+                                Forms\Components\TextInput::make('travelers_number')->label('Nombre de voyageur')->numeric(),
+                            ]),
+                        Forms\Components\Repeater::make('travel_data.data.arrivals')
+                            ->label('Retours')
+                            ->columns(2)
+                            ->addActionLabel('Ajouter un retour')
+                            ->schema([
+                                Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
+                                Forms\Components\TextInput::make('location')->label('Lieu'),
+                                Forms\Components\TextInput::make('means')->label('Moyen de transport'),
+                                Forms\Components\TextInput::make('driver')->label('Chauffeur'),
+                                Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
+                                Forms\Components\TextInput::make('travelers_number')->label('Nombre de voyageur')->numeric(),
+                            ]),
+                        Forms\Components\Section::make('Hébergement')
+                            ->schema([
+                                Forms\Components\Textarea::make('travel_data.data.accomodation')->label('Nom, adresse et renseignement'),
+                                Forms\Components\Repeater::make('travel_data.data.nights')
+                                    ->columns(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('day')->label('Jour'),
+                                        Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
+                                    ]),
+                            ]),
                         Forms\Components\Section::make('Compétition')
-                        ->schema([
-                            Forms\Components\TextInput::make('travel_data.data.competition')->label('Nom de la compétition'),
-                            Forms\Components\Textarea::make('travel_data.data.competition_informations_important')->label('Information importante'),
-                            Forms\Components\RichEditor::make('travel_data.data.competition_informations')->label('Informations')
-                            ->hint('URLs de la publication officielle, de l\'horaire et du règlement'),
-                            Forms\Components\Textarea::make('travel_data.data.competition_schedules')->label('Horaires')
-                            ->hint('PRENOM : (JOUR) XXhXX DISCIPLINE'),
-                        ])
+                            ->schema([
+                                Forms\Components\TextInput::make('travel_data.data.competition')->label('Nom de la compétition'),
+                                Forms\Components\Textarea::make('travel_data.data.competition_informations_important')->label('Information importante'),
+                                Forms\Components\RichEditor::make('travel_data.data.competition_informations')->label('Informations')
+                                    ->hint('URLs de la publication officielle, de l\'horaire et du règlement'),
+                                Forms\Components\Textarea::make('travel_data.data.competition_schedules')->label('Horaires')
+                                    ->hint('PRENOM : (JOUR) XXhXX DISCIPLINE'),
+                            ]),
                     ]),
             ]);
     }
@@ -190,9 +189,9 @@ class DocumentResource extends Resource
                             Forms\Components\TextInput::make('name')->required(),
                             Forms\Components\DatePicker::make('published_on')->required(),
                             Forms\Components\Select::make('status')
-                            ->required()
-                            ->options(DocumentStatus::class)
-                            ->default(DocumentStatus::VALIDATED),
+                                ->required()
+                                ->options(DocumentStatus::class)
+                                ->default(DocumentStatus::VALIDATED),
                         ])
                         ->beforeReplicaSaved(function (Document $replica, array $data): void {
                             $replica->fill($data);
@@ -219,9 +218,9 @@ class DocumentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDocuments::route('/'),
+            'index'  => Pages\ListDocuments::route('/'),
             'create' => Pages\CreateDocument::route('/create'),
-            'edit' => Pages\EditDocument::route('/{record}/edit'),
+            'edit'   => Pages\EditDocument::route('/{record}/edit'),
         ];
     }
 

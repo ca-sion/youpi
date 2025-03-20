@@ -2,16 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TrainerResource\Pages;
-use App\Filament\Resources\TrainerResource\RelationManagers;
-use App\Models\Trainer;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Trainer;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Resources\Resource;
+use App\Filament\Resources\TrainerResource\Pages;
 
 class TrainerResource extends Resource
 {
@@ -87,9 +84,9 @@ class TrainerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTrainers::route('/'),
+            'index'  => Pages\ListTrainers::route('/'),
             'create' => Pages\CreateTrainer::route('/create'),
-            'edit' => Pages\EditTrainer::route('/{record}/edit'),
+            'edit'   => Pages\EditTrainer::route('/{record}/edit'),
         ];
     }
 }

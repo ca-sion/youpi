@@ -9,10 +9,7 @@ use Filament\Tables\Table;
 use App\Models\AthleteGroup;
 use App\Enums\AthleteCategory;
 use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\AthleteGroupResource\Pages;
-use App\Filament\Resources\AthleteGroupResource\RelationManagers;
 
 class AthleteGroupResource extends Resource
 {
@@ -97,9 +94,9 @@ class AthleteGroupResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAthleteGroups::route('/'),
+            'index'  => Pages\ListAthleteGroups::route('/'),
             'create' => Pages\CreateAthleteGroup::route('/create'),
-            'edit' => Pages\EditAthleteGroup::route('/{record}/edit'),
+            'edit'   => Pages\EditAthleteGroup::route('/{record}/edit'),
         ];
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\AthleteGroupResource\Pages;
 
-use App\Filament\Resources\AthleteGroupResource;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Resources\AthleteGroupResource;
 
 class CreateAthleteGroup extends CreateRecord
 {

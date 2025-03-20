@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Carbon;
 
 class Resource extends Model implements HasMedia
 {
@@ -28,7 +28,7 @@ class Resource extends Model implements HasMedia
      * @var array
      */
     protected $casts = [
-        'is_protected' => 'boolean',
+        'is_protected'       => 'boolean',
         'available_weekdays' => 'array',
     ];
 
@@ -42,8 +42,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Get the resource first media url.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function firstMediaUrl(): Attribute
     {
@@ -54,8 +52,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Get the resource first media.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function firstMedia(): Attribute
     {
@@ -66,8 +62,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * GChecket the resource media is a pdf.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     public function mediaIsPdf(): Attribute
     {
@@ -78,8 +72,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Get the resource attachment.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function attachment(): Attribute
     {
@@ -89,7 +81,7 @@ class Resource extends Model implements HasMedia
             if ($this->mediaIsPdf) {
                 $value = $this->firstMediaUrl;
             } else {
-                $value = 'https://drive.google.com/viewer?embedded=true&hl=fr-CH&url=' . $this->firstMediaUrl;
+                $value = 'https://drive.google.com/viewer?embedded=true&hl=fr-CH&url='.$this->firstMediaUrl;
             }
         } else {
             $value = null;
@@ -102,8 +94,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Get the resource url to share.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function shareUrl(): Attribute
     {
@@ -120,8 +110,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Computed name service.
-     *
-     * @return string
      */
     private function computedNameService($whithWeek = true, $whithAthleteGroup = true, $whithName = true): string
     {
@@ -153,11 +141,11 @@ class Resource extends Model implements HasMedia
         if ($hasDay) {
             $value .= str($dayName)->ucfirst().' '.$day;
         }
-        $value .= (($hasGroup && $hasYear) || ($hasGroup && $hasDay) || ($hasGroup && $hasWeek)  ? ' · ' : null);
+        $value .= (($hasGroup && $hasYear) || ($hasGroup && $hasDay) || ($hasGroup && $hasWeek) ? ' · ' : null);
         if ($hasGroup) {
             $value .= $group;
         }
-        $value .= (($hasYear || $hasWeek || $hasDay || $hasGroup) && $name  ? ' · ' : null);
+        $value .= (($hasYear || $hasWeek || $hasDay || $hasGroup) && $name ? ' · ' : null);
         if (! empty($name) && $whithName) {
             $value .= $name;
         }
@@ -167,8 +155,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Get the computed name without week.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function computedName(): Attribute
     {
@@ -179,8 +165,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Get the computed name without week.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function computedNameWithoutWeek(): Attribute
     {
@@ -191,8 +175,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Get the computed name without week.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function computedNameWithoutGroup(): Attribute
     {
@@ -203,8 +185,6 @@ class Resource extends Model implements HasMedia
 
     /**
      * Check if the resource is accessible.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function isAccessible(): Attribute
     {

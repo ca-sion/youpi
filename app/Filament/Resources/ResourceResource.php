@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Get;
 use Filament\Forms\Form;
@@ -20,12 +19,8 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TimePicker;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ResourceResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use App\Filament\Resources\ResourceResource\RelationManagers;
 
 class ResourceResource extends Resource
 {
@@ -83,8 +78,8 @@ class ResourceResource extends Resource
                     ->live()
                     ->options([
                         'media' => 'Fichier',
-                        'text' => 'Texte',
-                        'url' => 'URL (lien)',
+                        'text'  => 'Texte',
+                        'url'   => 'URL (lien)',
                     ])
                     ->default('media'),
                 SpatieMediaLibraryFileUpload::make('media')
@@ -170,7 +165,7 @@ class ResourceResource extends Resource
                 Action::make('share')
                     ->icon('heroicon-s-share')
                     ->label('Partager')
-                    ->url(fn (Model $record): string|null => $record->shareUrl)
+                    ->url(fn (Model $record): ?string => $record->shareUrl)
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
             ])
@@ -192,9 +187,9 @@ class ResourceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListResources::route('/'),
+            'index'  => Pages\ListResources::route('/'),
             'create' => Pages\CreateResource::route('/create'),
-            'edit' => Pages\EditResource::route('/{record}/edit'),
+            'edit'   => Pages\EditResource::route('/{record}/edit'),
         ];
     }
 }
