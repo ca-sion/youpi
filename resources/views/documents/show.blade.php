@@ -72,6 +72,15 @@
             width: 80%;
         }
 
+        .ca-document ol,
+        .ca-document ul {
+            margin-left: 2rem;
+        }
+
+        .ca-document li {
+            list-style-type: disc;
+        }
+
         .ca-table-content-block {
             margin-bottom: .5rem;
         }
