@@ -98,7 +98,9 @@
             .ca-document {
                 padding: 20px 30px;
             }
-
+            .ca-table-content {
+              width: 100%;
+          }
             .ca-identifier {
                 margin-left: -12px;
             }
@@ -214,7 +216,7 @@
                                     <td class="ca-table-heading" align="left">
                                         {!! data_get($section, 'data.heading') !!}
                                     </td>
-                                    <td align="left" class=ca-table-content">
+                                    <td align="left" class="ca-table-content">
                                         {!! str(data_get($section, 'data.content'))->markdown() !!}
                                     </td>
                                 </tr>
