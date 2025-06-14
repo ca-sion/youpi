@@ -20,10 +20,8 @@ class DocumentController extends Controller
     {
         $document = Document::findOrFail($document);
 
-        SEOMeta::setTitle($document->name);
-        OpenGraph::setTitle($document->name);
-
-        return redirect(route('documents.pdf', compact('document')));
+        SEOMeta::setTitle($document->name.' ('.$document->identifier.')');
+        OpenGraph::setTitle($document->name.' ('.$document->identifier.')');
 
         return view('documents.show', [
             'document' => $document,
