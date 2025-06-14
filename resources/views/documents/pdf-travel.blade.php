@@ -160,7 +160,7 @@
             <td align="left" class="ca-table-heading">
                 Lieu
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 {{ data_get($document, 'travel_data.data.location') }}
             </td>
         </tr>
@@ -171,7 +171,7 @@
             <td align="left" class="ca-table-heading">
                 Date
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 {{ data_get($document, 'travel_data.data.date') }}
             </td>
         </tr>
@@ -182,7 +182,7 @@
             <td align="left" class="ca-table-heading">
                 Compétition
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 {{ data_get($document, 'travel_data.data.competition') }}
             </td>
         </tr>
@@ -193,7 +193,7 @@
             <td align="left" class="ca-table-heading">
                 Aller
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 @foreach (data_get($document, 'travel_data.data.departures') as $departure)
                     <div style="margin-bottom: .5rem">
                         <strong>{{ data_get($departure, 'day_hour') }}</strong>
@@ -221,7 +221,7 @@
             <td align="left" class="ca-table-heading">
                 Retour
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 @foreach (data_get($document, 'travel_data.data.arrivals') as $arrival)
                     <div style="margin-bottom: .5rem">
                         <strong>{{ data_get($arrival, 'day_hour') }}</strong>
@@ -249,7 +249,7 @@
             <td align="left" class="ca-table-heading">
                 Hébergement
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 <div style="margin-bottom: .5rem">
                     {!! nl2br(data_get($document, 'travel_data.data.accomodation')) !!}
                 </div>
@@ -270,7 +270,7 @@
             <td align="left" class="ca-table-heading">
                 Frais
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 <div style="margin-bottom: .5rem">
                     <strong>Par le CA Sion</strong>
                     @if (data_get($document, 'travel_data.data.accomodation'))
@@ -295,7 +295,7 @@
             <td align="left" class="ca-table-heading">
                 A prendre
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 @if (data_get($document, 'travel_data.data.accomodation'))
                 <p>T-shirt ou tenue du club, pointes, baskets, scotch pour marques, casquette, habits de sport, pic-nic, gourde, habits pour la pluie, habits civils, linge et sous-vêtements, brosse à dents</p>
                 @else
@@ -317,7 +317,7 @@
             <td align="left" class="ca-table-heading">
                 À lire et à savoir
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 {!! data_get($document, 'travel_data.data.competition_informations') !!}
             </td>
         </tr>
@@ -328,7 +328,7 @@
             <td align="left" class="ca-table-heading">
                 Horaire
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 <div style="margin-bottom: .5rem">{!! nl2br(data_get($document, 'travel_data.data.competition_schedules')) !!}</div>
                 <div>L’horaire et à titre indicatif. On est pas à l’abri d’une erreur de notre côté ou d’un changement auprès de l’organisateur.</div>
             </td>
@@ -339,7 +339,7 @@
             <td align="left" class="ca-table-heading">
                 Renseignements
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 {{ $document->author }}
                 @if (data_get($document, 'travel_data.data.modification_deadline_phone'))
                     – {{ data_get($document, 'travel_data.data.modification_deadline_phone') }}
@@ -379,7 +379,7 @@
             <td align="left" class="ca-table-heading">
                 {!! data_get($section, 'data.heading') !!}
             </td>
-            <td align="left" class=ca-table-content">
+            <td align="left" class="ca-table-content">
                 {!! str(data_get($section, 'data.content'))->markdown() !!}
             </td>
         </tr>
