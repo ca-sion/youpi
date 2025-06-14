@@ -61,7 +61,8 @@
             margin-top: .5rem;
         }
 
-        .ca-table-heading {
+        .ca-table-heading,
+        .ca-table-row-definition-heading {
             vertical-align: top;
             width: 20%;
             font-weight: bold;
@@ -85,6 +86,18 @@
             margin-bottom: .5rem;
         }
 
+        .ca-table-content-block-warning {
+            background-color: rgb(255, 196, 85);
+            padding: 8px 12px !important;
+        }
+
+        .ca-table-row-important td {
+            background-color: rgb(253, 227, 227);
+            padding: 8px 12px;
+            padding-left: 20%;
+            border-radius: 8px;
+        }
+
         .ca-status {
             padding: 2px 8px;
             background-color: #222222;
@@ -103,11 +116,7 @@
                 width: 100%;
             }
 
-            .ca-table-heading {
-                width: 100%;
-            }
-
-            .ca-table-row td.ca-table-heading {
+            .ca-table-row td.ca-table-row-definition-heading {
                 padding-bottom: 0rem;
             }
 
@@ -126,8 +135,17 @@
                 vertical-align: top;
             }
 
+            .ca-table-row-definition-heading,
+            .ca-table-heading {
+                word-break: break-word;
+                width: 100%;
+            }
+
+            .ca-table-row-definition,
             .ca-table-row-description {
                 display: grid;
+                grid-template-columns: minmax(60px, 1fr) 3fr;
+                gap: 2px;
             }
         }
     </style>
@@ -191,6 +209,219 @@
                     </tr>
                 </table>
 
+                @if ($document->type == \App\Enums\DocumentType::TRAVEL)
+                    @if (data_get($document, 'travel_data.data.modification_deadline'))
+                        <table style="margin-top: 2rem; margin-bottom: 1rem;" width="100%">
+
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    
+                                </td>
+                                <td class="ca-table-content ca-table-content-block-warning" align="left">
+                                    Si tu te déplaces par tes propres moyens, merci d’aviser le CT ou le secrétariat avant le {{ Carbon\Carbon::parse(data_get($document, 'travel_data.data.modification_deadline'))->isoFormat('dddd D.MM.Y') }} 21h. Tél : {{ data_get($document, 'travel_data.data.modification_deadline_phone') }}
+                                </td>
+                            </tr>
+                        </table>
+                    @endif
+                    <table width="100%">
+
+                        @if (data_get($document, 'travel_data.data.location'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    Lieu
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    {{ data_get($document, 'travel_data.data.location') }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if (data_get($document, 'travel_data.data.date'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    Date
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    {{ data_get($document, 'travel_data.data.date') }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if (data_get($document, 'travel_data.data.competition'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    Compétition
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    {{ data_get($document, 'travel_data.data.competition') }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if (data_get($document, 'travel_data.data.departures'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    Aller
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    @foreach (data_get($document, 'travel_data.data.departures') as $departure)
+                                        <div style="margin-bottom: .5rem">
+                                            <strong>{{ data_get($departure, 'day_hour') }}</strong>
+                                            @if (data_get($departure, 'location'))
+                                                <span>– {{ data_get($departure, 'location') }}</span>
+                                                <br>
+                                            @endif
+                                            <span>{{ data_get($departure, 'means') }}</span>
+                                            @if (data_get($departure, 'driver'))
+                                                <span>– Chauffeur : {{ data_get($departure, 'driver') }}</span>
+                                                <br>
+                                            @endif
+                                            @if (data_get($departure, 'travelers_number'))
+                                                <span>({{ data_get($departure, 'travelers_number') }})</span>
+                                            @endif
+                                            <span>{{ data_get($departure, 'travelers') }}</span>
+                                        </div>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if (data_get($document, 'travel_data.data.arrivals'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    Retour
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    @foreach (data_get($document, 'travel_data.data.arrivals') as $arrival)
+                                        <div style="margin-bottom: .5rem">
+                                            <strong>{{ data_get($arrival, 'day_hour') }}</strong>
+                                            @if (data_get($arrival, 'location'))
+                                                <span>– {{ data_get($arrival, 'location') }}</span>
+                                                <br>
+                                            @endif
+                                            <span>{{ data_get($arrival, 'means') }}</span>
+                                            @if (data_get($arrival, 'driver'))
+                                                <span>– Chauffeur : {{ data_get($arrival, 'driver') }}</span>
+                                                <br>
+                                            @endif
+                                            @if (data_get($arrival, 'travelers_number'))
+                                                <span>({{ data_get($arrival, 'travelers_number') }})</span>
+                                            @endif
+                                            <span>{{ data_get($arrival, 'travelers') }}</span>
+                                        </div>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if (data_get($document, 'travel_data.data.accomodation'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    Hébergement
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    <div style="margin-bottom: .5rem">
+                                        {!! nl2br(data_get($document, 'travel_data.data.accomodation')) !!}
+                                    </div>
+                                    @foreach (data_get($document, 'travel_data.data.nights') as $night)
+                                        <div style="margin-bottom: .5rem">
+                                            <strong>{{ data_get($night, 'day') }}</strong>
+                                            @if (data_get($night, 'travelers'))
+                                                <br>
+                                                <span>{{ data_get($night, 'travelers') }}</span>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @endif
+
+                        <tr class="ca-table-row ca-table-row-description">
+                            <td class="ca-table-heading" align="left">
+                                Frais
+                            </td>
+                            <td class="ca-table-content" align="left">
+                                <div style="margin-bottom: .5rem">
+                                    <strong>Par le CA Sion</strong>
+                                    @if (data_get($document, 'travel_data.data.accomodation'))
+                                        <p>Hébergement, repas du soir à l’hôtel et déplacement ci-dessus</p>
+                                    @else
+                                        <p>Déplacement ci-dessus</p>
+                                    @endif
+                                </div>
+                                <div style="margin-bottom: .5rem">
+                                    <strong>Par l'athlète</strong>
+                                    @if (data_get($document, 'travel_data.data.accomodation'))
+                                        <div>Déplacement et hébergement individuel par ses propres moyens</div>
+                                    @else
+                                        <div>Déplacement individuel par ses propres moyens</div>
+                                    @endif
+                                    <div>Repas du midi</div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr class="ca-table-row ca-table-row-description">
+                            <td class="ca-table-heading" align="left">
+                                A prendre
+                            </td>
+                            <td class="ca-table-content" align="left">
+                                @if (data_get($document, 'travel_data.data.accomodation'))
+                                    <p>T-shirt ou tenue du club, pointes, baskets, scotch pour marques, casquette, habits de sport, pic-nic, gourde, habits pour la pluie, habits civils, linge et sous-vêtements, brosse à dents</p>
+                                @else
+                                    <p>T-shirt ou tenue du club, pointes, baskets, scotch pour marques, casquette, habits de sport, pic-nic, gourde, habits pour la pluie, si douche : habits civils, linge et sous-vêtements</p>
+                                @endif
+                            </td>
+                        </tr>
+
+                        @if (data_get($document, 'travel_data.data.competition_informations_important'))
+                            <tr class="ca-table-row ca-table-row-block ca-table-row-important">
+                                <td class="ca-table-content"
+                                    align="left"
+                                    colspan="2">
+                                    {!! data_get($document, 'travel_data.data.competition_informations_important') !!}
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if (data_get($document, 'travel_data.data.competition_informations'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    À lire et à savoir
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    {!! data_get($document, 'travel_data.data.competition_informations') !!}
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if (data_get($document, 'travel_data.data.competition_schedules'))
+                            <tr class="ca-table-row ca-table-row-description">
+                                <td class="ca-table-heading" align="left">
+                                    Horaire
+                                </td>
+                                <td class="ca-table-content" align="left">
+                                    <div style="margin-bottom: .5rem">{!! nl2br(data_get($document, 'travel_data.data.competition_schedules')) !!}</div>
+                                    <div>L’horaire et à titre indicatif. On est pas à l’abri d’une erreur de notre côté ou d’un changement auprès de l’organisateur.</div>
+                                </td>
+                            </tr>
+                        @endif
+
+                        <tr class="ca-table-row ca-table-row-description">
+                            <td class="ca-table-heading" align="left">
+                                Renseignements
+                            </td>
+                            <td class="ca-table-content" align="left">
+                                {{ $document->author }}
+                                @if (data_get($document, 'travel_data.data.modification_deadline_phone'))
+                                    – {{ data_get($document, 'travel_data.data.modification_deadline_phone') }}
+                                @endif
+                            </td>
+                        </tr>
+
+                    </table>
+                @endif
+
                 <table style="margin-top: 2rem;" width="100%">
 
                     @if ($document->sections)
@@ -222,8 +453,8 @@
                             @endif
 
                             @if (data_get($section, 'type') == 'description')
-                                <tr class="ca-table-row ca-table-row-description">
-                                    <td class="ca-table-heading" align="left">
+                                <tr class="ca-table-row ca-table-row-definition">
+                                    <td class="ca-table-row-definition-heading" align="left">
                                         {!! data_get($section, 'data.heading') !!}
                                     </td>
                                     <td class="ca-table-content" align="left">
