@@ -7,7 +7,9 @@ use Livewire\Component;
 use Filament\Forms\Form;
 use Illuminate\Support\Str;
 use Filament\Forms\Components\Select;
+use Artesaos\SEOTools\Facades\SEOMeta;
 use Filament\Forms\Contracts\HasForms;
+use Artesaos\SEOTools\Facades\OpenGraph;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\DatePicker;
@@ -27,6 +29,9 @@ class GenerateTshirtVoucher extends Component implements HasForms
     {
         // Initialisation des données du formulaire
         $this->form->fill();
+
+        SEOMeta::setTitle('Émission d\'un bon pour T-shirt');
+        OpenGraph::setTitle('Émission d\'un bon pour T-shirt');
     }
 
     public function form(Form $form): Form

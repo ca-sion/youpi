@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Voucher;
 use App\Livewire\ViewResource;
 use App\Livewire\ListResources;
 use App\Livewire\CreateResource;
@@ -10,9 +9,9 @@ use App\Livewire\GenerateTshirtVoucher;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProtectController;
+use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ResourceController;
-use App\Http\Controllers\VoucherController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,8 +40,8 @@ Route::get('documents', [DocumentController::class, 'index'])->name('documents.i
 Route::get('documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
 Route::get('documents/{document}/pdf', [DocumentController::class, 'pdf'])->name('documents.pdf');
 
-Route::get('/vouchers/create', GenerateTshirtVoucher::class)->name('vouchers.create');
-Route::get('/vouchers/{code}', [VoucherController::class, 'show'])->name('vouchers.show');
+Route::get('/vouchers/tshirt/create', GenerateTshirtVoucher::class)->name('vouchers.tshirt.create');
+Route::get('/vouchers/tshirt/{code}', [VoucherController::class, 'showTshirt'])->name('vouchers.tshirt.show');
 
 Route::get('/run/schedule/daily', function () {
     Artisan::call('app:send-admin-events');

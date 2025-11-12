@@ -16,7 +16,7 @@
         <h1 class="text-3xl font-extrabold text-gray-900 mb-2 text-center">
             Émission d'un bon
         </h1>
-        <p class="text-xl font-extrabold text-gray-900 mb-6 text-center">T-shirt gratuit</p>
+        <p class="text-xl font-extrabold text-gray-900 mb-6 text-center">pour un T-shirt du CA Sion</p>
 
         @if ($newVoucher)
             <!-- AFFICHAGE DU BON ÉMIS -->
@@ -33,7 +33,7 @@
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
                     <label class="block text-sm font-medium text-gray-500 mb-1">Lien du bon numérique (à transmettre à l'athlète/parent) :</label>
                     @php
-                        $voucherUrl = route('vouchers.show', ['code' => $newVoucher->code_unique]);
+                        $voucherUrl = route('vouchers.tshirt.show', ['code' => $newVoucher->code_unique]);
                     @endphp
                     <a href="{{ $voucherUrl }}" target="_blank" class="block text-blue-600 hover:underline break-all">
                         {{ $voucherUrl }}
