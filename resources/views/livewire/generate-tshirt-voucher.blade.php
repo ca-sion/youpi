@@ -33,7 +33,7 @@
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
                     <label class="block text-sm font-medium text-gray-500 mb-1">Lien du bon numérique (à transmettre à l'athlète/parent) :</label>
                     @php
-                        $voucherUrl = route('vouchers.show', ['code_unique' => $newVoucher->code_unique]);
+                        $voucherUrl = route('vouchers.show', ['code' => $newVoucher->code_unique]);
                     @endphp
                     <a href="{{ $voucherUrl }}" target="_blank" class="block text-blue-600 hover:underline break-all">
                         {{ $voucherUrl }}

@@ -3,15 +3,15 @@
 namespace App\Livewire;
 
 use App\Models\Voucher;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DatePicker;
-use Filament\Notifications\Notification;
-use Illuminate\Support\Str;
 use Livewire\Component;
+use Filament\Forms\Form;
+use Illuminate\Support\Str;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Concerns\InteractsWithForms;
 
 class GenerateTshirtVoucher extends Component implements HasForms
 {
@@ -55,15 +55,15 @@ class GenerateTshirtVoucher extends Component implements HasForms
                         '140' => '140',
                         '152' => '152',
                         '164' => '164',
-                        '34' => '34 - Femme',
-                        '36' => '36 - Femme',
-                        '38' => '38 - Femme',
-                        '40' => '40 - Femme',
-                        '42' => '42 - Femme',
-                        'S' => 'S - Homme',
-                        'M' => 'M - Homme',
-                        'L' => 'L - Homme',
-                        'XL' => 'XL - Homme',
+                        '34'  => '34 - Femme',
+                        '36'  => '36 - Femme',
+                        '38'  => '38 - Femme',
+                        '40'  => '40 - Femme',
+                        '42'  => '42 - Femme',
+                        'S'   => 'S - Homme',
+                        'M'   => 'M - Homme',
+                        'L'   => 'L - Homme',
+                        'XL'  => 'XL - Homme',
                     ])
                     ->required(),
 
@@ -73,7 +73,7 @@ class GenerateTshirtVoucher extends Component implements HasForms
                     ->default(now()->addMonths(1)->subDay())
                     ->disabled()
                     ->dehydrated(false)
-                    ->helperText('Le bon est valide 1 mois à partir d\'aujourd\'hui.')
+                    ->helperText('Le bon est valide 1 mois à partir d\'aujourd\'hui.'),
             ])
             ->statePath('data')
             ->model(Voucher::class);
@@ -90,14 +90,14 @@ class GenerateTshirtVoucher extends Component implements HasForms
 
             // Créer le bon dans la base de données
             $this->newVoucher = Voucher::create([
-                'code_unique' => Str::uuid(),
-                'athlete_name' => $data['athlete_name'],
-                'tshirt_size' => $data['tshirt_size'],
-                'coach_name' => $data['coach_name'],
+                'code_unique'   => Str::uuid(),
+                'athlete_name'  => $data['athlete_name'],
+                'tshirt_size'   => $data['tshirt_size'],
+                'coach_name'    => $data['coach_name'],
                 'date_emission' => now(),
                 'date_validity' => now()->addMonths(1)->subDay(),
-                'status' => 'emitted',
-                'type' => 'tshirt',
+                'status'        => 'emitted',
+                'type'          => 'tshirt',
             ]);
 
             // Notification de succès pour l'entraîneur
@@ -114,9 +114,9 @@ class GenerateTshirtVoucher extends Component implements HasForms
                 ->body('Une erreur est survenue. Veuillez réessayer.')
                 ->danger()
                 ->send();
-            
+
             // Log l'erreur pour le développeur
-            logger()->error('Voucher creation failed: ' . $e->getMessage());
+            logger()->error('Voucher creation failed: '.$e->getMessage());
         }
     }
 

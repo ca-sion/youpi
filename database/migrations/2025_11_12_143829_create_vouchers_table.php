@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->uuid('code_unique')->unique();
             $table->string('type')->nullable();
-            
+
             $table->string('athlete_name')->nullable();
             $table->string('tshirt_size')->nullable();
             $table->string('coach_name')->nullable();
-            
+
             $table->date('date_emission')->nullable();
             $table->date('date_validity')->nullable();
             $table->string('status')->nullable();

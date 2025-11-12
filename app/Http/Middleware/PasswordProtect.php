@@ -29,7 +29,7 @@ class PasswordProtect
     }
 
     /**
-     * @param $request
+     * @param  $request
      * @return bool
      */
     protected function isPasswordProtected()
@@ -38,7 +38,7 @@ class PasswordProtect
     }
 
     /**
-     * @param $request
+     * @param  $request
      * @return bool
      */
     protected function hasPasswords()

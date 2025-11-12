@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Voucher extends Model
 {
@@ -24,6 +24,6 @@ class Voucher extends Model
     protected $casts = [
         'date_emission' => 'date',
         'date_validity' => 'date',
-        'used_at' => 'datetime',
+        'used_at'       => 'datetime',
     ];
 }

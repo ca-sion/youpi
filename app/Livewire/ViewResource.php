@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Resource;
 use Filament\Infolists\Infolist;
