@@ -27,14 +27,30 @@
                 </h2>
 
                 <p class="text-lg mb-6">
-                    Copiez le lien ci-dessous et transférez-le immédiatement au parent ou à l'athlète. C'est la preuve numérique à présenter au magasin.
+                    Copiez le lien ou le message ci-dessous et transférez-le aux parents ou à l'athlète par WhatsApp ou SMS.
                 </p>
 
+                @php
+                    $voucherUrl = route('vouchers.tshirt.show', ['code' => $newVoucher->code_unique]);
+                @endphp
+
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                    <label class="block text-sm font-medium text-gray-500 mb-1">Lien du bon numérique (à transmettre à l'athlète/parent) :</label>
-                    @php
-                        $voucherUrl = route('vouchers.tshirt.show', ['code' => $newVoucher->code_unique]);
-                    @endphp
+                    <label class="block text-sm font-medium text-gray-500 mb-1">Message à copier/coller :</label>
+                    <textarea rows="4" class="w-full">👕 *T-shirt gratuit*
+Bonjour, un bon numérique a été généré pour vous ou votre enfant pour que vous puissiez obtenir votre *T-shirt gratuit* du CA Sion.
+- 🔗 Votre bon : {{ $voucherUrl }}
+
+ℹ️ Comment faire ? Ouvrez ce lien sur votre téléphone et présentez la page directement au magasin :
+- 📍 Adresse : Theytaz Excursions, Av. des Mayennets 7, Sion
+- 🗺️ Plan : https://maps.app.goo.gl/8Q9zkHVXcXGaXx6aA (Google Maps)
+Un ouvrant le lien, vous pouvez aussi imprimer le bon et le présenter aisni.
+
+🗓️ Date limite : {{ \Carbon\Carbon::parse($newVoucher->date_validity)->isoFormat('LL') }}
+Bonne journée ! Le Secrétariat du CA Sion</textarea>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <label class="block text-sm font-medium text-gray-500 mb-1">Lien du bon numérique :</label>
                     <a href="{{ $voucherUrl }}" target="_blank" class="block text-blue-600 hover:underline break-all">
                         {{ $voucherUrl }}
                     </a>
