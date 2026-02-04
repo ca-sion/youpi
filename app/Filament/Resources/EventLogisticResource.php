@@ -1,0 +1,159 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\EventLogisticResource\Pages;
+use App\Filament\Resources\EventLogisticResource\RelationManagers;
+use App\Models\EventLogistic;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
+
+class EventLogisticResource extends Resource
+{
+    protected static ?string $model = EventLogistic::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('event_name')
+                            ->label('Nom de l\'événement')
+                            ->required()
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $state) => $set('slug', Str::slug($state))),
+                        Forms\Components\TextInput::make('slug')
+                            ->required()
+                            ->unique(ignoreRecord: true),
+                    ])->columns(2),
+                Forms\Components\Tabs::make('Logistique')
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('Inscriptions')
+                            ->schema([
+                                Forms\Components\Textarea::make('athletes_inscriptions_raw')
+                                    ->label('Inscriptions Brutes')
+                                    ->rows(10)
+                                    ->placeholder("BOLT Usain (U18M) : 100m, 200m\nPHELPS Michael (SEN) : Natation")
+                                    ->helperText('Copiez-collez ici les inscriptions. Format attendu par ligne : NOM Prénom (CAT) : Discipline 1, Discipline 2'),
+                                Forms\Components\Repeater::make('inscriptions_data')
+                                    ->label('Données Analysées')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('name')->label('Nom'),
+                                        Forms\Components\TextInput::make('category')->label('Catégorie'),
+                                        Forms\Components\TagsInput::make('disciplines')->label('Disciplines'),
+                                    ])
+                                    ->addable(true)
+                                    ->deletable(true)
+                                    ->reorderable(true)
+                                    ->columnSpanFull(),
+                            ]),
+                        Forms\Components\Tabs\Tab::make('Horaire')
+                            ->schema([
+                                Forms\Components\Placeholder::make('prompt_help')
+                                    ->label('Aide IA')
+                                    ->content('Utilisez ce prompt pour générer le JSON via ChatGPT/Claude : "Analyse ce texte d\'horaire. Extrais les données en JSON pur sous ce format : [{"jour": "Samedi", "heure": "14:15", "cat": "U18M", "epreuve": "100m"}, ...]. Ne fournis aucune explication."'),
+                                Forms\Components\Textarea::make('raw_schedule')
+                                    ->label('JSON Horaire')
+                                    ->rows(20),
+                            ]),
+                        Forms\Components\Tabs\Tab::make('Participants (Planning)')
+                            ->schema([
+                                Forms\Components\Repeater::make('participants_data')
+                                    ->label('Planning et Sondages')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('name')->label('Nom'),
+                                        Forms\Components\TextInput::make('first_competition_datetime')->label('Premier départ'),
+                                        Forms\Components\TextInput::make('last_competition_datetime')->label('Dernier départ'),
+                                        Forms\Components\Textarea::make('survey_response')
+                                            ->label('Réponse Sondage')
+                                            ->rows(4)
+                                            ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
+                                            ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state),
+                                    ])
+                                    ->addable(false)
+                                    ->deletable(false)
+                                    ->reorderable(false)
+                                    ->columnSpanFull(),
+                            ]),
+                        Forms\Components\Tabs\Tab::make('Paramètres')
+                            ->schema([
+                                Forms\Components\DatePicker::make('settings.start_date')
+                                    ->label('Date de début (1er jour)')
+                                    ->required(),
+                                Forms\Components\TextInput::make('settings.vitesse_bus')
+                                    ->label('Vitesse Bus (km/h)')
+                                    ->numeric()
+                                    ->default(100),
+                                Forms\Components\TextInput::make('settings.vitesse_voiture')
+                                    ->label('Vitesse Voiture (km/h)')
+                                    ->numeric()
+                                    ->default(120),
+                                Forms\Components\TextInput::make('settings.temps_prep_min')
+                                    ->label('Temps de préparation (min)')
+                                    ->numeric()
+                                    ->default(90),
+                                Forms\Components\TextInput::make('settings.temps_recup_min')
+                                    ->label('Temps de récupération (min)')
+                                    ->numeric()
+                                    ->default(60),
+                                Forms\Components\TextInput::make('settings.distance_km')
+                                    ->label('Distance (km)')
+                                    ->numeric(),
+                            ])->columns(3),
+                    ])->columnSpanFull()
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('event_name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListEventLogistics::route('/'),
+            'create' => Pages\CreateEventLogistic::route('/create'),
+            'edit' => Pages\EditEventLogistic::route('/{record}/edit'),
+            'transport' => Pages\ManageTransport::route('/{record}/transport'),
+        ];
+    }
+}

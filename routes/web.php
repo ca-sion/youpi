@@ -46,3 +46,6 @@ Route::get('/vouchers/tshirt/{code}', [VoucherController::class, 'showTshirt'])-
 Route::get('/run/schedule/daily', function () {
     Artisan::call('app:send-admin-events');
 });
+
+Route::get('logistique/{event_logistic}/sondage', \App\Livewire\Logistics\Survey::class)->name('logistics.survey');
+Route::get('logistique/{id}', [\App\Http\Controllers\LogisticsController::class, 'show'])->name('logistics.show');
