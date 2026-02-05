@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EventLogistic;
 use Illuminate\Http\Request;
+use App\Models\EventLogistic;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
 
 class LogisticsController extends Controller
 {
@@ -26,6 +28,9 @@ class LogisticsController extends Controller
                 ];
             }
         }
+
+        SEOMeta::setTitle($event->event_name.' - Résumé logistique');
+        OpenGraph::setTitle($event->event_name.' - Résumé logistique');
 
         return view('logistics.summary', [
             'event' => $event,

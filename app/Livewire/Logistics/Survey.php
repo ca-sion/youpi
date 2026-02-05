@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Logistics;
 
-use App\Models\EventLogistic;
-use Illuminate\Support\Str;
 use Livewire\Component;
+use Illuminate\Support\Str;
+use App\Models\EventLogistic;
+use Artesaos\SEOTools\Facades\SEOMeta;
+use Artesaos\SEOTools\Facades\OpenGraph;
 
 class Survey extends Component
 {
@@ -21,6 +23,9 @@ class Survey extends Component
     public function mount(EventLogistic $event_logistic)
     {
         $this->event_logistic = $event_logistic;
+
+        SEOMeta::setTitle($event_logistic->event_name.' - Sondage logistique');
+        OpenGraph::setTitle($event_logistic->event_name.' - Sondage logistique');
     }
 
     public function getDaysProperty()

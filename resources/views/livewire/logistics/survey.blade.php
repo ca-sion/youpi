@@ -1,14 +1,14 @@
 <div class="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6 bg-indigo-50 border-b border-indigo-100">
-            <h3 class="text-xl leading-6 font-bold text-indigo-900">
-                Logistique : {{ $event_logistic->event_name }}
-            </h3>
-            <div class="mt-2 text-sm text-indigo-800 space-y-2">
+        <div class="px-4 py-5 sm:px-6 border-b">
+            <h1 class="text-xl leading-6 font-bold">
+                Sondage logistique : {{ $event_logistic->event_name }}
+            </h1>
+            <div class="mt-2 text-sm space-y-2">
                 <p>
-                    <strong>Pourquoi ce formulaire ?</strong> Il nous aide à organiser les transports (bus du club, covoiturage) de manière efficace pour tout le monde.
+                    <strong>Pourquoi ce condage ?</strong> Il nous aide à organiser les transports (bus du club, covoiturage) de manière efficace pour tout le monde.
                 </p>
-                <div class="bg-white/60 rounded p-3 border border-indigo-200 text-xs sm:text-sm">
+                <div class="bg-white/60 rounded p-3 border text-xs sm:text-sm">
                     <ul class="list-disc list-inside space-y-1">
                         <li><strong>Athlètes :</strong> Sélectionnez votre nom dans la liste.</li>
                         <li><strong>Parents :</strong> Sélectionnez le nom de votre enfant dans la liste.</li>
@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <div class="p-6">
+        <div class="p-6 bg-indigo-50/20">
             @if (session()->has('message'))
                 <div class="rounded-md bg-green-50 p-4 mb-6">
                     <div class="flex">
@@ -38,7 +38,7 @@
             <div class="space-y-6">
                 <div>
                     <label for="participant" class="block text-sm font-medium text-gray-700">Sélectionnez votre nom</label>
-                    <select wire:model.live="participantId" id="participant" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <select wire:model.live="participantId" id="participant" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                         <option value="">-- Choisir dans la liste --</option>
                         @foreach($participants as $p)
                             <option value="{{ $p['id'] }}" wire:key="opt-{{ $p['id'] }}">{{ $p['name'] }}</option>
@@ -65,28 +65,28 @@
 
                 @if($participantId)
                     <div wire:key="form-container-{{ $participantId }}">
-                    <form wire:submit="submit" class="space-y-6 border-t pt-6">
+                    <form wire:submit="submit" class="space-y-6 pt-6">
                         
                         <!-- Granular Transport per Day -->
                         <div class="space-y-6">
                             <h3 class="text-base font-medium text-gray-900 border-b pb-2">Mes déplacements</h3>
                             
                             @foreach($days as $day)
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-4" wire:key="day-{{ $day['date'] }}">
+                                <div class="bg-white rounded-lg p-4 border border-gray-200 space-y-4" wire:key="day-{{ $day['date'] }}">
                                     <div class="flex items-center justify-between">
-                                        <h4 class="font-bold text-indigo-700">{{ $day['label'] }}</h4>
+                                        <h4 class="font-bold text-gray-700">{{ $day['label'] }}</h4>
                                     </div>
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <!-- Aller Section -->
                                         <div class="space-y-2">
                                             <div class="flex items-center space-x-2">
-                                                <svg class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                                                 </svg>
                                                 <label class="block text-sm font-semibold text-gray-700">Aller (Départ de Sion)</label>
                                             </div>
-                                            <select wire:model.live="responses.{{ $day['date'] }}.aller.mode" class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md bg-white shadow-sm">
+                                            <select wire:model.live="responses.{{ $day['date'] }}.aller.mode" class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md bg-white shadow-sm">
                                                 <option value="">-- Choisir --</option>
                                                 <option value="bus">J'ai besoin d'un transport (Bus du club)</option>
                                                 <option value="train">Propres moyens (Train)</option>
@@ -97,9 +97,9 @@
                                             </select>
 
                                             @if(($responses[$day['date']]['aller']['mode'] ?? '') === 'car_seats')
-                                                <div class="flex items-center space-x-2 bg-indigo-50 p-2.5 rounded-md border border-indigo-100 mt-2 animate-in fade-in slide-in-from-top-1">
-                                                    <label class="text-xs text-indigo-700 font-bold">Places à disposition :</label>
-                                                    <input type="number" min="1" wire:model="responses.{{ $day['date'] }}.aller.seats" class="w-20 py-1 text-xs border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nb places">
+                                                <div class="flex items-center space-x-2 bg-gray-50 p-2.5 rounded-md border border-gray-100 mt-2 animate-in fade-in slide-in-from-top-1">
+                                                    <label class="text-xs text-gray-700 font-bold">Places à disposition :</label>
+                                                    <input type="number" min="1" wire:model="responses.{{ $day['date'] }}.aller.seats" class="w-20 py-1 text-xs border-gray-300 rounded-md focus:ring-gray-500 focus:border-gray-500" placeholder="Nb places">
                                                 </div>
                                             @endif
                                         </div>
@@ -107,12 +107,12 @@
                                         <!-- Retour Section -->
                                         <div class="space-y-2">
                                             <div class="flex items-center space-x-2">
-                                                <svg class="h-4 w-4 text-indigo-500 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="h-4 w-4 text-gray-500 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                                                 </svg>
                                                 <label class="block text-sm font-semibold text-gray-700">Retour (Retour à Sion)</label>
                                             </div>
-                                            <select wire:model.live="responses.{{ $day['date'] }}.retour.mode" class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md bg-white shadow-sm">
+                                            <select wire:model.live="responses.{{ $day['date'] }}.retour.mode" class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md bg-white shadow-sm">
                                                 <option value="">-- Choisir --</option>
                                                 <option value="bus">J'ai besoin d'un transport (Bus du club)</option>
                                                 <option value="train">Propres moyens (Train)</option>
@@ -123,9 +123,9 @@
                                             </select>
 
                                             @if(($responses[$day['date']]['retour']['mode'] ?? '') === 'car_seats')
-                                                <div class="flex items-center space-x-2 bg-indigo-50 p-2.5 rounded-md border border-indigo-100 mt-2 animate-in fade-in slide-in-from-top-1">
-                                                    <label class="text-xs text-indigo-700 font-bold">Places à disposition :</label>
-                                                    <input type="number" min="1" wire:model="responses.{{ $day['date'] }}.retour.seats" class="w-20 py-1 text-xs border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nb places">
+                                                <div class="flex items-center space-x-2 bg-gray-50 p-2.5 rounded-md border border-gray-100 mt-2 animate-in fade-in slide-in-from-top-1">
+                                                    <label class="text-xs text-gray-700 font-bold">Places à disposition :</label>
+                                                    <input type="number" min="1" wire:model="responses.{{ $day['date'] }}.retour.seats" class="w-20 py-1 text-xs border-gray-300 rounded-md focus:ring-gray-500 focus:border-gray-500" placeholder="Nb places">
                                                 </div>
                                             @endif
                                         </div>
@@ -154,23 +154,28 @@
                             <label for="remarks" class="block text-sm font-medium text-gray-700">Remarques, questions ou précisions</label>
                             <p class="text-xs text-gray-500 mb-1">N'hésitez pas à poser vos questions ou donner des détails ici.</p>
                             <div class="mt-1">
-                                <textarea wire:model="remarks" id="remarks" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Ex: Départ différé, transport uniquement le matin..."></textarea>
+                                <textarea wire:model="remarks" id="remarks" rows="3" class="shadow-sm focus:ring-gray-500 focus:border-gray-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Ex: Départ différé, transport uniquement le matin..."></textarea>
                             </div>
                         </div>
 
-                        <div class="pt-5">
+                        <div>
                             <div class="flex justify-end">
-                                <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Enregistrer mes préférences
+                                <button type="submit" class="mb-3 ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Enregistrer
                                 </button>
                             </div>
                         </div>
                     </form>
+                    </div>
                 @endif
             </div>
 
+        </div>
+
+        <div class="p-6 border-t">
+
             <!-- Compact Summary Table -->
-            <div class="mt-10 border-t pt-8">
+            <div>
                 <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Récapitulatif des réponses</h4>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
