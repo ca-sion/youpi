@@ -19,6 +19,16 @@ class EventLogisticResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getModelLabel(): string
+    {
+        return 'Logistique';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Logistique d\'événements';
+    }
+
     public static function form(Form $form): Form
     {
         return $form

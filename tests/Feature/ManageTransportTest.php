@@ -61,6 +61,44 @@ class ManageTransportTest extends TestCase
     }
 
     /** @test */
+    public function it_filters_unassigned_participants_by_selected_day_retour()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'start_date' => '2026-02-05',
+                'days_count' => 1,
+            ],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 
+                    'name' => 'Need Retour', 
+                    'survey_response' => [
+                        'responses' => [
+                            '2026-02-05' => ['retour' => ['mode' => 'bus']],
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 'p2', 
+                    'name' => 'No Retour', 
+                    'survey_response' => [
+                        'responses' => [
+                            '2026-02-05' => ['retour' => ['mode' => 'car']],
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        $component->set('selectedDay', '2026-02-05');
+        $unassigned = array_values($component->get('unassignedTransportRetour'));
+        $this->assertCount(1, $unassigned);
+        $this->assertEquals('p1', $unassigned[0]['id']);
+    }
+
+    /** @test */
     public function it_auto_dispatches_for_selected_day()
     {
         $logistic = EventLogistic::factory()->create([
@@ -110,5 +148,53 @@ class ManageTransportTest extends TestCase
         $bus = collect($plan)->firstWhere('type', 'bus');
         $allPassengers = array_merge($bus['passengers'] ?? [], $car['passengers'] ?? []);
         $this->assertContains('p1', $allPassengers);
+    }
+
+    /** @test */
+    public function it_auto_dispatches_retour_trips_with_proper_timing()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'start_date' => '2026-02-05',
+                'days_count' => 1,
+                'bus_capacity' => 50,
+            ],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 
+                    'name' => 'Athlete 1', 
+                    'last_competition_datetime' => '2026-02-05 16:00:00',
+                    'survey_response' => [
+                        'responses' => [
+                            '2026-02-05' => ['retour' => ['mode' => 'bus']],
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 'p2', 
+                    'name' => 'Athlete 2', 
+                    'last_competition_datetime' => '2026-02-05 16:45:00',
+                    'survey_response' => [
+                        'responses' => [
+                            '2026-02-05' => ['retour' => ['mode' => 'bus']],
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2026-02-05')
+            ->call('autoDispatch');
+
+        $logistic->refresh();
+        $plan = $logistic->transport_plan['2026-02-05'] ?? [];
+        
+        $busRetour = collect($plan)->firstWhere('flow', 'retour');
+        $this->assertNotNull($busRetour);
+        $this->assertCount(2, $busRetour['passengers']);
+        
+        // Timing should be max(last_competition) + 30 min = 16:45 + 30 = 17:15
+        $this->assertEquals('2026-02-05 17:15:00', $busRetour['departure_datetime']);
     }
 }

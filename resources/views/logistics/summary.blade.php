@@ -112,15 +112,22 @@
                                                 @foreach($vehicle['passengers'] as $pid)
                                                     @php 
                                                         $p = $participants[$pid] ?? null;
-                                                        $firstComp = $p && isset($p['first_competition_datetime']) ? \Carbon\Carbon::parse($p['first_competition_datetime']) : null;
-                                                        $isTight = $arrival && $firstComp && $arrival->copy()->addMinutes($prepMin)->gt($firstComp);
+                                                        $flow = $vehicle['flow'] ?? 'aller';
+                                                        $timeKey = ($flow === 'retour' ? 'last_competition_datetime' : 'first_competition_datetime');
+                                                        $compTime = $p && isset($p[$timeKey]) ? \Carbon\Carbon::parse($p[$timeKey]) : null;
+                                                        $isTight = false;
+                                                        if ($flow === 'aller') {
+                                                            $isTight = $arrival && $compTime && $arrival->copy()->addMinutes($prepMin)->gt($compTime);
+                                                        } else {
+                                                            $isTight = $vehicle['departure_datetime'] && $compTime && \Carbon\Carbon::parse($vehicle['departure_datetime'])->lt($compTime);
+                                                        }
                                                     @endphp
                                                     <div class="flex items-center justify-between text-[11px] font-medium bg-white px-2 py-1.5 rounded-lg border border-gray-100 shadow-sm">
                                                         <span class="text-gray-800 truncate">{{ $p['name'] ?? 'Inconnu' }}</span>
-                                                        @if($firstComp && $firstComp->toDateString() === $day['date'])
+                                                        @if($compTime && $compTime->toDateString() === $day['date'])
                                                             <div class="flex items-center gap-1 {{ $isTight ? 'text-red-500' : 'text-gray-400' }}">
                                                                 <x-heroicon-s-bolt class="w-3 h-3" />
-                                                                <span class="font-bold tabular-nums">{{ $firstComp->format('H:i') }}</span>
+                                                                <span class="font-bold tabular-nums">{{ $compTime->format('H:i') }}</span>
                                                             </div>
                                                         @endif
                                                     </div>

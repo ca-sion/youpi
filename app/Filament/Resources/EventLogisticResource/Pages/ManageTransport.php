@@ -20,7 +20,8 @@ class ManageTransport extends Page
 
     public $transportPlans = []; // ['YYYY-MM-DD' => [vehicles...]]
     public $stayPlans = [];      // ['YYYY-MM-DD' => [rooms...]]
-    public $unassignedTransport = [];
+    public $unassignedTransport = []; // Aller
+    public $unassignedTransportRetour = [];
     public $unassignedStay = [];
     public $participantsMap = [];
     public $alerts = []; // [vehicleIndex => ['type' => 'msg']]
@@ -117,16 +118,28 @@ class ManageTransport extends Page
                     $travelMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
                     
                     $arrivalEst = $depTime->copy()->addMinutes($travelMin);
-                    
+                    $flow = $vehicle['flow'] ?? 'aller';
+
                     foreach ($vPassengers as $pid) {
                         $p = $this->participantsMap[$pid] ?? null;
-                        if ($p && isset($p['first_competition_datetime'])) {
-                            $firstEvent = Carbon::parse($p['first_competition_datetime']);
-                            $neededArrival = $firstEvent->copy()->subMinutes($prep);
-                            
-                            if ($arrivalEst->gt($neededArrival)) {
-                                 $lateMin = $arrivalEst->diffInMinutes($neededArrival);
-                                 $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Retard échauffement: {$p['name']} (+{$lateMin}m)"];
+                        if (!$p) continue;
+
+                        if ($flow === 'retour') {
+                            if (isset($p['last_competition_datetime'])) {
+                                $lastEvent = Carbon::parse($p['last_competition_datetime']);
+                                if ($depTime->lt($lastEvent)) {
+                                    $this->alerts[$index][] = ['type' => 'danger', 'msg' => "Départ anticipé: {$p['name']} (Epreuve finit à {$lastEvent->format('H:i')})"];
+                                }
+                            }
+                        } else {
+                            if (isset($p['first_competition_datetime'])) {
+                                $firstEvent = Carbon::parse($p['first_competition_datetime']);
+                                $neededArrival = $firstEvent->copy()->subMinutes($prep);
+                                
+                                if ($arrivalEst->gt($neededArrival)) {
+                                     $lateMin = $arrivalEst->diffInMinutes($neededArrival);
+                                     $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Retard échauffement: {$p['name']} (+{$lateMin}m)"];
+                                }
                             }
                         }
                     }
@@ -136,12 +149,19 @@ class ManageTransport extends Page
             }
         }
 
-        // Transport Unassigned
-        $assignedTransportIds = [];
+        // Transport Unassigned (Aller vs Retour)
+        $assignedAllerIds = [];
+        $assignedRetourIds = [];
+        
         foreach ($this->transportPlans as $day => $vList) {
             if ($day === $this->selectedDay) {
                 foreach ($vList as $v) {
-                    $assignedTransportIds = array_merge($assignedTransportIds, $v['passengers'] ?? []);
+                    $flow = $v['flow'] ?? 'aller';
+                    if ($flow === 'retour') {
+                        $assignedRetourIds = array_merge($assignedRetourIds, $v['passengers'] ?? []);
+                    } else {
+                        $assignedAllerIds = array_merge($assignedAllerIds, $v['passengers'] ?? []);
+                    }
                 }
             }
         }
@@ -150,12 +170,21 @@ class ManageTransport extends Page
             ->filter(function($p) {
                 $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
                 if (!$dayResp) return false;
-                
                 $allerMode = $dayResp['aller']['mode'] ?? '';
-                $retourMode = $dayResp['retour']['mode'] ?? '';
-                return $allerMode === 'bus' || $retourMode === 'bus' || $allerMode === 'car_seats' || $retourMode === 'car_seats';
+                return in_array($allerMode, ['bus', 'car_seats']);
             })
-            ->reject(fn($p) => in_array($p['id'], $assignedTransportIds))
+            ->reject(fn($p) => in_array($p['id'], $assignedAllerIds))
+            ->values()
+            ->toArray();
+
+        $this->unassignedTransportRetour = collect($participants)
+            ->filter(function($p) {
+                $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
+                if (!$dayResp) return false;
+                $retourMode = $dayResp['retour']['mode'] ?? '';
+                return in_array($retourMode, ['bus', 'car_seats']);
+            })
+            ->reject(fn($p) => in_array($p['id'], $assignedRetourIds))
             ->values()
             ->toArray();
 
@@ -252,7 +281,7 @@ class ManageTransport extends Page
         $this->loadData();
     }
 
-    public function addVehicle($type = 'car')
+    public function addVehicle($type = 'car', $flow = 'aller')
     {
         $settings = $this->record->settings ?? [];
         $defaultBusCapacity = $settings['bus_capacity'] ?? 50;
@@ -261,15 +290,18 @@ class ManageTransport extends Page
             $this->transportPlans[$this->selectedDay] = [];
         }
 
+        $flowLabel = ($flow === 'retour' ? 'Retour' : 'Aller');
+
         $this->transportPlans[$this->selectedDay][] = [
             'id' => 'manual_' . uniqid(),
             'type' => $type,
-            'name' => ($type === 'bus' ? 'Nouveau Bus' : 'Nouvelle Voiture'),
+            'flow' => $flow,
+            'name' => ($type === 'bus' ? "Nouveau Bus $flowLabel" : "Nouvelle Voiture $flowLabel"),
             'capacity' => ($type === 'bus' ? $defaultBusCapacity : 4),
             'passengers' => [],
             'driver' => 'À définir',
-            'departure_datetime' => $this->selectedDay . ' 08:00:00',
-            'departure_location' => 'Sion, piscine',
+            'departure_datetime' => $this->selectedDay . ($flow === 'retour' ? ' 17:00:00' : ' 08:00:00'),
+            'departure_location' => ($flow === 'retour' ? 'Lieu compétition' : 'Sion, piscine'),
             'note' => '',
         ];
         $this->record->update(['transport_plan' => $this->transportPlans]);
@@ -279,18 +311,20 @@ class ManageTransport extends Page
     
     public function autoDispatch()
     {
-        // 1. Get all candidates for the selected day (only bus needs)
+        // 1. Get all candidates for the selected day
         $participants = $this->record->participants_data ?? [];
-        $candidates = [];
+        $candidatesAller = [];
+        $candidatesRetour = [];
+        
         foreach ($participants as $p) {
             $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
             if (!$dayResp) continue;
 
-            $allerMode = $dayResp['aller']['mode'] ?? '';
-            $retourMode = $dayResp['retour']['mode'] ?? '';
-
-            if ($allerMode === 'bus' || $retourMode === 'bus') {
-                $candidates[] = $p;
+            if (($dayResp['aller']['mode'] ?? '') === 'bus') {
+                $candidatesAller[] = $p;
+            }
+            if (($dayResp['retour']['mode'] ?? '') === 'bus') {
+                $candidatesRetour[] = $p;
             }
         }
 
@@ -299,88 +333,141 @@ class ManageTransport extends Page
         $defaultBusCapacity = $settings['bus_capacity'] ?? 50;
         
         $vehicles = [];
-        // Add a Bus by default
-        $vehicles[] = [
-            'id' => 'bus_' . $this->selectedDay,
-            'type' => 'bus',
-            'name' => Carbon::parse($this->selectedDay)->translatedFormat('D') . ' - Bus du club',
-            'capacity' => $defaultBusCapacity,
-            'passengers' => [],
-            'driver' => 'Chauffeur Bus'
-        ];
+        
+        // Add Buses by default if needed
+        if (!empty($candidatesAller)) {
+            $vehicles[] = [
+                'id' => 'bus_aller_' . $this->selectedDay,
+                'type' => 'bus',
+                'flow' => 'aller',
+                'name' => Carbon::parse($this->selectedDay)->translatedFormat('D') . ' - Bus Aller',
+                'capacity' => $defaultBusCapacity,
+                'passengers' => [],
+                'driver' => 'Chauffeur Bus',
+                'departure_datetime' => $this->selectedDay . ' 07:30:00',
+                'departure_location' => 'Sion, piscine'
+            ];
+        }
+        if (!empty($candidatesRetour)) {
+            $vehicles[] = [
+                'id' => 'bus_retour_' . $this->selectedDay,
+                'type' => 'bus',
+                'flow' => 'retour',
+                'name' => Carbon::parse($this->selectedDay)->translatedFormat('D') . ' - Bus Retour',
+                'capacity' => $defaultBusCapacity,
+                'passengers' => [],
+                'driver' => 'Chauffeur Bus',
+                'departure_datetime' => $this->selectedDay . ' 17:30:00',
+                'departure_location' => 'Lieu compétition'
+            ];
+        }
 
-        // Parent Cars from Survey for the selected day
+        // Parent Cars from Survey
         foreach ($participants as $p) {
             $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
             if (!$dayResp) continue;
 
             $allerSeats = (int)($dayResp['aller']['seats'] ?? 0);
             $retourSeats = (int)($dayResp['retour']['seats'] ?? 0);
-            $maxSeats = max($allerSeats, $retourSeats);
 
-            if ($maxSeats > 0) {
+            if ($allerSeats > 0) {
                  $vehicles[] = [
-                     'id' => 'car_' . $p['id'] . '_' . $this->selectedDay,
+                     'id' => 'car_aller_' . $p['id'] . '_' . $this->selectedDay,
                      'type' => 'car',
-                     'name' => 'Voiture ' . $p['name'],
-                     'capacity' => $maxSeats,
+                     'flow' => 'aller',
+                     'name' => 'Voiture ' . $p['name'] . ' (Aller)',
+                     'capacity' => $allerSeats,
                      'passengers' => [$p['id']], 
-                     'driver' => 'Parent ' . $p['name']
+                     'driver' => 'Parent ' . $p['name'],
+                     'departure_datetime' => $this->selectedDay . ' 07:30:00',
+                     'departure_location' => 'Sion, piscine'
                  ];
-                 $candidates = array_filter($candidates, fn($c) => $c['id'] !== $p['id']);
+                 $candidatesAller = array_filter($candidatesAller, fn($c) => $c['id'] !== $p['id']);
+            }
+            
+            if ($retourSeats > 0) {
+                 $vehicles[] = [
+                     'id' => 'car_retour_' . $p['id'] . '_' . $this->selectedDay,
+                     'type' => 'car',
+                     'flow' => 'retour',
+                     'name' => 'Voiture ' . $p['name'] . ' (Retour)',
+                     'capacity' => $retourSeats,
+                     'passengers' => [$p['id']], 
+                     'driver' => 'Parent ' . $p['name'],
+                     'departure_datetime' => $this->selectedDay . ' 17:30:00',
+                     'departure_location' => 'Lieu compétition'
+                 ];
+                 $candidatesRetour = array_filter($candidatesRetour, fn($c) => $c['id'] !== $p['id']);
             }
         }
 
         // 3. Fill Vehicles
         foreach ($vehicles as &$v) {
-            if ($v['type'] !== 'bus') continue;
-            while (count($v['passengers']) < $v['capacity'] && !empty($candidates)) {
-                $p = array_shift($candidates);
-                $v['passengers'][] = $p['id'];
-            }
-        }
-        unset($v);
+            $isRetour = ($v['flow'] === 'retour');
+            $targetCandidates = $isRetour ? $candidatesRetour : $candidatesAller;
+            if (empty($targetCandidates)) continue;
 
-        foreach ($vehicles as &$v) {
-            if ($v['type'] !== 'car') continue;
             $slots = $v['capacity'] - count($v['passengers']);
-            while ($slots > 0 && !empty($candidates)) {
-                $p = array_shift($candidates);
-                 $v['passengers'][] = $p['id'];
-                 $slots--;
+            while ($slots > 0 && !empty($targetCandidates)) {
+                $p = array_shift($targetCandidates);
+                $v['passengers'][] = $p['id'];
+                $slots--;
+            }
+            
+            // Sync back the candidates lists
+            if ($isRetour) {
+                $candidatesRetour = $targetCandidates;
+            } else {
+                $candidatesAller = $targetCandidates;
             }
         }
         unset($v);
 
-        // 4. Calculate Departure Times (Approximate based on first competition)
+        // 4. Calculate Departure Times
         $dist = $settings['distance_km'] ?? 0;
         $prep = $settings['duration_prep_min'] ?? 90;
         
         foreach ($vehicles as &$v) {
-            $speed = ($v['type'] === 'bus') ? ($settings['bus_speed'] ?? 100) : ($settings['car_speed'] ?? 120);
-            $travelTimeHours = ($speed > 0) ? ($dist / $speed) : 0;
-            $travelTimeMin = $travelTimeHours * 60;
-            $totalOffset = $prep + $travelTimeMin;
+            $isRetour = ($v['flow'] === 'retour');
             
-            $firstTime = null;
-            foreach ($v['passengers'] as $pid) {
-                $p = collect($participants)->firstWhere('id', $pid);
-                if ($p && isset($p['first_competition_datetime'])) {
-                    $dt = Carbon::parse($p['first_competition_datetime']);
-                    // Only care about events on the selected day
-                    if ($dt->toDateString() === $this->selectedDay) {
-                        if (!$firstTime || $dt->lt($firstTime)) {
-                            $firstTime = $dt;
+            if ($isRetour) {
+                // Return: Departure = Last competition + some buffer (e.g. 30min)
+                $lastTime = null;
+                foreach ($v['passengers'] as $pid) {
+                    $p = collect($participants)->firstWhere('id', $pid);
+                    if ($p && isset($p['last_competition_datetime'])) {
+                        $dt = Carbon::parse($p['last_competition_datetime']);
+                        if ($dt->toDateString() === $this->selectedDay) {
+                            if (!$lastTime || $dt->gt($lastTime)) {
+                                $lastTime = $dt;
+                            }
                         }
                     }
                 }
-            }
-            
-            if ($firstTime) {
-                $v['departure_datetime'] = $firstTime->copy()->subMinutes($totalOffset)->toDateTimeString();
-                $v['departure_location'] = 'Sion, piscine';
+                if ($lastTime) {
+                    $v['departure_datetime'] = $lastTime->copy()->addMinutes(30)->toDateTimeString();
+                }
             } else {
-                $v['departure_datetime'] = null;
+                // Aller: Departure = First competition - (dist/speed + prep)
+                $speed = ($v['type'] === 'bus') ? ($settings['bus_speed'] ?? 100) : ($settings['car_speed'] ?? 120);
+                $travelTimeMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
+                $totalOffset = $prep + $travelTimeMin;
+                
+                $firstTime = null;
+                foreach ($v['passengers'] as $pid) {
+                    $p = collect($participants)->firstWhere('id', $pid);
+                    if ($p && isset($p['first_competition_datetime'])) {
+                        $dt = Carbon::parse($p['first_competition_datetime']);
+                        if ($dt->toDateString() === $this->selectedDay) {
+                            if (!$firstTime || $dt->lt($firstTime)) {
+                                $firstTime = $dt;
+                            }
+                        }
+                    }
+                }
+                if ($firstTime) {
+                    $v['departure_datetime'] = $firstTime->copy()->subMinutes($totalOffset)->toDateTimeString();
+                }
             }
         }
         unset($v);
@@ -411,23 +498,44 @@ class ManageTransport extends Page
         ];
     }
 
-    public function getParticipantTimes($pId)
+    public function getParticipantStartTime($pId)
     {
         $p = $this->participantsMap[$pId] ?? null;
         if (!$p) return null;
 
         $start = $p['first_competition_datetime'] ?? null;
-        $end = $p['last_competition_datetime'] ?? null;
-
         if (!$start) return null;
 
-        // Filter for selected day
         $startDt = Carbon::parse($start);
         if ($startDt->toDateString() !== $this->selectedDay) return null;
 
-        $startStr = $startDt->format('H:i');
-        $endStr = $end ? Carbon::parse($end)->format('H:i') : '...';
+        return $startDt->format('H:i');
+    }
 
-        return "{$startStr} - {$endStr}";
+    public function getParticipantEndTime($pId)
+    {
+        $p = $this->participantsMap[$pId] ?? null;
+        if (!$p) return null;
+
+        $end = $p['last_competition_datetime'] ?? null;
+        if (!$end) return null;
+
+        $endDt = Carbon::parse($end);
+        if ($endDt->toDateString() !== $this->selectedDay) return null;
+
+        return $endDt->format('H:i');
+    }
+
+    public function getParticipantTimes($pId)
+    {
+        $p = $this->participantsMap[$pId] ?? null;
+        if (!$p) return null;
+
+        $start = $this->getParticipantStartTime($pId);
+        $end = $this->getParticipantEndTime($pId) ?? '...';
+
+        if (!$start) return null;
+
+        return "{$start} - {$end}";
     }
 }

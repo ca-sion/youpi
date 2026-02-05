@@ -4,6 +4,7 @@
             transportPlans: @entangle('transportPlans'),
             stayPlans: @entangle('stayPlans'),
             unassignedTransport: @entangle('unassignedTransport'),
+            unassignedTransportRetour: @entangle('unassignedTransportRetour'),
             unassignedStay: @entangle('unassignedStay'),
             participantsMap: @js($participantsMap),
             hotelNeededIds: @js($hotelNeededIds),
@@ -63,37 +64,35 @@
 
         <div class="flex flex-col gap-8">
                 
-                <!-- Section 1: Transports -->
-                <div class="bg-white border border-gray-200 rounded-xl p-1">
                     <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
                         <div class="flex items-center gap-3">
                             <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">1. Transports & Véhicules</h3>
+                            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">1. Transports Aller</h3>
                         </div>
                         <div class="flex gap-2">
                              <x-filament::button wire:click="mountAction('auto_dispatch')" color="gray" size="sm" variant="outlined">Auto Distribute</x-filament::button>
-                             <x-filament::button wire:click="addVehicle('car')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture</x-filament::button>
-                             <x-filament::button wire:click="addVehicle('bus')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus</x-filament::button>
+                             <x-filament::button wire:click="addVehicle('car', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Aller</x-filament::button>
+                             <x-filament::button wire:click="addVehicle('bus', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus Aller</x-filament::button>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-3">
-                        <!-- TRANSPORT WAITING LIST -->
+                        <!-- ALLER WAITING LIST -->
                         <div class="lg:col-span-1 bg-blue-50 border border-blue-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden">
                             <div class="p-3 border-b border-blue-100 bg-blue-50/50 flex justify-between items-center">
-                                <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest">En Attente</h3>
+                                <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest">En Attente (Aller)</h3>
                                 <span class="text-xs font-bold bg-white text-blue-600 px-2 py-0.5 rounded-full border border-blue-100" x-text="unassignedTransport.length"></span>
                             </div>
-                            <div wire:ignore id="transport-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="transport">
+                            <div wire:ignore id="transport-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="transport-aller">
                                 <template x-for="p in unassignedTransport" :key="p.id">
                                     <div class="bg-white border border-blue-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group relative" :data-id="p.id">
                                         <div class="flex justify-between items-start gap-2">
                                             <div>
                                                 <span class="text-xs font-bold text-gray-800 leading-tight w-full" x-text="p.name"></span>
-                                                <div class="inline-flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" x-show="getParticipantTimes(p)">
-                                             <x-heroicon-s-clock class="w-3 h-3 text-gray-400" />
-                                             <span class="text-xs font-mono font-medium text-gray-600" x-text="getParticipantTimes(p)"></span>
-                                        </div>
+                                                <div class="inline-flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" x-show="getParticipantFirstTime(p.id)">
+                                                     <span class="text-[10px] font-black text-gray-400 uppercase leading-none">Départ</span>
+                                                     <span class="text-xs font-mono font-bold text-blue-600" x-text="getParticipantFirstTime(p.id)"></span>
+                                                </div>
                                             </div>
                                             <template x-if="hotelNeededIds.includes(p.id)">
                                                 <x-heroicon-s-home class="w-3 h-3 text-indigo-400 shrink-0" />
@@ -104,121 +103,242 @@
                             </div>
                         </div>
 
-                        <!-- VEHICLES GRID -->
+                        <!-- ALLER VEHICLES GRID -->
                         <div class="lg:col-span-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                         <template x-for="(v, index) in (transportPlans[selectedDay] || [])" :key="v.id || index">
-                            <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all group overflow-hidden flex flex-col">
-                                <!-- Card Header -->
-                                <div class="px-3 py-2 bg-gray-50 border-b border-gray-100 flex justify-between items-start gap-2">
-                                    <div class="flex-1 min-w-0 space-y-1">
-                                        <div class="flex items-center gap-2">
-                                            <template x-if="v.type === 'bus'">
-                                                <div class="p-1 bg-blue-100 text-blue-600 rounded">
-                                                    <x-heroicon-s-truck class="w-3.5 h-3.5" />
-                                                </div>
-                                            </template>
-                                            <template x-if="v.type !== 'bus'">
-                                                <div class="p-1 bg-gray-100 text-gray-500 rounded">
-                                                    <x-heroicon-s-users class="w-3.5 h-3.5" />
-                                                </div>
-                                            </template>
-                                            <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-gray-800 focus:ring-0 w-full truncate placeholder-gray-300" placeholder="NOM VÉHICULE">
-                                        </div>
-                                        <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-xs font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300" placeholder="Nom du chauffeur...">
-                                        
-                                        <!-- Vehicle specific alerts -->
-                                        <div class="flex flex-col gap-1 mt-1">
-                                            <template x-for="alert in (alerts[index] || [])">
-                                                <div class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border"
-                                                     :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
-                                                    <x-heroicon-s-exclamation-triangle class="w-3 h-3 shrink-0" />
-                                                    <span x-text="alert.msg"></span>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col items-end gap-1">
-                                        <button x-on:click="removeVehicle(index)" class="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors" title="Supprimer">
-                                            <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
-                                        </button>
-                                        <div class="flex items-center bg-white border border-gray-200 rounded px-1.5 py-0.5">
-                                            <span class="text-xs font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-600' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
-                                            <span class="text-xs text-gray-300 mx-0.5">/</span>
-                                            <input type="number" x-model.number="v.capacity" class="w-6 p-0 border-none bg-transparent text-xs font-bold text-gray-500 focus:ring-0 text-center">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Time & Location Inputs -->
-                                <div class="px-3 py-2 grid grid-cols-2 gap-2 border-b border-gray-50">
-                                    <div class="flex flex-col gap-1">
-                                        <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors relative">
-                                            <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Départ</label>
-                                            <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4">
-                                        </div>
-                                        <template x-if="getArrivalTime(v)">
-                                            <div class="px-2 text-[9px] font-bold text-indigo-500 flex items-center gap-1">
-                                                <x-heroicon-m-arrow-right-circle class="w-2.5 h-2.5" />
-                                                <span>Arr. est. <span x-text="getArrivalTime(v)"></span></span>
-                                            </div>
-                                        </template>
-                                    </div>
-                                    <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors h-fit">
-                                        <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Lieu</label>
-                                        <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Ex: Stade">
-                                    </div>
-                                </div>
-
-                                <!-- Passengers Drop Zone -->
-                                <div class="flex-1 bg-gray-50/30 p-2">
-                                    <div wire:ignore
-                                         class="min-h-[60px] space-y-1 rounded border-2 border-dashed border-transparent transition-colors" 
-                                         :class="(v.passengers || []).length === 0 ? 'border-gray-200 bg-gray-50 flex items-center justify-center' : ''"
-                                         :id="'v-list-' + index" 
-                                         data-group="transport" 
-                                         :data-index="index">
-                                        
-                                        <template x-if="(v.passengers || []).length === 0">
-                                            <span class="text-xs text-gray-300 font-medium select-none pointer-events-none">Glisser ici</span>
-                                        </template>
-
-                                        <template x-for="pId in v.passengers" :key="pId">
-                                            <div class="bg-white border border-gray-200 rounded shadow-sm group/p hover:border-blue-300 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
-                                                <div class="flex items-center justify-between px-2 py-1.5">
-                                                    <div class="flex items-center gap-2 overflow-hidden">
-                                                        <div class="w-1 h-3 rounded-full bg-blue-400 shrink-0"></div>
-                                                        <span class="text-xs font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : 'Inconnu'"></span>
+                            <template x-if="(v.flow || 'aller') === 'aller'">
+                                <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all group overflow-hidden flex flex-col">
+                                    <div class="px-3 py-2 bg-gray-50 border-b border-gray-100 flex justify-between items-start gap-2">
+                                        <div class="flex-1 min-w-0 space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <template x-if="v.type === 'bus'">
+                                                    <div class="p-1 bg-blue-100 text-blue-600 rounded">
+                                                        <x-heroicon-s-truck class="w-3.5 h-3.5" />
                                                     </div>
-                                                    <template x-if="hotelNeededIds.includes(pId)">
-                                                        <x-heroicon-s-home class="ml-2 w-3 h-3 text-indigo-400" />
-                                                    </template>
-                                                </div>
-                                                <template x-if="getParticipantFirstTime(pId)">
-                                                    <div class="px-2 flex items-center gap-1 opacity-50">
-                                                        <x-heroicon-m-stop-circle class="w-2.5 h-2.5 text-gray-400" />
-                                                        <span class="text-[9px] font-bold text-gray-500 uppercase">1er départ: <span x-text="getParticipantFirstTime(pId)"></span></span>
+                                                </template>
+                                                <template x-if="v.type !== 'bus'">
+                                                    <div class="p-1 bg-gray-100 text-gray-500 rounded">
+                                                        <x-heroicon-s-users class="w-3.5 h-3.5" />
+                                                    </div>
+                                                </template>
+                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-gray-800 focus:ring-0 w-full truncate placeholder-gray-300" placeholder="NOM VÉHICULE">
+                                            </div>
+                                            <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-xs font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300" placeholder="Nom du chauffeur...">
+                                            
+                                            <div class="flex flex-col gap-1 mt-1">
+                                                <template x-for="alert in (alerts[index] || [])">
+                                                    <div class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border"
+                                                         :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
+                                                        <x-heroicon-s-exclamation-triangle class="w-3 h-3 shrink-0" />
+                                                        <span x-text="alert.msg"></span>
                                                     </div>
                                                 </template>
                                             </div>
-                                        </template>
+                                        </div>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <button x-on:click="removeVehicle(index)" class="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors" title="Supprimer">
+                                                <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
+                                            </button>
+                                            <div class="flex items-center bg-white border border-gray-200 rounded px-1.5 py-0.5">
+                                                <span class="text-xs font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-600' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
+                                                <span class="text-xs text-gray-300 mx-0.5">/</span>
+                                                <input type="number" x-model.number="v.capacity" class="w-6 p-0 border-none bg-transparent text-xs font-bold text-gray-500 focus:ring-0 text-center">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="px-3 py-2 grid grid-cols-2 gap-2 border-b border-gray-50">
+                                        <div class="flex flex-col gap-1">
+                                            <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors relative">
+                                                <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Départ</label>
+                                                <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4">
+                                            </div>
+                                            <template x-if="getArrivalTime(v)">
+                                                <div class="px-2 text-[9px] font-bold text-indigo-500 flex items-center gap-1">
+                                                    <x-heroicon-m-arrow-right-circle class="w-2.5 h-2.5" />
+                                                    <span>Arr. est. <span x-text="getArrivalTime(v)"></span></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors h-fit">
+                                            <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Lieu</label>
+                                            <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Ex: Stade">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-1 bg-gray-50/30 p-2">
+                                        <div wire:ignore
+                                             class="min-h-[60px] space-y-1 rounded border-2 border-dashed border-transparent transition-colors" 
+                                             :class="(v.passengers || []).length === 0 ? 'border-gray-200 bg-gray-50 flex items-center justify-center' : ''"
+                                             :id="'v-list-' + index" 
+                                             data-group="transport-aller" 
+                                             :data-index="index">
+                                            <template x-if="(v.passengers || []).length === 0">
+                                                <span class="text-xs text-gray-300 font-medium select-none pointer-events-none">Glisser ici</span>
+                                            </template>
+                                            <template x-for="pId in v.passengers" :key="pId">
+                                                <div class="bg-white border border-gray-200 rounded shadow-sm group/p hover:border-blue-300 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
+                                                    <div class="flex items-center justify-between px-2 py-1.5 w-full">
+                                                        <div class="flex items-center gap-2 overflow-hidden">
+                                                            <div class="w-1 h-3 rounded-full bg-blue-400 shrink-0"></div>
+                                                            <span class="text-xs font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : 'Inconnu'"></span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <template x-if="getParticipantFirstTime(pId)">
+                                                                <span class="text-[10px] font-bold text-blue-600 tabular-nums" x-text="getParticipantFirstTime(pId)"></span>
+                                                            </template>
+                                                            <template x-if="hotelNeededIds.includes(pId)">
+                                                                <x-heroicon-s-home class="w-3 h-3 text-indigo-400 shrink-0" />
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="p-2 border-t border-gray-100 bg-gray-50">
+                                        <input type="text" x-model="v.note" class="w-full p-1.5 border border-gray-200 rounded text-xs text-gray-600 focus:border-blue-400 focus:ring-0" placeholder="Note interne...">
                                     </div>
                                 </div>
-                                
-                                <div class="p-2 border-t border-gray-100 bg-gray-50">
-                                    <input type="text" x-model="v.note" class="w-full p-1.5 border border-gray-200 rounded text-xs text-gray-600 focus:border-blue-400 focus:ring-0" placeholder="Note interne...">
-                                </div>
-                            </div>
+                            </template>
                         </template>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Section 2: Transports Retour -->
+                <div class="bg-white border border-gray-200 rounded-xl p-1">
+                    <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">2. Transports Retour</h3>
+                        </div>
+                        <div class="flex gap-2">
+                             <x-filament::button wire:click="addVehicle('car', 'retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Retour</x-filament::button>
+                             <x-filament::button wire:click="addVehicle('bus', 'retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus Retour</x-filament::button>
+                        </div>
+                    </div>
 
-                <!-- Section 2: Hébergement -->
+                    <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-3">
+                        <!-- RETOUR WAITING LIST -->
+                        <div class="lg:col-span-1 bg-orange-50 border border-orange-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden">
+                            <div class="p-3 border-b border-orange-100 bg-orange-50/50 flex justify-between items-center">
+                                <h3 class="text-xs font-black text-orange-400 uppercase tracking-widest">En Attente (Retour)</h3>
+                                <span class="text-xs font-bold bg-white text-orange-600 px-2 py-0.5 rounded-full border border-orange-100" x-text="unassignedTransportRetour.length"></span>
+                            </div>
+                            <div wire:ignore id="transport-retour-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="transport-retour">
+                                <template x-for="p in unassignedTransportRetour" :key="p.id">
+                                    <div class="bg-white border border-orange-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-orange-300 hover:shadow transition-all group relative" :data-id="p.id">
+                                        <div class="flex justify-between items-start gap-2">
+                                            <div>
+                                                <span class="text-xs font-bold text-gray-800 leading-tight w-full" x-text="p.name"></span>
+                                                <div class="inline-flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" x-show="getParticipantLastTime(p.id)">
+                                                     <span class="text-[10px] font-black text-gray-400 uppercase leading-none">Fin</span>
+                                                     <span class="text-xs font-mono font-bold text-orange-600" x-text="getParticipantLastTime(p.id)"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- RETOUR VEHICLES GRID -->
+                        <div class="lg:col-span-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                        <template x-for="(v, index) in (transportPlans[selectedDay] || [])" :key="v.id || index">
+                            <template x-if="v.flow === 'retour'">
+                                <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-orange-300 transition-all group overflow-hidden flex flex-col">
+                                    <div class="px-3 py-2 bg-gray-50 border-b border-gray-100 flex justify-between items-start gap-2">
+                                        <div class="flex-1 min-w-0 space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <template x-if="v.type === 'bus'">
+                                                    <div class="p-1 bg-orange-100 text-orange-600 rounded">
+                                                        <x-heroicon-s-truck class="w-3.5 h-3.5" />
+                                                    </div>
+                                                </template>
+                                                <template x-if="v.type !== 'bus'">
+                                                    <div class="p-1 bg-gray-100 text-gray-500 rounded">
+                                                        <x-heroicon-s-users class="w-3.5 h-3.5" />
+                                                    </div>
+                                                </template>
+                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-gray-800 focus:ring-0 w-full truncate placeholder-gray-300" placeholder="NOM VÉHICULE">
+                                            </div>
+                                            <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-xs font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300" placeholder="Nom du chauffeur...">
+                                            
+                                            <div class="flex flex-col gap-1 mt-1">
+                                                <template x-for="alert in (alerts[index] || [])">
+                                                    <div class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border"
+                                                         :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
+                                                        <x-heroicon-s-exclamation-triangle class="w-3 h-3 shrink-0" />
+                                                        <span x-text="alert.msg"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <button x-on:click="removeVehicle(index)" class="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors" title="Supprimer">
+                                                <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
+                                            </button>
+                                            <div class="flex items-center bg-white border border-gray-200 rounded px-1.5 py-0.5">
+                                                <span class="text-xs font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-600' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
+                                                <span class="text-xs text-gray-300 mx-0.5">/</span>
+                                                <input type="number" x-model.number="v.capacity" class="w-6 p-0 border-none bg-transparent text-xs font-bold text-gray-500 focus:ring-0 text-center">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="px-3 py-2 grid grid-cols-2 gap-2 border-b border-gray-50">
+                                        <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors relative">
+                                            <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Départ</label>
+                                            <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4">
+                                        </div>
+                                        <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors h-fit">
+                                            <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Lieu</label>
+                                            <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Ex: Stade">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-1 bg-gray-50/30 p-2">
+                                        <div wire:ignore
+                                             class="min-h-[60px] space-y-1 rounded border-2 border-dashed border-transparent transition-colors" 
+                                             :class="(v.passengers || []).length === 0 ? 'border-orange-200 bg-orange-50 flex items-center justify-center' : ''"
+                                             :id="'v-list-' + index" 
+                                             data-group="transport-retour" 
+                                             :data-index="index">
+                                            <template x-if="(v.passengers || []).length === 0">
+                                                <span class="text-xs text-orange-300 font-medium select-none pointer-events-none">Glisser ici</span>
+                                            </template>
+                                            <template x-for="pId in v.passengers" :key="pId">
+                                                <div class="bg-white border border-gray-200 rounded shadow-sm group/p hover:border-orange-300 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
+                                                    <div class="flex items-center justify-between px-2 py-1.5 w-full">
+                                                        <div class="flex items-center gap-2 overflow-hidden">
+                                                            <div class="w-1 h-3 rounded-full bg-orange-400 shrink-0"></div>
+                                                            <span class="text-xs font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : 'Inconnu'"></span>
+                                                        </div>
+                                                        <template x-if="getParticipantLastTime(pId)">
+                                                            <span class="text-[10px] font-bold text-orange-600 tabular-nums" x-text="getParticipantLastTime(pId)"></span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="p-2 border-t border-gray-100 bg-gray-50">
+                                        <input type="text" x-model="v.note" class="w-full p-1.5 border border-gray-200 rounded text-xs text-gray-600 focus:border-orange-400 focus:ring-0" placeholder="Note interne...">
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Hébergement -->
                 <div class="bg-white border border-gray-200 rounded-xl p-1" x-show="!isLastDay()">
                      <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
                          <div class="flex items-center gap-3">
                              <span class="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
-                             <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">2. Hébergement & Chambres</h3>
+                             <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">3. Hébergement & Chambres</h3>
                          </div>
                          <x-filament::button wire:click="addRoom" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Ajouter Chambre</x-filament::button>
                      </div>
@@ -318,6 +438,7 @@
                 transportPlans: config.transportPlans,
                 stayPlans: config.stayPlans,
                 unassignedTransport: config.unassignedTransport,
+                unassignedTransportRetour: config.unassignedTransportRetour,
                 unassignedStay: config.unassignedStay,
                 participantsMap: config.participantsMap,
                 hotelNeededIds: config.hotelNeededIds,
@@ -364,14 +485,18 @@
                     const toIdx = evt.to.getAttribute('data-index');
 
                     // 1. Update logic for Transport
-                    if (fromGroup === 'transport') {
+                    if (fromGroup === 'transport-aller' || fromGroup === 'transport-retour') {
                         if (!this.transportPlans[this.selectedDay]) this.transportPlans[this.selectedDay] = [];
 
                         // Remove from source
                         if (fromIdx !== null) {
                             this.transportPlans[this.selectedDay][fromIdx].passengers = this.transportPlans[this.selectedDay][fromIdx].passengers.filter(id => id != pId);
                         } else {
-                            this.unassignedTransport = this.unassignedTransport.filter(p => p.id != pId);
+                            if (fromGroup === 'transport-aller') {
+                                this.unassignedTransport = this.unassignedTransport.filter(p => p.id != pId);
+                            } else {
+                                this.unassignedTransportRetour = this.unassignedTransportRetour.filter(p => p.id != pId);
+                            }
                         }
 
                         // Add to destination
@@ -380,8 +505,14 @@
                              this.transportPlans[this.selectedDay][toIdx].passengers = newOrder;
                         } else {
                             const pObj = this.participantsMap[pId];
-                            if (pObj && !this.unassignedTransport.find(p => p.id == pId)) {
-                                this.unassignedTransport.push(pObj);
+                            if (toGroup === 'transport-aller') {
+                                if (pObj && !this.unassignedTransport.find(p => p.id == pId)) {
+                                    this.unassignedTransport.push(pObj);
+                                }
+                            } else {
+                                if (pObj && !this.unassignedTransportRetour.find(p => p.id == pId)) {
+                                    this.unassignedTransportRetour.push(pObj);
+                                }
                             }
                         }
                     } 
@@ -478,6 +609,13 @@
                     if (!p || !p.first_competition_datetime) return null;
                     if (!p.first_competition_datetime.startsWith(this.selectedDay)) return null;
                     return p.first_competition_datetime.split(' ')[1].substring(0, 5);
+                },
+
+                getParticipantLastTime(pId) {
+                    const p = this.participantsMap[pId];
+                    if (!p || !p.last_competition_datetime) return null;
+                    if (!p.last_competition_datetime.startsWith(this.selectedDay)) return null;
+                    return p.last_competition_datetime.split(' ')[1].substring(0, 5);
                 },
 
                 isLastDay() {
