@@ -95,6 +95,16 @@ class EventLogisticResource extends Resource
                                             ->placeholder('07:00')
                                             ->default('07:00'),
                                     ]),
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\DateTimePicker::make('settings.survey_deadline_at')
+                                            ->label('Date limite du sondage (Fixe)')
+                                            ->helperText('Si rempli, le sondage se fermera à cette date précise.'),
+                                        Forms\Components\TextInput::make('settings.survey_deadline_days_before')
+                                            ->label('Nombre de jours avant l\'événement')
+                                            ->numeric()
+                                            ->helperText('Ex: 3 pour fermer le sondage 3 jours avant le début de l\'événement.'),
+                                    ]),
                             ]),
                         Forms\Components\Tabs\Tab::make('Horaire')
                             ->icon('heroicon-o-clock')
@@ -154,11 +164,81 @@ class EventLogisticResource extends Resource
                                                     ->label('Hôtel requis (Manuel)')
                                                     ->inline(false),
                                             ]),
-                                        Forms\Components\Textarea::make('survey_response')
-                                            ->label('Sondage (Brut)')
-                                            ->rows(2)
-                                            ->formatStateUsing(fn ($state) => is_string($state) ? $state : json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
-                                            ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state),
+                                        Forms\Components\Grid::make(3)
+                                            ->schema([
+                                                Forms\Components\Checkbox::make('survey_response.hotel_needed')
+                                                    ->label('Hôtel (Sondage)'),
+                                                Forms\Components\TextInput::make('survey_response.filled_at')
+                                                    ->label('Rempli le')
+                                                    ->disabled(),
+                                                Forms\Components\TextInput::make('survey_response.remarks')
+                                                    ->label('Remarques (Sondage)'),
+                                            ]),
+                                        Forms\Components\Repeater::make('survey_response.responses_array')
+                                            ->label('Détails transports par jour')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('date')->disabled()->label('Jour'),
+                                                Forms\Components\Select::make('aller_mode')
+                                                    ->label('Aller')
+                                                    ->options([
+                                                        'bus' => 'Bus',
+                                                        'car' => 'Voiture (Parents)',
+                                                        'train' => 'Train',
+                                                        'on_site' => 'Sur place',
+                                                        '' => 'Non défini',
+                                                    ]),
+                                                Forms\Components\Select::make('retour_mode')
+                                                    ->label('Retour')
+                                                    ->options([
+                                                        'bus' => 'Bus',
+                                                        'car' => 'Voiture (Parents)',
+                                                        'train' => 'Train',
+                                                        'on_site' => 'Sur place',
+                                                        '' => 'Non défini',
+                                                    ]),
+                                            ])
+                                            ->columns(3)
+                                            ->addable(false)
+                                            ->deletable(false)
+                                            ->formatStateUsing(function ($state, $get) {
+                                                $responses = $get('survey_response.responses') ?? [];
+                                                $settings = $get('../../settings');
+                                                $startDateStr = $settings['start_date'] ?? null;
+                                                $daysCount = (int)($settings['days_count'] ?? 2);
+                                                
+                                                if (!$startDateStr) return [];
+
+                                                $startDate = \Carbon\Carbon::parse($startDateStr);
+                                                $data = [];
+                                                for ($i = 0; $i < $daysCount; $i++) {
+                                                    $date = $startDate->copy()->addDays($i)->toDateString();
+                                                    $resp = $responses[$date] ?? [];
+                                                    $data[] = [
+                                                        'date' => $date,
+                                                        'aller_mode' => $resp['aller']['mode'] ?? '',
+                                                        'retour_mode' => $resp['retour']['mode'] ?? '',
+                                                    ];
+                                                }
+                                                return $data;
+                                            })
+                                            ->dehydrateStateUsing(function ($state) {
+                                                return null; // We'll handle sync in the parent dehydrate or separate field
+                                            })
+                                            ->afterStateUpdated(function ($state, $set, $get) {
+                                                $responses = $get('survey_response.responses') ?? [];
+                                                foreach ($state as $item) {
+                                                    $date = $item['date'];
+                                                    if (!isset($responses[$date])) $responses[$date] = [];
+                                                    $responses[$date]['aller'] = ['mode' => $item['aller_mode'] ?? ''];
+                                                    $responses[$date]['retour'] = ['mode' => $item['retour_mode'] ?? ''];
+                                                }
+                                                $set('survey_response.responses', $responses);
+                                                // Mark as updated for sync logic
+                                                $settings = $get('../../settings');
+                                                $settings['survey_updated_at'] = now()->toDateTimeString();
+                                                $set('../../settings', $settings);
+                                            }),
+                                        Forms\Components\Hidden::make('survey_response.responses'),
                                     ])
                                     ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                                     ->collapsible()
@@ -166,7 +246,13 @@ class EventLogisticResource extends Resource
                                     ->addable()
                                     ->deletable()
                                     ->reorderable()
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->afterStateUpdated(function($state, $set, $get) {
+                                        // Update global sync flag if any participant data changed
+                                        $settings = $get('settings');
+                                        $settings['survey_updated_at'] = now()->toDateTimeString();
+                                        $set('settings', $settings);
+                                    }),
                             ]),
                     ])->columnSpanFull()
             ]);

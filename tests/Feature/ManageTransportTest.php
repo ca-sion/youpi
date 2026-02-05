@@ -197,4 +197,30 @@ class ManageTransportTest extends TestCase
         // Timing should be max(last_competition) + 30 min = 16:45 + 30 = 17:15
         $this->assertEquals('2026-02-05 17:15:00', $busRetour['departure_datetime']);
     }
+    /** @test */
+    public function it_shows_out_of_sync_warning_when_survey_is_updated()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'survey_updated_at' => '2026-02-05 10:00:00',
+                'last_auto_dispatch_at' => '2026-02-05 09:00:00',
+            ]
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        $component->assertSet('globalAlerts', function($alerts) {
+            return collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul Auto" pour synchroniser.');
+        });
+
+        // After autoDispatch, warning should be gone
+        $component->call('autoDispatch');
+        
+        $component->assertSet('globalAlerts', function($alerts) {
+            return !collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul Auto" pour synchroniser.');
+        });
+        
+        $logistic->refresh();
+        $this->assertNotNull($logistic->settings['last_auto_dispatch_at']);
+    }
 }

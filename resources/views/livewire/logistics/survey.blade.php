@@ -35,6 +35,37 @@
                 </div>
             @endif
 
+            @error('error')
+                <div class="rounded-md bg-red-50 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">{{ $message }}</p>
+                        </div>
+                    </div>
+                </div>
+            @enderror
+
+            @if($this->is_survey_closed)
+                <div class="rounded-md bg-amber-50 border border-amber-200 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-amber-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v4a1 1 0 11-2 0V9zm1-5a1 1 0 00-1 1v1a1 1 0 002 0V5a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-bold text-amber-800">Sondage fermé</h3>
+                            <p class="text-xs text-amber-700 mt-1">La date limite est dépassée. Les modifications en ligne ne sont plus acceptées. En cas de changement urgent, veuillez contacter l'administration.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="space-y-6">
                 <div>
                     <label for="participant" class="block text-sm font-medium text-gray-700">Sélectionnez votre nom</label>
@@ -160,7 +191,9 @@
 
                         <div>
                             <div class="flex justify-end">
-                                <button type="submit" class="mb-3 ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <button type="submit" 
+                                    @if($this->is_survey_closed) disabled @endif
+                                    class="mb-3 ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white {{ $this->is_survey_closed ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700' }} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                     Enregistrer
                                 </button>
                             </div>

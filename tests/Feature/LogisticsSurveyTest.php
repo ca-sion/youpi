@@ -104,4 +104,59 @@ class LogisticsSurveyTest extends TestCase
         $this->assertEquals(3, $resp['aller']['seats']);
         $this->assertEquals('absent', $resp['retour']['mode']);
     }
+    /** @test */
+    public function it_enforces_fixed_date_deadline()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'survey_deadline_at' => now()->subDay()->toDateTimeString(),
+            ]
+        ]);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->assertSet('is_survey_closed', true)
+            ->set('participantId', 'new')
+            ->set('newName', 'Jean Dupont')
+            ->call('submit')
+            ->assertHasErrors(['error' => 'Le sondage est fermé. Les modifications ne sont plus possibles en ligne.']);
+    }
+
+    /** @test */
+    public function it_enforces_relative_deadline()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'start_date' => now()->addDays(2)->toDateString(),
+                'survey_deadline_days_before' => 3,
+            ]
+        ]);
+
+        // 2 days before event, deadline is 3 days before -> should be closed
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->assertSet('is_survey_closed', true);
+            
+        // 4 days before event, deadline is 3 days before -> should be open
+        $logistic->update(['settings' => [
+            'start_date' => now()->addDays(4)->toDateString(),
+            'survey_deadline_days_before' => 3,
+        ]]);
+        
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->assertSet('is_survey_closed', false);
+    }
+
+    /** @test */
+    public function it_updates_survey_updated_at_on_submission()
+    {
+        $logistic = EventLogistic::factory()->create();
+        $this->assertNull($logistic->settings['survey_updated_at'] ?? null);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->set('participantId', 'new')
+            ->set('newName', 'Jean Dupont')
+            ->call('submit');
+
+        $logistic->refresh();
+        $this->assertNotNull($logistic->settings['survey_updated_at']);
+    }
 }

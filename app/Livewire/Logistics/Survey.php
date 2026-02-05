@@ -63,6 +63,25 @@ class Survey extends Component
         return $p && (($p['role'] ?? '') === 'coach' || str_contains($p['name'] ?? '', '[E]'));
     }
 
+    public function getIsSurveyClosedProperty()
+    {
+        $settings = $this->event_logistic->settings ?? [];
+        $deadlineAt = $settings['survey_deadline_at'] ?? null;
+        $deadlineDaysBefore = $settings['survey_deadline_days_before'] ?? null;
+        $startDateStr = $settings['start_date'] ?? null;
+
+        if ($deadlineAt) {
+            return now()->isAfter(\Carbon\Carbon::parse($deadlineAt));
+        }
+
+        if ($deadlineDaysBefore !== null && $startDateStr) {
+            $deadline = \Carbon\Carbon::parse($startDateStr)->subDays((int)$deadlineDaysBefore)->startOfDay();
+            return now()->isAfter($deadline);
+        }
+
+        return false;
+    }
+
     public function getStatsProperty()
     {
         $participants = collect($this->event_logistic->participants_data ?? []);
@@ -100,6 +119,11 @@ class Survey extends Component
 
     public function submit()
     {
+        if ($this->is_survey_closed) {
+            $this->addError('error', 'Le sondage est fermé. Les modifications ne sont plus possibles en ligne.');
+            return;
+        }
+
         $this->validate([
             'participantId' => 'required',
             'newName' => 'required_if:participantId,new',
@@ -139,7 +163,12 @@ class Survey extends Component
         }
         
         if ($updated) {
-            $this->event_logistic->update(['participants_data' => $participants]);
+            $settings = $this->event_logistic->settings ?? [];
+            $settings['survey_updated_at'] = now()->toDateTimeString();
+            $this->event_logistic->update([
+                'participants_data' => $participants,
+                'settings' => $settings,
+            ]);
             session()->flash('message', 'Merci ! Votre réponse a été enregistrée.');
             if ($this->participantId === 'new') {
                 $this->reset(['participantId', 'newName', 'isCoach', 'responses', 'hotel_needed', 'remarks']);

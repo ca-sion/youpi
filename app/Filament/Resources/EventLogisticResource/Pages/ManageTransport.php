@@ -154,6 +154,16 @@ class ManageTransport extends Page
             $this->record->update(['settings' => $settings]);
         }
 
+        // Out-of-sync logic
+        $surveyUpdatedAt = $settings['survey_updated_at'] ?? null;
+        $lastAutoDispatchAt = $settings['last_auto_dispatch_at'] ?? null;
+        if ($surveyUpdatedAt && (!$lastAutoDispatchAt || $surveyUpdatedAt > $lastAutoDispatchAt)) {
+            $this->globalAlerts[] = [
+                'type' => 'warning', 
+                'msg' => 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul Auto" pour synchroniser.'
+            ];
+        }
+
         // Calculate unassigned & Alerts
         $assignedIds = [];
         
@@ -555,7 +565,14 @@ class ManageTransport extends Page
         unset($v);
 
         $this->transportPlans[$this->selectedDay] = $vehicles;
-        $this->record->update(['transport_plan' => $this->transportPlans]);
+        
+        $settings = $this->record->settings ?? [];
+        $settings['last_auto_dispatch_at'] = now()->toDateTimeString();
+        $this->record->update([
+            'transport_plan' => $this->transportPlans,
+            'settings' => $settings,
+        ]);
+        
         $this->loadData();
         Notification::make()->title('Calcul automatique terminé (Jour : ' . $this->selectedDay . ')')->success()->send();
     }
