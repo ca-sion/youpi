@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->nullable();
+            $table->foreignId('document_id')->nullable()->constrained();
             $table->text('inscriptions_raw')->nullable();
             $table->json('inscriptions_data')->nullable();
             $table->json('schedule_raw')->nullable();
