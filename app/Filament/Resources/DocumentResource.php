@@ -92,17 +92,19 @@ class DocumentResource extends Resource
                                 Forms\Components\TextInput::make('travel_data.data.modification_deadline_phone')->label('Téléphone'),
                                 Forms\Components\TextInput::make('travel_data.data.location')->label('Lieu'),
                                 Forms\Components\TextInput::make('travel_data.data.date')->label('Date'),
-                            ]),
+                            ])
+                            ->columns(4),
                         Forms\Components\Repeater::make('travel_data.data.departures')
                             ->label('Allers')
                             ->columns(2)
                             ->addActionLabel('Ajouter un aller')
+                            ->columns(4)
                             ->schema([
                                 Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
                                 Forms\Components\TextInput::make('location')->label('Lieu'),
                                 Forms\Components\TextInput::make('means')->label('Moyen de transport'),
                                 Forms\Components\TextInput::make('driver')->label('Chauffeur'),
-                                Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
+                                Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs')->columnSpan(3),
                                 Forms\Components\TextInput::make('travelers_number')->label('Nombre de voyageur')->numeric(),
                             ]),
                         Forms\Components\Repeater::make('travel_data.data.arrivals')

@@ -8,6 +8,7 @@ use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Notifications\Notification;
 use Filament\Actions\Action;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class ManageTransport extends Page
 {
@@ -402,6 +403,11 @@ class ManageTransport extends Page
                 ->action(fn() => $this->autoDispatch())
                 ->color('danger')
                 ->icon('heroicon-o-arrow-path'),
+            Action::make('edit')
+                ->label(fn() => "Editer")
+                ->url(fn(Model $record) => EventLogisticResource::getUrl('edit', ['record' => $record]))
+                ->color('gray')
+                ->icon('heroicon-o-pencil'),
         ];
     }
 
