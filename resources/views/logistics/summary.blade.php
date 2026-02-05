@@ -4,250 +4,268 @@
     $speedBus = $settings['bus_speed'] ?? 100;
     $prepMin = $settings['duration_prep_min'] ?? 90;
 
-    $getArrivalTime = function($departureTime, $type) use ($distance, $speedVoiture, $speedBus) {
-        if (!$departureTime || !$distance) return null;
+    $getTravelTime = function($type) use ($distance, $speedVoiture, $speedBus) {
+        if (!$distance) return 0;
         $speed = ($type === 'bus') ? $speedBus : $speedVoiture;
-        $travelMin = ($distance / $speed) * 60;
-        return \Carbon\Carbon::parse($departureTime)->addMinutes($travelMin);
+        return ($distance / $speed) * 60;
+    };
+
+    $getArrivalTime = function($departureTime, $type) use ($getTravelTime) {
+        if (!$departureTime) return null;
+        return \Carbon\Carbon::parse($departureTime)->addMinutes($getTravelTime($type));
+    };
+
+    $carTime = $getTravelTime('car');
+    $busTime = $getTravelTime('bus');
+    
+    $formatDuration = function($minutes) {
+        $h = floor($minutes / 60);
+        $m = $minutes % 60;
+        return ($h > 0 ? $h.'h' : '') . str_pad($m, 2, '0', STR_PAD_LEFT);
     };
 @endphp
 
 <x-layouts.app>
-    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-12">
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200 pb-6">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-8">
+        <!-- Header Compact -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
             <div>
-                <nav class="flex mb-2" aria-label="Breadcrumb">
-                    <ol class="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-indigo-600">
+                <nav class="flex mb-1" aria-label="Breadcrumb">
+                    <ol class="flex items-center space-x-1 text-[10px] font-bold uppercase tracking-wider text-indigo-500">
                         <li>Logistique</li>
-                        <li>
-                            <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                        </li>
-                        <li class="text-gray-500">Résumé</li>
+                        <li><x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300" /></li>
+                        <li class="text-gray-400">Résumé</li>
                     </ol>
                 </nav>
-                <h1 class="text-4xl font-black text-gray-900 tracking-tight">{{ $event->name }}</h1>
+                <h1 class="text-3xl font-black text-gray-900 tracking-tight">{{ $event->name }}</h1>
             </div>
             
-            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
-                <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                    <x-heroicon-o-map-pin class="w-5 h-5" />
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                        <x-heroicon-s-map-pin class="w-4 h-4" />
+                    </div>
+                    <div>
+                        <div class="text-[9px] font-black text-gray-400 uppercase leading-none">Distance</div>
+                        <div class="text-sm font-bold text-gray-900">{{ $distance }}km</div>
+                    </div>
                 </div>
-                <div class="text-xs font-bold text-gray-500 uppercase leading-none">
-                    Distance: <span class="text-gray-900">{{ $distance }} km</span>
+                <div class="flex items-center gap-4 border-l border-gray-100 pl-6">
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <x-heroicon-s-users class="w-4 h-4 text-gray-400" />
+                        <span class="text-xs font-bold">{{ $formatDuration($carTime) }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <x-heroicon-s-truck class="w-4 h-4 text-gray-400" />
+                        <span class="text-xs font-bold">{{ $formatDuration($busTime) }}</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         @foreach($days as $day)
-            <div class="space-y-6">
-                <!-- Day Header -->
-                <div class="flex items-center gap-4">
-                    <div class="bg-indigo-600 px-4 py-1 rounded-full text-white font-black text-sm uppercase tracking-widest shadow-lg shadow-indigo-100 italic">
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gray-900 px-3 py-1 rounded-lg text-white font-black text-xs uppercase tracking-widest italic shadow-sm">
                         {{ $day['label'] }}
                     </div>
-                    <div class="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
+                    <div class="flex-1 h-px bg-gray-100"></div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     
-                    <!-- Transport Section -->
-                    <div class="lg:col-span-2 space-y-4">
-                        <div class="flex items-center gap-2 px-1">
-                            <x-heroicon-o-truck class="w-5 h-5 text-gray-400" />
-                            <h3 class="font-bold text-gray-900 uppercase tracking-tight text-sm">Transports</h3>
-                        </div>
+                    <!-- Transport Section Compact -->
+                    <div class="lg:col-span-3 space-y-4">
+                        @php 
+                            $dayTransport = $transportPlan[$day['date']] ?? [];
+                            $groupedTransport = collect($dayTransport)->groupBy('flow');
+                        @endphp
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            @php $dayTransport = $transportPlan[$day['date']] ?? []; @endphp
-                            @forelse($dayTransport as $vehicle)
-                                @php 
-                                    $arrival = $getArrivalTime($vehicle['departure_datetime'], $vehicle['type']);
-                                    $isFull = count($vehicle['passengers']) >= ($vehicle['capacity'] ?? 99);
-                                @endphp
-                                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-                                    <div class="p-4 border-b border-gray-50 flex justify-between items-start bg-gray-50/30 group-hover:bg-gray-50/80 transition-colors">
-                                        <div class="min-w-0">
-                                            <div class="flex items-center gap-2">
-                                                <div class="p-1 rounded {{ $vehicle['type'] === 'bus' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600' }}">
-                                                    @if($vehicle['type'] === 'bus')
-                                                        <x-heroicon-s-truck class="w-3.5 h-3.5" />
-                                                    @else
-                                                        <x-heroicon-s-users class="w-3.5 h-3.5" />
+                            @foreach(['aller', 'retour'] as $flow)
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2 px-1">
+                                        @if($flow === 'aller')
+                                            <x-heroicon-s-arrow-up-right class="w-3.5 h-3.5 text-blue-500" />
+                                        @else
+                                            <x-heroicon-s-arrow-down-left class="w-3.5 h-3.5 text-orange-500" />
+                                        @endif
+                                        <h3 class="font-black text-gray-900 uppercase tracking-widest text-[10px]">{{ $flow }}</h3>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        @forelse($groupedTransport->get($flow, []) as $vehicle)
+                                            @php 
+                                                $arrival = $getArrivalTime($vehicle['departure_datetime'], $vehicle['type']);
+                                                $isFull = count($vehicle['passengers']) >= ($vehicle['capacity'] ?? 99);
+                                            @endphp
+                                            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                                                <div class="px-3 py-2 bg-gray-50/50 flex items-center justify-between border-b border-gray-50">
+                                                    <div class="flex items-center gap-2 min-w-0">
+                                                        <span class="text-[10px] font-black {{ $vehicle['type'] === 'bus' ? 'text-blue-600' : 'text-gray-600' }}">{{ $vehicle['name'] }}</span>
+                                                        <span class="text-[9px] text-gray-400 font-medium truncate">/ {{ $vehicle['driver'] ?? '?' }}</span>
+                                                    </div>
+                                                    <span class="text-[9px] font-bold {{ $isFull ? 'text-orange-600' : 'text-green-600' }}">
+                                                        {{ count($vehicle['passengers']) }}/{{ $vehicle['capacity'] ?? '?' }}
+                                                    </span>
+                                                </div>
+                                                <div class="p-3">
+                                                    <div class="flex items-center justify-between mb-3 px-1">
+                                                        <div class="flex items-baseline gap-1">
+                                                            <span class="text-sm font-black text-gray-900 tabular-nums">{{ $vehicle['departure_datetime'] ? \Carbon\Carbon::parse($vehicle['departure_datetime'])->format('H:i') : '--:--' }}</span>
+                                                            <span class="text-[9px] text-gray-400 uppercase font-bold">{{ $vehicle['departure_location'] ?? 'Stade' }}</span>
+                                                        </div>
+                                                        <x-heroicon-s-chevron-right class="w-3 h-3 text-gray-300" />
+                                                        <div class="flex items-baseline gap-1 text-right">
+                                                            <span class="text-[9px] text-gray-400 uppercase font-bold">Arrivée est.</span>
+                                                            <span class="text-sm font-black text-indigo-600 tabular-nums">{{ $arrival ? $arrival->format('H:i') : '--:--' }}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex flex-wrap gap-1">
+                                                        @foreach($vehicle['passengers'] as $pid)
+                                                            @php 
+                                                                $p = $participants[$pid] ?? null;
+                                                                $timeKey = ($flow === 'retour' ? 'last_competition_datetime' : 'first_competition_datetime');
+                                                                $compTime = $p && isset($p[$timeKey]) ? \Carbon\Carbon::parse($p[$timeKey]) : null;
+                                                                $isTight = false;
+                                                                if ($flow === 'aller') {
+                                                                    $isTight = $arrival && $compTime && $arrival->copy()->addMinutes($prepMin)->gt($compTime);
+                                                                } else {
+                                                                    $isTight = $vehicle['departure_datetime'] && $compTime && \Carbon\Carbon::parse($vehicle['departure_datetime'])->lt($compTime);
+                                                                }
+                                                            @endphp
+                                                            <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-50 border border-gray-100 text-[10px] {{ $isTight ? 'text-red-600 border-red-100 bg-red-50' : 'text-gray-700' }}">
+                                                                <span class="font-bold">{{ $p['name'] ?? '?' }}</span>
+                                                                @if($compTime && $compTime->toDateString() === $day['date'])
+                                                                    <span class="text-[8px] opacity-70 tabular-nums">({{ $compTime->format('H:i') }})</span>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+
+                                                    @if(!empty($vehicle['note']))
+                                                        <div class="mt-2 text-[9px] text-gray-500 italic px-1 flex gap-1 items-start bg-gray-50/50 p-1.5 rounded-lg border border-gray-100/50">
+                                                            <x-heroicon-s-information-circle class="w-3 h-3 shrink-0 text-gray-400" />
+                                                            {{ $vehicle['note'] }}
+                                                        </div>
                                                     @endif
                                                 </div>
-                                                <h4 class="font-black text-gray-900 text-xs uppercase truncate">{{ $vehicle['name'] }}</h4>
                                             </div>
-                                            <p class="text-[10px] text-gray-500 font-medium mt-0.5 truncate italic">Chauffeur: <span class="text-gray-700">{{ $vehicle['driver'] ?? 'À définir' }}</span></p>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $isFull ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700' }}">
-                                                {{ count($vehicle['passengers']) }}/{{ $vehicle['capacity'] ?? '?' }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="p-4 grid grid-cols-2 gap-4">
-                                        <div class="space-y-0.5">
-                                            <span class="text-[9px] font-black text-gray-400 uppercase leading-none block">Départ</span>
-                                            <div class="flex items-center gap-1.5 font-black text-gray-900 text-base tabular-nums">
-                                                <x-heroicon-o-clock class="w-4 h-4 text-indigo-500" />
-                                                {{ $vehicle['departure_datetime'] ? \Carbon\Carbon::parse($vehicle['departure_datetime'])->format('H:i') : '--:--' }}
+                                        @empty
+                                            <div class="py-4 text-center border border-dashed border-gray-100 rounded-xl">
+                                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Aucun trajet</p>
                                             </div>
-                                            <span class="text-[10px] text-gray-500 font-medium truncate block">{{ $vehicle['departure_location'] ?? 'Stade' }}</span>
-                                        </div>
-                                        <div class="space-y-0.5">
-                                            <span class="text-[9px] font-black text-gray-400 uppercase leading-none block italic">Arrivée est.</span>
-                                            <div class="flex items-center gap-1.5 font-bold text-indigo-600 text-base tabular-nums opacity-60 group-hover:opacity-100 transition-opacity">
-                                                <x-heroicon-o-arrow-right-circle class="w-4 h-4" />
-                                                {{ $arrival ? $arrival->format('H:i') : '--:--' }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="px-4 pb-4">
-                                        <div class="bg-gray-50 rounded-xl p-3 space-y-2">
-                                            <span class="text-[9px] font-black text-gray-400 uppercase block tracking-widest">Liste des Voyageurs</span>
-                                            <div class="grid grid-cols-1 gap-1">
-                                                @foreach($vehicle['passengers'] as $pid)
-                                                    @php 
-                                                        $p = $participants[$pid] ?? null;
-                                                        $flow = $vehicle['flow'] ?? 'aller';
-                                                        $timeKey = ($flow === 'retour' ? 'last_competition_datetime' : 'first_competition_datetime');
-                                                        $compTime = $p && isset($p[$timeKey]) ? \Carbon\Carbon::parse($p[$timeKey]) : null;
-                                                        $isTight = false;
-                                                        if ($flow === 'aller') {
-                                                            $isTight = $arrival && $compTime && $arrival->copy()->addMinutes($prepMin)->gt($compTime);
-                                                        } else {
-                                                            $isTight = $vehicle['departure_datetime'] && $compTime && \Carbon\Carbon::parse($vehicle['departure_datetime'])->lt($compTime);
-                                                        }
-                                                    @endphp
-                                                    <div class="flex items-center justify-between text-[11px] font-medium bg-white px-2 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                                                        <span class="text-gray-800 truncate">{{ $p['name'] ?? 'Inconnu' }}</span>
-                                                        @if($compTime && $compTime->toDateString() === $day['date'])
-                                                            <div class="flex items-center gap-1 {{ $isTight ? 'text-red-500' : 'text-gray-400' }}">
-                                                                <x-heroicon-s-bolt class="w-3 h-3" />
-                                                                <span class="font-bold tabular-nums">{{ $compTime->format('H:i') }}</span>
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        @if(!empty($vehicle['note']))
-                                            <div class="mt-2 text-[10px] text-gray-500 italic px-1 flex gap-1 items-start">
-                                                <x-heroicon-s-information-circle class="w-3 h-3 shrink-0" />
-                                                {{ $vehicle['note'] }}
-                                            </div>
-                                        @endif
+                                        @endforelse
                                     </div>
                                 </div>
-                            @empty
-                                <div class="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                                    <p class="text-sm text-gray-500 font-medium italic">Aucun transport planifié pour cette journée.</p>
-                                </div>
-                            @endforelse
+                            @endforeach
                         </div>
                     </div>
 
+                    <!-- Hébergement Section Compact -->
                     @if(!$loop->last)
-                    <!-- Stay/Hosting Section -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 px-1">
-                            <x-heroicon-o-home class="w-5 h-5 text-gray-400" />
-                            <h3 class="font-bold text-gray-900 uppercase tracking-tight text-sm">Hébergement</h3>
+                            <x-heroicon-s-home class="w-3.5 h-3.5 text-gray-400" />
+                            <h3 class="font-black text-gray-900 uppercase tracking-widest text-[10px]">Hébergement</h3>
                         </div>
 
-                        <div class="space-y-3">
+                        <div class="grid grid-cols-1 gap-2">
                             @php $dayStay = $stayPlan[$day['date']] ?? []; @endphp
                             @forelse($dayStay as $room)
-                                <div class="bg-indigo-50/50 rounded-2xl border border-indigo-100 p-4 space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-2 min-w-0">
-                                            <div class="p-1 bg-white rounded shadow-sm text-indigo-600 border border-indigo-100">
-                                                <x-heroicon-s-home class="w-3 h-3" />
-                                            </div>
-                                            <h4 class="font-black text-indigo-900 text-[11px] uppercase truncate">{{ $room['name'] }}</h4>
-                                        </div>
-                                        <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">{{ count($room['occupant_ids']) }} pers.</span>
+                                <div class="bg-indigo-50/40 rounded-xl border border-indigo-100/50 p-2.5">
+                                    <div class="flex items-center justify-between mb-1.5 px-0.5">
+                                        <span class="text-[10px] font-black text-indigo-900 uppercase truncate">{{ $room['name'] }}</span>
+                                        <span class="text-[8px] font-bold text-indigo-400 uppercase tracking-tighter">{{ count($room['occupant_ids']) }} pers.</span>
                                     </div>
-                                    
-                                    <div class="flex flex-wrap gap-1.5">
+                                    <div class="flex flex-wrap gap-1">
                                         @foreach($room['occupant_ids'] as $pid)
-                                            <div class="px-2 py-1 bg-white rounded-lg border border-indigo-100 text-[10px] font-bold text-gray-800 shadow-sm">
+                                            <span class="px-1.5 py-0.5 bg-white text-indigo-700 text-[9px] font-bold rounded border border-indigo-50 shadow-sm">
                                                 {{ $participants[$pid]['name'] ?? '?' }}
-                                            </div>
+                                            </span>
                                         @endforeach
                                     </div>
                                     @if(!empty($room['note']))
-                                        <div class="text-[10px] text-indigo-400 italic font-medium leading-tight">
+                                        <div class="mt-1.5 text-[9px] text-indigo-400 italic font-medium leading-tight px-0.5">
                                             {{ $room['note'] }}
                                         </div>
                                     @endif
                                 </div>
                             @empty
-                                <div class="py-6 text-center bg-gray-50 rounded-2xl border border-gray-100">
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Pas d'hébergement<br>ce jour-là</p>
+                                <div class="py-4 text-center bg-gray-50/50 rounded-xl">
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Aucun</p>
                                 </div>
                             @endforelse
                         </div>
                     </div>
                     @endif
-
                 </div>
             </div>
         @endforeach
 
-        <!-- Global Summary / Athlètes -->
-        <div class="pt-8 border-t border-gray-100">
-            <div class="flex items-center justify-between mb-6">
+        <!-- Athletes Planning Compact -->
+        <div class="pt-6 border-t border-gray-100 space-y-4">
+            <div class="flex items-end justify-between">
                 <div>
-                    <h2 class="text-2xl font-black text-gray-900">Planning des Athlètes</h2>
-                    <p class="text-sm text-gray-500 font-medium">Récapitulatif des heures d'épreuve estimées.</p>
+                    <h2 class="text-xl font-black text-gray-900">Planning Athlètes</h2>
+                    <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Compétitions estimées</p>
+                    <div class="flex items-center gap-4 mt-1">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2 h-2 rounded-full bg-indigo-600"></div>
+                            <span class="text-[9px] font-bold text-gray-500 uppercase">1ère épreuve</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2 h-2 rounded-full border-2 border-indigo-200"></div>
+                            <span class="text-[9px] font-bold text-gray-500 uppercase">Dernière épreuve</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="bg-gray-50 border-b border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                            <th class="px-6 py-4">Athlète</th>
+                        <tr class="bg-gray-50/50 border-b border-gray-100 text-[9px] font-black uppercase tracking-widest text-gray-400">
+                            <th class="px-4 py-3">Athlète</th>
                             @foreach($days as $day)
-                                <th class="px-6 py-4">{{ $day['label'] }}</th>
+                                <th class="px-4 py-3">{{ $day['label'] }}</th>
                             @endforeach
-                            <th class="px-6 py-4">Note</th>
+                            <th class="px-4 py-3 text-right">Note</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         @foreach($participants as $p)
-                            <tr class="hover:bg-gray-50/50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-black text-gray-900">{{ $p['name'] }}</div>
+                            <tr class="hover:bg-gray-50/30 transition-colors">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="text-xs font-black text-gray-900">{{ $p['name'] }}</div>
                                 </td>
                                 @foreach($days as $day)
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-4 py-3 whitespace-nowrap">
                                         @php
                                             $first = $p['first_competition_datetime'] ?? null;
                                             $last = $p['last_competition_datetime'] ?? null;
                                             $isOnDay = $first && str_starts_with($first, $day['date']);
                                         @endphp
                                         @if($isOnDay)
-                                            <div class="inline-flex items-center gap-2 bg-indigo-50 px-2 py-1 rounded-lg">
-                                                <div class="text-xs font-black text-indigo-700 tabular-nums">
+                                            <div class="inline-flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                                                <span class="text-[10px] font-black text-indigo-600 tabular-nums">
                                                     {{ \Carbon\Carbon::parse($first)->format('H:i') }}
-                                                </div>
-                                                <div class="w-px h-3 bg-indigo-200"></div>
-                                                <div class="text-xs font-medium text-indigo-400 tabular-nums">
+                                                </span>
+                                                <span class="text-[8px] text-gray-300 font-bold">→</span>
+                                                <span class="text-[10px] font-medium text-gray-400 tabular-nums">
                                                     {{ $last ? \Carbon\Carbon::parse($last)->format('H:i') : '--:--' }}
-                                                </div>
+                                                </span>
                                             </div>
                                         @else
-                                            <span class="text-gray-300 text-xs">-</span>
+                                            <span class="text-gray-200 text-xs">-</span>
                                         @endif
                                     </td>
                                 @endforeach
-                                <td class="px-6 py-4 text-xs text-gray-500 italic font-medium">
-                                    {{ $p['note'] ?? '' }}
+                                <td class="px-4 py-3 text-right">
+                                    <span class="text-[10px] text-gray-400 italic font-medium max-w-[200px] truncate block ml-auto" title="{{ $p['survey_response']['remarks'] ?? '' }}">
+                                        {{ $p['survey_response']['remarks'] ?? '' }}
+                                    </span>
                                 </td>
                             </tr>
                         @endforeach
