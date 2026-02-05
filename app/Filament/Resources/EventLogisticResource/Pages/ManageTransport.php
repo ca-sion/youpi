@@ -17,14 +17,16 @@ class ManageTransport extends Page
 
     protected static string $view = 'filament.resources.event-logistic-resource.pages.manage-transport';
 
-    public $transportPlan = [];
-    public $stayPlan = [];
+    public $transportPlans = []; // ['YYYY-MM-DD' => [vehicles...]]
+    public $stayPlans = [];      // ['YYYY-MM-DD' => [rooms...]]
     public $unassignedTransport = [];
     public $unassignedStay = [];
     public $participantsMap = [];
     public $alerts = []; // [vehicleIndex => ['type' => 'msg']]
     public $globalAlerts = []; // ['msg' => '...']
     public $hotelNeededIds = [];
+    public $days = [];
+    public $selectedDay = null;
 
     public function mount(int | string $record): void
     {
@@ -34,8 +36,44 @@ class ManageTransport extends Page
 
     public function loadData()
     {
-        $this->transportPlan = $this->record->transport_plan ?? [];
-        $this->stayPlan = $this->record->stay_plan ?? [];
+        $settings = $this->record->settings ?? [];
+        $startDateStr = $settings['start_date'] ?? null;
+        $daysCount = (int)($settings['days_count'] ?? 2);
+
+        $this->days = [];
+        if ($startDateStr) {
+            $startDate = Carbon::parse($startDateStr);
+            for ($i = 0; $i < $daysCount; $i++) {
+                $date = $startDate->copy()->addDays($i);
+                $this->days[] = [
+                    'date' => $date->toDateString(),
+                    'label' => $date->translatedFormat('D d M'),
+                ];
+            }
+        }
+
+        if (!$this->selectedDay && !empty($this->days)) {
+            $this->selectedDay = $this->days[0]['date'];
+        }
+
+        // Load and Normalize Transport Plans
+        $rawTransport = $this->record->transport_plan ?? [];
+        if (isset($rawTransport[0])) { // Migration from flat array
+            $newTransport = [];
+            foreach ($rawTransport as $v) {
+                $day = $v['departure_datetime'] ? substr($v['departure_datetime'], 0, 10) : ($this->selectedDay ?? date('Y-m-d'));
+                $newTransport[$day][] = $v;
+            }
+            $rawTransport = $newTransport;
+        }
+        $this->transportPlans = $rawTransport;
+
+        // Load and Normalize Stay Plans
+        $rawStay = $this->record->stay_plan ?? [];
+        if (isset($rawStay[0])) { // Migration from flat array to first day
+            $rawStay = [$this->selectedDay => $rawStay];
+        }
+        $this->stayPlans = $rawStay;
         $participants = $this->record->participants_data ?? [];
         $this->participantsMap = collect($participants)->keyBy('id')->toArray();
         $this->alerts = [];
@@ -48,11 +86,6 @@ class ManageTransport extends Page
             $settings['bus_capacity'] = 50;
             $this->record->update(['settings' => $settings]);
         }
-        
-        // Ensure at least a Bus if empty?
-        if (empty($this->transportPlan)) {
-            // Check settings if bus exists?
-        }
 
         // Calculate unassigned & Alerts
         $assignedIds = [];
@@ -61,7 +94,8 @@ class ManageTransport extends Page
         $prep = $settings['temps_prep_min'] ?? 90;
         $dist = $settings['distance_km'] ?? 0;
 
-        foreach ($this->transportPlan as $index => $vehicle) {
+        $currentDayTransport = $this->transportPlans[$this->selectedDay] ?? [];
+        foreach ($currentDayTransport as $index => $vehicle) {
             $vPassengers = $vehicle['passengers'] ?? [];
             if (empty($vPassengers)) continue;
 
@@ -76,55 +110,73 @@ class ManageTransport extends Page
 
             // 2. Timing Alert
             if (!empty($vehicle['departure_datetime'])) {
-                $depTime = Carbon::parse($vehicle['departure_datetime']);
-                $speed = ($vehicle['type'] === 'bus') ? ($settings['vitesse_bus'] ?? 100) : ($settings['vitesse_voiture'] ?? 120);
-                $travelMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
-                
-                $arrivalEst = $depTime->copy()->addMinutes($travelMin); // Arrival at destination
-                
-                foreach ($vPassengers as $pid) {
-                    $p = $this->participantsMap[$pid] ?? null;
-                    if ($p && isset($p['first_competition_datetime'])) {
-                        $firstEvent = Carbon::parse($p['first_competition_datetime']);
-                        $neededArrival = $firstEvent->copy()->subMinutes($prep);
-                        
-                        if ($arrivalEst->gt($neededArrival)) {
-                             $lateMin = $arrivalEst->diffInMinutes($neededArrival);
-                             $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Retard échauffement: {$p['name']} (+{$lateMin}m)"];
+                try {
+                    $depTime = Carbon::parse($vehicle['departure_datetime']);
+                    $speed = ($vehicle['type'] === 'bus') ? ($settings['vitesse_bus'] ?? 100) : ($settings['vitesse_voiture'] ?? 120);
+                    $travelMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
+                    
+                    $arrivalEst = $depTime->copy()->addMinutes($travelMin);
+                    
+                    foreach ($vPassengers as $pid) {
+                        $p = $this->participantsMap[$pid] ?? null;
+                        if ($p && isset($p['first_competition_datetime'])) {
+                            $firstEvent = Carbon::parse($p['first_competition_datetime']);
+                            $neededArrival = $firstEvent->copy()->subMinutes($prep);
+                            
+                            if ($arrivalEst->gt($neededArrival)) {
+                                 $lateMin = $arrivalEst->diffInMinutes($neededArrival);
+                                 $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Retard échauffement: {$p['name']} (+{$lateMin}m)"];
+                            }
                         }
                     }
+                } catch (\Exception $e) {
+                    // Fail silently or log
                 }
             }
         }
 
         // Transport Unassigned
         $assignedTransportIds = [];
-        foreach ($this->transportPlan as $v) {
-            $assignedTransportIds = array_merge($assignedTransportIds, $v['passengers'] ?? []);
+        foreach ($this->transportPlans as $day => $vList) {
+            if ($day === $this->selectedDay) {
+                foreach ($vList as $v) {
+                    $assignedTransportIds = array_merge($assignedTransportIds, $v['passengers'] ?? []);
+                }
+            }
         }
-        $this->unassignedTransport = collect($participants)->reject(fn($p) => in_array($p['id'], $assignedTransportIds))->toArray();
+        
+        $this->unassignedTransport = collect($participants)
+            ->filter(function($p) {
+                $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
+                if (!$dayResp) return false;
+                
+                $allerMode = $dayResp['aller']['mode'] ?? '';
+                $retourMode = $dayResp['retour']['mode'] ?? '';
+                return $allerMode === 'bus' || $retourMode === 'bus' || $allerMode === 'car_seats' || $retourMode === 'car_seats';
+            })
+            ->reject(fn($p) => in_array($p['id'], $assignedTransportIds))
+            ->values()
+            ->toArray();
 
         // Stay Unassigned
         $assignedStayIds = [];
-        foreach ($this->stayPlan as $r) {
-            $assignedStayIds = array_merge($assignedStayIds, $r['occupant_ids'] ?? []);
+        foreach ($this->stayPlans as $day => $rList) {
+            if ($day === $this->selectedDay) {
+                foreach ($rList as $r) {
+                    $assignedStayIds = array_merge($assignedStayIds, $r['occupant_ids'] ?? []);
+                }
+            }
         }
         $this->unassignedStay = collect($participants)
-            ->filter(fn($p) => $p['survey_response']['hotel_needed'] ?? false) // Only those who need hotel?
+            ->filter(fn($p) => $p['survey_response']['hotel_needed'] ?? false)
             ->reject(fn($p) => in_array($p['id'], $assignedStayIds))
+            ->values()
             ->toArray();
 
         foreach ($participants as $p) {
             // 3. Hotel Alert
             $surveyHotel = $p['survey_response']['hotel_needed'] ?? false;
-            $inHotel = false;
-            $stayPlan = $this->record->stay_plan ?? [];
-            foreach ($stayPlan as $room) {
-                if (in_array($p['id'], $room['occupant_ids'] ?? [])) {
-                    $inHotel = true; 
-                    break;
-                }
-            }
+            $inHotel = in_array($p['id'], $assignedStayIds);
 
             if ($surveyHotel && !$inHotel) {
                  $this->globalAlerts[] = ['type' => 'danger', 'msg' => "Dodo manquant: {$p['name']}"];
@@ -134,14 +186,23 @@ class ManageTransport extends Page
         $this->dispatch('refresh-sortables');
     }
 
-    public function saveAllPlans($transport, $stay)
+    public function updatedSelectedDay()
     {
-        $this->transportPlan = $transport;
-        $this->stayPlan = $stay;
+        $this->record->update([
+            'transport_plan' => $this->transportPlans,
+            'stay_plan' => $this->stayPlans,
+        ]);
+        $this->loadData();
+    }
+
+    public function saveAllPlans($transportPlans, $stayPlans)
+    {
+        $this->transportPlans = $transportPlans;
+        $this->stayPlans = $stayPlans;
         
         $this->record->update([
-            'transport_plan' => $this->transportPlan,
-            'stay_plan' => $this->stayPlan,
+            'transport_plan' => $this->transportPlans,
+            'stay_plan' => $this->stayPlans,
         ]);
         
         Notification::make()->title('Logistique enregistrée avec succès')->success()->send();
@@ -150,9 +211,9 @@ class ManageTransport extends Page
     
     public function removeVehicle($index)
     {
-        if (isset($this->transportPlan[$index])) {
-            array_splice($this->transportPlan, $index, 1);
-            $this->record->update(['transport_plan' => $this->transportPlan]);
+        if (isset($this->transportPlans[$this->selectedDay][$index])) {
+            array_splice($this->transportPlans[$this->selectedDay], $index, 1);
+            $this->record->update(['transport_plan' => $this->transportPlans]);
             $this->loadData();
             Notification::make()->title('Véhicule supprimé')->success()->send();
         }
@@ -160,9 +221,9 @@ class ManageTransport extends Page
 
     public function removeRoom($index)
     {
-        if (isset($this->stayPlan[$index])) {
-            array_splice($this->stayPlan, $index, 1);
-            $this->record->update(['stay_plan' => $this->stayPlan]);
+        if (isset($this->stayPlans[$this->selectedDay][$index])) {
+            array_splice($this->stayPlans[$this->selectedDay], $index, 1);
+            $this->record->update(['stay_plan' => $this->stayPlans]);
             $this->loadData();
             Notification::make()->title('Chambre supprimée')->success()->send();
         }
@@ -170,13 +231,17 @@ class ManageTransport extends Page
 
     public function addRoom()
     {
-        $this->stayPlan[] = [
+        if (!isset($this->stayPlans[$this->selectedDay])) {
+            $this->stayPlans[$this->selectedDay] = [];
+        }
+
+        $this->stayPlans[$this->selectedDay][] = [
             'id' => 'room_' . uniqid(),
-            'name' => 'Chambre ' . (count($this->stayPlan) + 1),
+            'name' => 'Chambre ' . (count($this->stayPlans[$this->selectedDay]) + 1),
             'occupant_ids' => [],
             'note' => '',
         ];
-        $this->record->update(['stay_plan' => $this->stayPlan]);
+        $this->record->update(['stay_plan' => $this->stayPlans]);
         $this->loadData();
     }
 
@@ -185,57 +250,73 @@ class ManageTransport extends Page
         $settings = $this->record->settings ?? [];
         $defaultBusCapacity = $settings['bus_capacity'] ?? 50;
 
-        $this->transportPlan[] = [
+        if (!isset($this->transportPlans[$this->selectedDay])) {
+            $this->transportPlans[$this->selectedDay] = [];
+        }
+
+        $this->transportPlans[$this->selectedDay][] = [
             'id' => 'manual_' . uniqid(),
             'type' => $type,
             'name' => ($type === 'bus' ? 'Nouveau Bus' : 'Nouvelle Voiture'),
             'capacity' => ($type === 'bus' ? $defaultBusCapacity : 4),
             'passengers' => [],
             'driver' => 'À définir',
-            'departure_datetime' => null,
-            'departure_location' => 'Stade de Sion',
+            'departure_datetime' => $this->selectedDay . ' 08:00:00',
+            'departure_location' => 'Sion, piscine',
             'note' => '',
         ];
-        $this->record->update(['transport_plan' => $this->transportPlan]);
+        $this->record->update(['transport_plan' => $this->transportPlans]);
         $this->loadData();
         Notification::make()->title('Véhicule ajouté')->success()->send();
     }
     
     public function autoDispatch()
     {
-        // 1. Get all candidates (exclude personal transport)
+        // 1. Get all candidates for the selected day (only bus needs)
         $participants = $this->record->participants_data ?? [];
         $candidates = [];
         foreach ($participants as $p) {
-            $mode = $p['survey_response']['transport_mode'] ?? null;
-            if ($mode === 'perso' || $mode === 'train') continue; 
-            $candidates[] = $p;
+            $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
+            if (!$dayResp) continue;
+
+            $allerMode = $dayResp['aller']['mode'] ?? '';
+            $retourMode = $dayResp['retour']['mode'] ?? '';
+
+            if ($allerMode === 'bus' || $retourMode === 'bus') {
+                $candidates[] = $p;
+            }
         }
 
         // 2. Identify Vehicles
         $settings = $this->record->settings ?? [];
-        $defaultBusCapacity = $settings['bus_capacity'] ?? 12;
+        $defaultBusCapacity = $settings['bus_capacity'] ?? 50;
         
         $vehicles = [];
-        // Add a Bus Club by default
+        // Add a Bus by default
         $vehicles[] = [
-            'id' => 'bus_1',
+            'id' => 'bus_' . $this->selectedDay,
             'type' => 'bus',
-            'name' => 'Bus Club',
+            'name' => Carbon::parse($this->selectedDay)->translatedFormat('D') . ' - Bus du club',
             'capacity' => $defaultBusCapacity,
             'passengers' => [],
             'driver' => 'Chauffeur Bus'
         ];
 
-        // Parent Cars from Survey
+        // Parent Cars from Survey for the selected day
         foreach ($participants as $p) {
-            $seats = $p['survey_response']['voiture_seats'] ?? 0;
-            if ($seats > 0) {
+            $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
+            if (!$dayResp) continue;
+
+            $allerSeats = (int)($dayResp['aller']['seats'] ?? 0);
+            $retourSeats = (int)($dayResp['retour']['seats'] ?? 0);
+            $maxSeats = max($allerSeats, $retourSeats);
+
+            if ($maxSeats > 0) {
                  $vehicles[] = [
-                     'id' => 'car_' . $p['id'],
+                     'id' => 'car_' . $p['id'] . '_' . $this->selectedDay,
                      'type' => 'car',
                      'name' => 'Voiture ' . $p['name'],
-                     'capacity' => (int)$seats,
+                     'capacity' => $maxSeats,
                      'passengers' => [$p['id']], 
                      'driver' => 'Parent ' . $p['name']
                  ];
@@ -255,7 +336,7 @@ class ManageTransport extends Page
 
         foreach ($vehicles as &$v) {
             if ($v['type'] !== 'car') continue;
-            $slots = $v['capacity'];
+            $slots = $v['capacity'] - count($v['passengers']);
             while ($slots > 0 && !empty($candidates)) {
                 $p = array_shift($candidates);
                  $v['passengers'][] = $p['id'];
@@ -264,8 +345,7 @@ class ManageTransport extends Page
         }
         unset($v);
 
-        // 4. Calculate Departure Times
-        $settings = $this->record->settings ?? [];
+        // 4. Calculate Departure Times (Approximate based on first competition)
         $dist = $settings['distance_km'] ?? 0;
         $prep = $settings['temps_prep_min'] ?? 90;
         
@@ -280,108 +360,80 @@ class ManageTransport extends Page
                 $p = collect($participants)->firstWhere('id', $pid);
                 if ($p && isset($p['first_competition_datetime'])) {
                     $dt = Carbon::parse($p['first_competition_datetime']);
-                    if (!$firstTime || $dt->lt($firstTime)) {
-                        $firstTime = $dt;
+                    // Only care about events on the selected day
+                    if ($dt->toDateString() === $this->selectedDay) {
+                        if (!$firstTime || $dt->lt($firstTime)) {
+                            $firstTime = $dt;
+                        }
                     }
                 }
             }
             
             if ($firstTime) {
                 $v['departure_datetime'] = $firstTime->copy()->subMinutes($totalOffset)->toDateTimeString();
-                $v['departure_location'] = 'Stade de Sion';
+                $v['departure_location'] = 'Sion, piscine';
             } else {
                 $v['departure_datetime'] = null;
             }
         }
+        unset($v);
 
-        $this->transportPlan = $vehicles;
-        $this->record->update(['transport_plan' => $this->transportPlan]);
+        $this->transportPlans[$this->selectedDay] = $vehicles;
+        $this->record->update(['transport_plan' => $this->transportPlans]);
         $this->loadData();
-        Notification::make()->title('Calcul automatique terminé (Réinitialisation effectuée)')->success()->send();
+        Notification::make()->title('Calcul automatique terminé (Jour : ' . $this->selectedDay . ')')->success()->send();
     }
     
     protected function getHeaderActions(): array
     {
         return [
              Action::make('auto_dispatch')
-                ->label('Auto-Dispatch (Reset)')
-                ->tooltip('Génère un plan basé sur les sondages (écrase le plan actuel)')
+                ->label(fn() => "Calcul Auto " . ($this->selectedDay ? "($this->selectedDay)" : ""))
+                ->tooltip('Génère un plan pour le jour sélectionné (écrase le plan actuel de ce jour)')
                 ->requiresConfirmation()
-                ->modalHeading('Réinitialiser le plan ?')
-                ->modalDescription('Cela va supprimer le plan actuel pour en générer un nouveau à partir des réponses au sondage.')
+                ->modalHeading('Réinitialiser le plan pour ce jour ?')
+                ->modalDescription('Cela va supprimer les attributions actuelles des véhicules pour générer un nouveau plan basé sur les sondages.')
                 ->action(fn() => $this->autoDispatch())
                 ->color('danger')
                 ->icon('heroicon-o-arrow-path'),
              
              Action::make('add_car')
-                ->label('Ajouter Voiture')
+                ->label('Voiture')
                 ->icon('heroicon-o-plus')
                 ->action(fn() => $this->addVehicle('car'))
                 ->color('gray'),
 
              Action::make('add_bus')
-                ->label('Ajouter Bus')
+                ->label('Bus')
                 ->icon('heroicon-o-plus')
                 ->action(fn() => $this->addVehicle('bus'))
                 ->color('gray'),
 
             Action::make('add_room')
-                ->label('Ajouter Chambre')
+                ->label('Chambre')
                 ->icon('heroicon-o-home')
                 ->action(fn() => $this->addRoom())
                 ->color('gray'),
-
-            Action::make('editVehicle')
-                ->hidden() // Hide from header but keep available for mountAction
-                ->modalWidth('lg')
-                ->form([
-                    \Filament\Forms\Components\TextInput::make('name')->label('Nom du véhicule')->required(),
-                    \Filament\Forms\Components\TextInput::make('driver')->label('Chauffeur'),
-                    \Filament\Forms\Components\TextInput::make('capacity')->label('Capacité')->numeric()->required(),
-                    \Filament\Forms\Components\DateTimePicker::make('departure_datetime')->label('Date/Heure de départ'),
-                    \Filament\Forms\Components\TextInput::make('departure_location')->label('Lieu de départ'),
-                    \Filament\Forms\Components\Textarea::make('note')->label('Notes'),
-                ])
-                ->fillForm(function (array $arguments) {
-                    $index = $arguments['index'] ?? null;
-                    if ($index !== null && isset($this->transportPlan[$index])) {
-                        return $this->transportPlan[$index];
-                    }
-                    return [];
-                })
-                ->action(function (array $data, array $arguments) {
-                    $index = $arguments['index'];
-                    if (isset($this->transportPlan[$index])) {
-                        $this->transportPlan[$index] = array_merge($this->transportPlan[$index], $data);
-                        $this->record->update(['transport_plan' => $this->transportPlan]);
-                        $this->loadData();
-                        Notification::make()->title('Véhicule mis à jour')->success()->send();
-                    }
-                }),
-
-            Action::make('editRoom')
-                ->hidden() // Hide from header
-                ->modalWidth('lg')
-                ->form([
-                    \Filament\Forms\Components\TextInput::make('name')->label('Nom de la chambre')->required(),
-                    \Filament\Forms\Components\Textarea::make('note')->label('Notes / Détails'),
-                ])
-                ->fillForm(function (array $arguments) {
-                    $index = $arguments['index'] ?? null;
-                    if ($index !== null && isset($this->stayPlan[$index])) {
-                        return $this->stayPlan[$index];
-                    }
-                    return [];
-                })
-                ->action(function (array $data, array $arguments) {
-                    $index = $arguments['index'];
-                    if (isset($this->stayPlan[$index])) {
-                        $this->stayPlan[$index] = array_merge($this->stayPlan[$index], $data);
-                        $this->record->update(['stay_plan' => $this->stayPlan]);
-                        $this->loadData();
-                        Notification::make()->title('Chambre mise à jour')->success()->send();
-                    }
-                }),
         ];
+    }
+
+    public function getParticipantTimes($pId)
+    {
+        $p = $this->participantsMap[$pId] ?? null;
+        if (!$p) return null;
+
+        $start = $p['first_competition_datetime'] ?? null;
+        $end = $p['last_competition_datetime'] ?? null;
+
+        if (!$start) return null;
+
+        // Filter for selected day
+        $startDt = Carbon::parse($start);
+        if ($startDt->toDateString() !== $this->selectedDay) return null;
+
+        $startStr = $startDt->format('H:i');
+        $endStr = $end ? Carbon::parse($end)->format('H:i') : '...';
+
+        return "{$startStr} - {$endStr}";
     }
 }

@@ -1,325 +1,448 @@
 <x-filament-panels::page>
     <div
-        x-data="transportBoard()"
-        x-init="initWait()"
-        x-on:refresh-sortables.window="setupSortables()"
-        class="space-y-6"
+        x-data="transportBoard({
+            transportPlans: @entangle('transportPlans'),
+            stayPlans: @entangle('stayPlans'),
+            unassignedTransport: @entangle('unassignedTransport'),
+            unassignedStay: @entangle('unassignedStay'),
+            participantsMap: @js($participantsMap),
+            hotelNeededIds: @js($hotelNeededIds),
+            globalAlerts: @entangle('globalAlerts'),
+            alerts: @entangle('alerts'),
+            selectedDay: @entangle('selectedDay').live,
+            days: @js($days)
+        })"
+        x-init="init()"
+        x-on:refresh-sortables.window="$nextTick(() => setupSortables())"
+        class="space-y-4"
     >
-        <!-- Instructions -->
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 shadow-sm rounded-r-lg">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
+        <!-- Header -->
+        <div class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                    <x-heroicon-o-truck class="w-5 h-5" />
                 </div>
-                <div class="ml-3 text-sm text-blue-700">
-                    <p>
-                        <strong>Mode d'emploi :</strong> Glissez les athlètes entre les colonnes. Les sections <strong>Transport</strong> et <strong>Hébergement</strong> sont indépendantes. Utilisez l'icône <svg class="inline w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg> sur les cartes pour modifier les détails.
-                    </p>
+                <div>
+                    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-tight">Logistique Flux</h2>
+                    <p class="text-xs text-gray-500 font-medium" x-text="formatDate(selectedDay)"></p>
                 </div>
             </div>
-        </div>
 
-        <div class="flex justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div class="flex items-center gap-4">
-                <h2 class="text-xl font-bold text-gray-800">1. Transport</h2>
-                <div class="text-sm text-gray-500 italic">
-                    N'oubliez pas d'enregistrer après vos modifications.
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg">
+                    <span class="text-xs font-bold text-gray-400 uppercase">Jour</span>
+                    <select x-model="selectedDay" class="bg-transparent border-none p-0 text-sm font-bold text-gray-700 focus:ring-0 cursor-pointer w-32">
+                        <template x-for="day in days" :key="day.date">
+                            <option :value="day.date" x-text="day.label" :selected="day.date === selectedDay"></option>
+                        </template>
+                    </select>
                 </div>
-            </div>
-            <div class="flex gap-2">
+
                 <x-filament::button 
                     x-on:click="saveAll()" 
-                    color="success" 
-                    icon="heroicon-o-check-circle"
-                    size="lg"
+                    color="primary" 
+                    size="sm"
+                    icon="heroicon-m-check"
                 >
-                    Enregistrer tout le Plan
+                    Enregistrer
                 </x-filament::button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Transport Unassigned Column -->
-            <div class="lg:col-span-1 bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col h-[600px]">
-                <h3 class="font-bold text-gray-700 mb-2 flex justify-between items-center">
-                    <span>Athlètes (Transport)</span>
-                    <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full font-mono">{{ count($unassignedTransport) }}</span>
-                </h3>
-                <div id="transport-unassigned-list" class="flex-1 overflow-y-auto space-y-2 min-h-[100px] p-1" data-group="transport">
-                    @foreach($unassignedTransport as $p)
-                        <div wire:key="un-t-{{ $p['id'] }}" class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 cursor-move hover:border-blue-300 hover:shadow-md transition-all relative group" data-id="{{ $p['id'] }}">
-                            <div class="font-medium text-gray-900">{{ $p['name'] }}</div>
-                            <div class="text-[10px] text-gray-500 flex justify-between mt-1">
-                                <span>{{ $p['survey_response']['transport_mode'] ?? '?' }}</span>
-                                @if(in_array($p['id'], $hotelNeededIds))
-                                    <span class="text-blue-500 font-bold">🏠 Hôtel</span>
-                                @endif
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left: Unassigned Transport -->
+            <div class="lg:col-span-2 flex flex-col gap-4">
+                <div class="bg-gray-50 border border-gray-200 rounded-xl flex flex-col h-[calc(100vh-220px)] sticky top-6 overflow-hidden">
+                    <div class="p-3 border-b border-gray-200 bg-gray-100 flex justify-between items-center">
+                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest">Attente Transport</h3>
+                        <span class="text-xs font-bold bg-white border border-gray-200 px-1.5 rounded-full text-gray-600" x-text="unassignedTransport.length"></span>
+                    </div>
+                    
+                    <div wire:ignore id="transport-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="transport">
+                        <template x-for="p in unassignedTransport" :key="p.id">
+                            <div class="bg-white border border-gray-200 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-400 hover:shadow-md transition-all group relative" :data-id="p.id">
+                                <div class="flex justify-between items-start gap-2">
+                                    <div class="text-xs font-bold text-gray-800 leading-tight w-full" x-text="p.name"></div>
+                                    <template x-if="hotelNeededIds.includes(p.id)">
+                                        <x-heroicon-s-home class="w-3 h-3 text-indigo-400 shrink-0" />
+                                    </template>
+                                </div>
+                                <div class="mt-1.5 inline-flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" x-show="getParticipantTimes(p)">
+                                     <x-heroicon-s-clock class="w-3 h-3 text-gray-400" />
+                                     <span class="text-xs font-mono font-medium text-gray-600" x-text="getParticipantTimes(p)"></span>
+                                </div>
+                                <div class="flex flex-wrap gap-1 mt-1.5">
+                                    <template x-if="getTransportMode(p, 'aller')">
+                                        <span class="text-xs font-bold px-1.5 py-0.5 rounded border" 
+                                              :class="getTransportMode(p, 'aller') === 'bus' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-gray-50 text-gray-500 border-gray-100'"
+                                              x-text="'A: ' + getTransportMode(p, 'aller').substring(0,3)"></span>
+                                    </template>
+                                    <template x-if="getTransportMode(p, 'retour')">
+                                        <span class="text-xs font-bold px-1.5 py-0.5 rounded border" 
+                                              :class="getTransportMode(p, 'retour') === 'bus' ? 'bg-orange-50 text-orange-700 border-orange-100' : 'bg-gray-50 text-gray-500 border-gray-100'"
+                                              x-text="'R: ' + getTransportMode(p, 'retour').substring(0,3)"></span>
+                                    </template>
+                                </div>
                             </div>
-                        </div>
-                    @endforeach
+                        </template>
+                    </div>
                 </div>
             </div>
 
-            <!-- Vehicles Columns -->
-            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto h-[600px] content-start pr-2">
-                @foreach($transportPlan as $index => $vehicle)
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col transition-all hover:shadow-md" wire:key="v-{{ $vehicle['id'] ?? $index }}">
-                        <div class="flex justify-between items-start mb-3 pb-3 border-b border-gray-100">
-                            <div class="flex-1">
-                                <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
-                                    @if(($vehicle['type'] ?? 'car') === 'bus')
-                                        <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8a2 2 0 012 2v10a2 2 0 01-2 2H8a2 2 0 01-2-2V9a2 2 0 012-2zm0 0V5a2 2 0 012-2h4a2 2 0 012 2v2M9 17h.01M15 17h.01" /></svg>
-                                    @else
-                                        <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                    @endif
-                                    {{ $vehicle['name'] }}
-                                </h3>
-                                <div class="text-xs text-gray-500 italic">{{ $vehicle['driver'] ?? 'À définir' }}</div>
-                            </div>
-                            <div class="flex flex-col items-end gap-2">
-                                <span class="inline-block {{ count($vehicle['passengers']) > ($vehicle['capacity'] ?? 0) ? 'bg-red-100 text-red-800 font-bold' : 'bg-blue-100 text-blue-800' }} text-[10px] px-2 py-0.5 rounded-full">
-                                    {{ count($vehicle['passengers']) }} / {{ $vehicle['capacity'] }}
-                                </span>
-                                <div class="flex gap-2">
-                                    <button 
-                                        x-on:click="$wire.mountAction('editVehicle', { index: {{ $index }} })"
-                                        class="text-gray-400 hover:text-blue-600 transition-colors"
-                                        title="Modifier les détails"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                    </button>
-                                    <button 
-                                        wire:click="removeVehicle({{ $index }})" 
-                                        wire:confirm="Supprimer ce transport ?"
-                                        class="text-gray-300 hover:text-red-500 transition-colors"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
-                                </div>
-                            </div>
+            <!-- Right: Kanban -->
+            <div class="lg:col-span-10 flex flex-col gap-8">
+                
+                <!-- Section 1: Transports -->
+                <div class="bg-white border border-gray-200 rounded-xl p-1">
+                    <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">1. Transports & Véhicules</h3>
                         </div>
-                        
-                        <div class="mb-3 text-[10px] space-y-1 bg-gray-50 p-2 rounded-lg border border-gray-100">
-                             <div class="flex justify-between items-center text-gray-600">
-                                <span class="font-medium">Départ :</span>
-                                <span class="font-mono font-bold px-2 py-0.5 rounded {{ empty($vehicle['departure_datetime'] ?? null) ? 'text-red-500 bg-red-50' : 'text-green-700 bg-green-50' }}">
-                                    {{ ($vehicle['departure_datetime'] ?? null) ? \Carbon\Carbon::parse($vehicle['departure_datetime'])->format('H:i') : 'TBD' }} 
-                                    @if(!empty($vehicle['departure_location'])) | {{ $vehicle['departure_location'] }} @endif
-                                </span>
-                             </div>
+                        <div class="flex gap-2">
+                             <x-filament::button wire:click="mountAction('auto_dispatch')" color="gray" size="sm" variant="outlined">Auto Distribute</x-filament::button>
+                             <x-filament::button wire:click="addVehicle('car')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture</x-filament::button>
+                             <x-filament::button wire:click="addVehicle('bus')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus</x-filament::button>
+                        </div>
+                    </div>
 
-                             @if(!empty($vehicle['note']))
-                                <div class="text-gray-500 italic mt-1 border-t pt-1">Note: {{ $vehicle['note'] }}</div>
-                             @endif
-                             
-                             @if(isset($alerts[$index]))
-                                <div class="space-y-1 pt-2">
-                                    @foreach($alerts[$index] as $alert)
-                                        <div class="flex items-start text-[9px] leading-tight px-2 py-1 rounded {{ $alert['type'] == 'danger' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800' }}">
-                                            <svg class="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {{ $alert['msg'] }}
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 p-3 bg-gray-50/50 min-h-[200px] rounded-lg">
+                        <template x-for="(v, index) in (transportPlans[selectedDay] || [])" :key="v.id || index">
+                            <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all group overflow-hidden flex flex-col">
+                                <!-- Card Header -->
+                                <div class="px-3 py-2 bg-gray-50 border-b border-gray-100 flex justify-between items-start gap-2">
+                                    <div class="flex-1 min-w-0 space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            <template x-if="v.type === 'bus'">
+                                                <div class="p-1 bg-blue-100 text-blue-600 rounded">
+                                                    <x-heroicon-s-truck class="w-3.5 h-3.5" />
+                                                </div>
+                                            </template>
+                                            <template x-if="v.type !== 'bus'">
+                                                <div class="p-1 bg-gray-100 text-gray-500 rounded">
+                                                    <x-heroicon-s-users class="w-3.5 h-3.5" />
+                                                </div>
+                                            </template>
+                                            <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-gray-800 focus:ring-0 w-full truncate placeholder-gray-300" placeholder="NOM VÉHICULE">
                                         </div>
-                                    @endforeach
+                                        <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-xs font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300" placeholder="Nom du chauffeur...">
+                                        
+                                        <!-- Vehicle specific alerts -->
+                                        <div class="flex flex-col gap-1 mt-1">
+                                            <template x-for="alert in (alerts[index] || [])">
+                                                <div class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border"
+                                                     :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
+                                                    <x-heroicon-s-exclamation-triangle class="w-3 h-3 shrink-0" />
+                                                    <span x-text="alert.msg"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <button x-on:click="removeVehicle(index)" class="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors" title="Supprimer">
+                                            <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
+                                        </button>
+                                        <div class="flex items-center bg-white border border-gray-200 rounded px-1.5 py-0.5">
+                                            <span class="text-xs font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-600' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
+                                            <span class="text-xs text-gray-300 mx-0.5">/</span>
+                                            <input type="number" x-model.number="v.capacity" class="w-6 p-0 border-none bg-transparent text-xs font-bold text-gray-500 focus:ring-0 text-center">
+                                        </div>
+                                    </div>
                                 </div>
-                             @endif
-                        </div>
 
-                        <div id="vehicle-{{ $index }}" class="flex-1 space-y-1 min-h-[60px] bg-gray-50/50 p-2 rounded-lg border-2 border-dashed border-gray-200" data-group="transport" data-vehicle-index="{{ $index }}">
-                            @foreach($vehicle['passengers'] as $pid)
-                                @php $p = $participantsMap[$pid] ?? ['name' => '?', 'id' => $pid]; @endphp
-                                <div class="bg-white p-2 rounded shadow-sm border border-gray-100 cursor-move hover:border-blue-300 transition-all font-medium text-xs text-gray-700 flex justify-between" data-id="{{ $pid }}">
-                                    <span>{{ $p['name'] }}</span>
-                                    @if(in_array($pid, $hotelNeededIds))
-                                        <span class="text-[9px] text-blue-500">🏠</span>
-                                    @endif
+                                <!-- Time & Location Inputs -->
+                                <div class="px-3 py-2 grid grid-cols-2 gap-2 border-b border-gray-50">
+                                    <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors">
+                                        <label class="text-xs font-black text-gray-400 uppercase block">Départ</label>
+                                        <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4">
+                                    </div>
+                                    <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors">
+                                        <label class="text-xs font-black text-gray-400 uppercase block">Lieu</label>
+                                        <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Ex: Stade">
+                                    </div>
                                 </div>
-                            @endforeach
-                        </div>
+
+                                <!-- Passengers Drop Zone -->
+                                <div class="flex-1 bg-gray-50/30 p-2">
+                                    <div wire:ignore
+                                         class="min-h-[60px] space-y-1 rounded border-2 border-dashed border-transparent transition-colors" 
+                                         :class="(v.passengers || []).length === 0 ? 'border-gray-200 bg-gray-50 flex items-center justify-center' : ''"
+                                         :id="'v-list-' + index" 
+                                         data-group="transport" 
+                                         :data-index="index">
+                                        
+                                        <template x-if="(v.passengers || []).length === 0">
+                                            <span class="text-xs text-gray-300 font-medium select-none pointer-events-none">Glisser ici</span>
+                                        </template>
+
+                                        <template x-for="pId in v.passengers" :key="pId">
+                                            <div class="flex items-center justify-between px-2 py-1.5 bg-white border border-gray-200 rounded shadow-sm group/p hover:border-blue-300 cursor-grab active:cursor-grabbing" :data-id="pId">
+                                                <div class="flex items-center gap-2 overflow-hidden">
+                                                    <div class="w-1 h-3 rounded-full bg-blue-400 shrink-0"></div>
+                                                    <span class="text-xs font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : 'Inconnu'"></span>
+                                                </div>
+                                                <template x-if="hotelNeededIds.includes(pId)">
+                                                    <x-heroicon-s-home class="w-3 h-3 text-indigo-400" />
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-2 border-t border-gray-100 bg-gray-50">
+                                    <input type="text" x-model="v.note" class="w-full p-1.5 border border-gray-200 rounded text-xs text-gray-600 focus:border-blue-400 focus:ring-0" placeholder="Note interne...">
+                                </div>
+                            </div>
+                        </template>
                     </div>
-                @endforeach
-            </div>
-        </div>
+                </div>
 
-        <hr class="my-8 border-gray-200" />
 
-        <!-- Stay Management Section -->
-        <div class="flex justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h2 class="text-xl font-bold text-gray-800">2. Hébergement (Hôtel)</h2>
-            <div class="text-sm text-gray-500 italic">
-                Glissez les athlètes ayant besoin d'un hôtel dans les chambres.
-            </div>
-        </div>
+                <!-- Section 2: Hébergement -->
+                <div class="bg-white border border-gray-200 rounded-xl p-1">
+                     <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
+                         <div class="flex items-center gap-3">
+                             <span class="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
+                             <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">2. Hébergement & Chambres</h3>
+                         </div>
+                         <x-filament::button wire:click="addRoom" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Ajouter Chambre</x-filament::button>
+                     </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Stay Unassigned Column -->
-            <div class="lg:col-span-1 bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col h-[600px]">
-                <h3 class="font-bold text-gray-700 mb-2 flex justify-between items-center">
-                    <span>Athlètes (Stay)</span>
-                    <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full font-mono">{{ count($unassignedStay) }}</span>
-                </h3>
-                <div id="stay-unassigned-list" class="flex-1 overflow-y-auto space-y-2 min-h-[100px] p-1" data-group="stay">
-                    @foreach($unassignedStay as $p)
-                        <div wire:key="un-s-{{ $p['id'] }}" class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-move hover:border-indigo-300 hover:shadow-md transition-all relative group" data-id="{{ $p['id'] }}">
-                            <div class="font-medium text-gray-900">{{ $p['name'] }}</div>
-                             <div class="text-[10px] text-indigo-500 font-bold">🏠 Hôtel requis</div>
+                     <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-3">
+                        <!-- HOUSING WAITING LIST -->
+                        <div class="lg:col-span-1 bg-indigo-50 border border-indigo-100 rounded-xl flex flex-col h-[350px] overflow-hidden">
+                            <div class="p-3 border-b border-indigo-100 bg-indigo-50/50 flex justify-between items-center">
+                                <h3 class="text-xs font-black text-indigo-400 uppercase tracking-widest">En Attente</h3>
+                                <span class="text-xs font-bold bg-white text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100" x-text="unassignedStay.length"></span>
+                            </div>
+                            <div wire:ignore id="stay-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="stay">
+                                <template x-for="p in unassignedStay" :key="p.id">
+                                    <div class="bg-white border border-indigo-100 p-2.5 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-300 hover:shadow" :data-id="p.id">
+                                        <div class="text-xs font-bold text-gray-700 truncate" x-text="p.name"></div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
-                    @endforeach
+
+                        <!-- ROOMS GRID -->
+                        <div class="lg:col-span-5 grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <template x-for="(r, index) in (stayPlans[selectedDay] || [])" :key="r.id || index">
+                                <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-300 transition-all flex flex-col">
+                                    <div class="px-3 py-2 bg-indigo-50/30 border-b border-indigo-50 flex justify-between items-center">
+                                        <div class="flex items-center gap-2 flex-1">
+                                            <div class="text-indigo-500">
+                                                <x-heroicon-s-home class="w-3.5 h-3.5" />
+                                            </div>
+                                            <input type="text" x-model="r.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-indigo-900 focus:ring-0 w-full placeholder-indigo-300" placeholder="NOM CHAMBRE">
+                                        </div>
+                                        <button x-on:click="removeRoom(index)" class="text-gray-300 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors">
+                                            <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="flex-1 p-2">
+                                        <div wire:ignore
+                                             class="min-h-[80px] space-y-1 rounded border-2 border-dashed border-transparent transition-all"
+                                             :class="(r.occupant_ids || []).length === 0 ? 'border-indigo-100 bg-indigo-50/10 flex items-center justify-center' : ''"
+                                             :id="'r-list-' + index" 
+                                             data-group="stay" 
+                                             :data-index="index">
+                                             
+                                            <template x-if="(r.occupant_ids || []).length === 0">
+                                                <span class="text-xs text-indigo-200 font-medium select-none pointer-events-none">Glisser occupants</span>
+                                            </template>
+
+                                            <template x-for="pId in (r.occupant_ids || [])" :key="pId">
+                                                <div class="flex items-center justify-between px-2 py-1.5 bg-indigo-50 border border-indigo-100 rounded text-indigo-900 cursor-grab active:cursor-grabbing hover:bg-white hover:shadow-sm transition-all" :data-id="pId">
+                                                    <span class="text-xs font-bold truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="p-2 border-t border-gray-50">
+                                        <textarea x-model="r.note" rows="1" class="w-full p-1.5 bg-gray-50 border border-gray-100 rounded text-xs text-gray-600 focus:border-indigo-300 focus:ring-0 resize-none" placeholder="Note chambre..."></textarea>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                     </div>
                 </div>
             </div>
-
-            <!-- Rooms Columns -->
-            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto h-[600px] content-start pr-2">
-                @foreach($stayPlan as $index => $room)
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col transition-all hover:shadow-md" wire:key="stay-{{ $room['id'] ?? $index }}">
-                        <div class="flex justify-between items-start mb-3 pb-3 border-b border-gray-100">
-                            <div class="flex-1">
-                                <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                                    {{ $room['name'] ?? 'Chambre' }}
-                                </h3>
-                                @if(!empty($room['note']))
-                                    <div class="text-[10px] text-gray-500 italic">{{ \Illuminate\Support\Str::limit($room['note'], 40) }}</div>
-                                @endif
-                            </div>
-                            <div class="flex gap-1">
-                                <button 
-                                    x-on:click="$wire.mountAction('editRoom', { index: {{ $index }} })"
-                                    class="p-1 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                    title="Modifier la chambre"
-                                >
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                </button>
-                                <button 
-                                    wire:click="removeRoom({{ $index }})" 
-                                    wire:confirm="Supprimer cette chambre ?"
-                                    class="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Supprimer la chambre"
-                                >
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="room-{{ $index }}" class="flex-1 space-y-1 min-h-[60px] bg-indigo-50/30 p-2 rounded-lg border-2 border-dashed border-indigo-100" data-group="stay" data-room-index="{{ $index }}">
-                            @foreach($room['occupant_ids'] ?? [] as $pid)
-                                @php $p = $participantsMap[$pid] ?? ['name' => '?', 'id' => $pid]; @endphp
-                                <div class="bg-white p-2 rounded shadow-sm border border-gray-100 cursor-move hover:border-indigo-300 transition-all font-medium text-xs text-gray-700 flex justify-between" data-id="{{ $pid }}">
-                                    <span>{{ $p['name'] }}</span>
-                                    <span class="text-[9px] text-blue-500 font-bold">🏠</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endforeach
-            </div>
         </div>
 
-        @if(!empty($globalAlerts))
-            <div class="mt-12 p-6 bg-white rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                <h4 class="font-bold text-gray-800 text-lg flex items-center gap-2">
-                    <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                    Alertes Générales
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    @foreach($globalAlerts as $alert)
-                        <div class="flex items-center text-sm px-4 py-3 rounded-xl border {{ $alert['type'] == 'danger' ? 'bg-red-50 border-red-100 text-red-800' : 'bg-orange-50 border-orange-100 text-orange-800' }}">
-                            {{ $alert['msg'] }}
+        <!-- Floating Alerts -->
+        <template x-if="globalAlerts.length > 0">
+            <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
+                <template x-for="alert in globalAlerts" :key="alert.msg">
+                    <div x-transition:enter="transition ease-out duration-300 transform"
+                         x-transition:enter-start="translate-x-full opacity-0"
+                         x-transition:enter-end="translate-x-0 opacity-100"
+                         x-transition:leave="transition ease-in duration-200 transform"
+                         x-transition:leave-start="translate-x-0 opacity-100"
+                         x-transition:leave-end="translate-x-full opacity-0"
+                         class="bg-white border-l-4 shadow-lg rounded-r p-3 flex items-start gap-3 pointer-events-auto"
+                         :class="alert.type === 'danger' ? 'border-red-500' : 'border-orange-500'">
+                        <div class="shrink-0" :class="alert.type === 'danger' ? 'text-red-500' : 'text-orange-500'">
+                            <x-heroicon-s-exclamation-triangle class="w-5 h-5" />
                         </div>
-                    @endforeach
-                </div>
+                        <div class="text-xs font-medium text-gray-700" x-text="alert.msg"></div>
+                    </div>
+                </template>
             </div>
-        @endif
+        </template>
     </div>
 
-    <!-- Modals & Scripts -->
     <x-filament-actions::modals />
 
+    @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script>
-        function transportBoard() {
+        function transportBoard(config) {
             return {
-                initWait() {
+                transportPlans: config.transportPlans,
+                stayPlans: config.stayPlans,
+                unassignedTransport: config.unassignedTransport,
+                unassignedStay: config.unassignedStay,
+                participantsMap: config.participantsMap,
+                hotelNeededIds: config.hotelNeededIds,
+                globalAlerts: config.globalAlerts || [],
+                alerts: config.alerts || {},
+                selectedDay: config.selectedDay,
+                days: config.days,
+
+                init() {
                     this.setupSortables();
-                    
-                    // Hook into Livewire for re-initialization after any update
-                    document.addEventListener('livewire:initialized', () => {
-                        Livewire.hook('commit', ({ component, succeed }) => {
-                            if (component.name === 'manage-transport') {
-                                succeed(() => {
-                                    this.$nextTick(() => this.setupSortables());
-                                });
-                            }
-                        });
-                    });
+                    // Sync unassigned when they change via entangle
+                    this.$watch('unassignedTransport', () => this.$nextTick(() => this.setupSortables()));
+                    this.$watch('unassignedStay', () => this.$nextTick(() => this.setupSortables()));
                 },
 
                 setupSortables() {
-                    if (typeof Sortable === 'undefined') {
-                        console.warn('SortableJS not loaded yet, retrying...');
-                        setTimeout(() => this.setupSortables(), 200);
-                        return;
-                    }
-
                     const containers = document.querySelectorAll('[data-group]');
                     containers.forEach(el => {
-                        // Destroy existing instance to prevent duplicates
-                        if (el.sortableInstance) {
-                            el.sortableInstance.destroy();
-                        }
+                        if (el.sortableInstance) el.sortableInstance.destroy();
                         
                         el.sortableInstance = new Sortable(el, {
                             group: el.getAttribute('data-group'),
-                            animation: 150,
-                            ghostClass: 'bg-indigo-50',
-                            dragClass: 'opacity-50',
-                            fallbackOnBody: true,
-                            swapThreshold: 0.65,
-                            forceFallback: true, // Crucial for some browser/layout combinations
-                            scroll: true,
+                            animation: 100,
+                            delay: 0,
+                            delayOnTouchOnly: true,
+                            touchStartThreshold: 3, 
+                            ghostClass: 'opacity-50',
+                            dragClass: 'opacity-100',
                             onEnd: (evt) => {
-                                // Potentially trigger a small UI update if needed
+                                this.handleSort(evt);
                             }
                         });
                     });
                 },
 
+                handleSort(evt) {
+                    const fromGroup = evt.from.getAttribute('data-group');
+                    const toGroup = evt.to.getAttribute('data-group');
+                    if (fromGroup !== toGroup) return; 
+
+                    const pId = evt.item.getAttribute('data-id');
+                    const fromIdx = evt.from.getAttribute('data-index'); 
+                    const toIdx = evt.to.getAttribute('data-index');
+
+                    // 1. Update logic for Transport
+                    if (fromGroup === 'transport') {
+                        if (!this.transportPlans[this.selectedDay]) this.transportPlans[this.selectedDay] = [];
+
+                        // Remove from source
+                        if (fromIdx !== null) {
+                            this.transportPlans[this.selectedDay][fromIdx].passengers = this.transportPlans[this.selectedDay][fromIdx].passengers.filter(id => id != pId);
+                        } else {
+                            this.unassignedTransport = this.unassignedTransport.filter(p => p.id != pId);
+                        }
+
+                        // Add to destination
+                        if (toIdx !== null) {
+                             const newOrder = Array.from(evt.to.querySelectorAll('[data-id]')).map(el => el.getAttribute('data-id'));
+                             this.transportPlans[this.selectedDay][toIdx].passengers = newOrder;
+                        } else {
+                            const pObj = this.participantsMap[pId];
+                            if (pObj && !this.unassignedTransport.find(p => p.id == pId)) {
+                                this.unassignedTransport.push(pObj);
+                            }
+                        }
+                    } 
+                    // 2. Update logic for Stay
+                    else if (fromGroup === 'stay') {
+                        if (!this.stayPlans[this.selectedDay]) this.stayPlans[this.selectedDay] = [];
+
+                        if (fromIdx !== null) {
+                            this.stayPlans[this.selectedDay][fromIdx].occupant_ids = this.stayPlans[this.selectedDay][fromIdx].occupant_ids.filter(id => id != pId);
+                        } else {
+                            this.unassignedStay = this.unassignedStay.filter(p => p.id != pId);
+                        }
+
+                        if (toIdx !== null) {
+                             const newOrder = Array.from(evt.to.querySelectorAll('[data-id]')).map(el => el.getAttribute('data-id'));
+                             this.stayPlans[this.selectedDay][toIdx].occupant_ids = newOrder;
+                        } else {
+                            const pObj = this.participantsMap[pId];
+                            if (pObj && !this.unassignedStay.find(p => p.id == pId)) {
+                                this.unassignedStay.push(pObj);
+                            }
+                        }
+                    }
+
+                    // Force Alpine to re-render the lists if Sortable moved the DOM
+                    this.$nextTick(() => this.setupSortables());
+                },
+
+                removeVehicle(index) {
+                    if (confirm('Supprimer ce véhicule ?')) {
+                        this.$wire.removeVehicle(index);
+                    }
+                },
+
+                removeRoom(index) {
+                    if (confirm('Supprimer cette chambre ?')) {
+                        this.$wire.removeRoom(index);
+                    }
+                },
+
                 saveAll() {
-                    // 1. Transport Plan - Synchronize with latest server state
-                    const vehicleEls = document.querySelectorAll('[data-vehicle-index]');
-                    // Get latest plan from Livewire public property instead of static directive
-                    const newTransportPlan = JSON.parse(JSON.stringify(this.$wire.transportPlan));
-                    
-                    vehicleEls.forEach(el => {
-                        const index = el.getAttribute('data-vehicle-index');
-                        if (newTransportPlan[index]) {
-                            const pIds = Array.from(el.children)
-                                .map(child => child.getAttribute('data-id'))
-                                .filter(id => id);
-                            newTransportPlan[index].passengers = pIds;
-                        }
-                    });
+                    // All plans are already entangled, but we call save to persist to DB
+                    this.$wire.saveAllPlans(this.transportPlans, this.stayPlans);
+                },
 
-                    // 2. Stay Plan - Synchronize with latest server state
-                    const roomEls = document.querySelectorAll('[data-room-index]');
-                    const newStayPlan = JSON.parse(JSON.stringify(this.$wire.stayPlan));
+                getTimeFromDatetime(dt) {
+                    if (!dt) return '';
+                    const parts = dt.split(' ');
+                    if (parts.length < 2) return '';
+                    return parts[1].substring(0, 5);
+                },
 
-                    roomEls.forEach(el => {
-                        const index = el.getAttribute('data-room-index');
-                        if (newStayPlan[index]) {
-                            const pIds = Array.from(el.children)
-                                .map(child => child.getAttribute('data-id'))
-                                .filter(id => id);
-                            newStayPlan[index].occupant_ids = pIds;
-                        }
-                    });
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = this.days.find(x => x.date === dateStr);
+                    return d ? d.label : dateStr;
+                },
 
-                    this.$wire.saveAllPlans(newTransportPlan, newStayPlan);
+                getParticipantTimes(p) {
+                    const startRaw = p.first_competition_datetime;
+                    const endRaw = p.last_competition_datetime;
+                    if (!startRaw || !startRaw.includes(' ')) return '';
+                    if (!startRaw.startsWith(this.selectedDay)) return '';
+
+                    const start = startRaw.split(' ')[1].substring(0, 5);
+                    const end = endRaw && endRaw.includes(' ') ? endRaw.split(' ')[1].substring(0, 5) : '...';
+                    return `${start} - ${end}`;
+                },
+                
+                getTransportMode(p, type) {
+                    const dayResp = p.survey_response?.responses?.[this.selectedDay];
+                    if (!dayResp) return null;
+                    return dayResp[type]?.mode;
                 }
             }
         }
     </script>
+    @endpush
 </x-filament-panels::page>

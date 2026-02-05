@@ -24,8 +24,10 @@ class LogisticsSurveyTest extends TestCase
         ]);
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
-            ->assertSee('Jeudi 05 février')
-            ->assertSee('Vendredi 06 février');
+            ->set('participantId', 'new')
+            ->set('isCoach', true)
+            ->assertSee('2026-02-05')
+            ->assertSee('2026-02-06');
     }
 
     /** @test */
