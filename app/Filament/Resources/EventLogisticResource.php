@@ -92,6 +92,11 @@ class EventLogisticResource extends Resource
                                 Forms\Components\DatePicker::make('settings.start_date')
                                     ->label('Date de début (1er jour)')
                                     ->required(),
+                                Forms\Components\TextInput::make('settings.days_count')
+                                    ->label('Nombre de jours')
+                                    ->numeric()
+                                    ->default(2)
+                                    ->required(),
                                 Forms\Components\TextInput::make('settings.vitesse_bus')
                                     ->label('Vitesse Bus (km/h)')
                                     ->numeric()

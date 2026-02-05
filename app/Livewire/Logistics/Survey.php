@@ -3,18 +3,18 @@
 namespace App\Livewire\Logistics;
 
 use App\Models\EventLogistic;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Survey extends Component
 {
     public EventLogistic $event_logistic;
     public $participantId = '';
+    public $newName = '';
+    public $isCoach = false;
     
     // Form data
-    public $presence_aller = [];
-    public $presence_retour = [];
-    public $transport_mode;
-    public $voiture_seats;
+    public $responses = []; // Per-day transport data
     public $hotel_needed = false;
     public $remarks;
 
@@ -22,21 +22,55 @@ class Survey extends Component
     {
         $this->event_logistic = $event_logistic;
     }
+
+    public function getDaysProperty()
+    {
+        $settings = $this->event_logistic->settings ?? [];
+        $startDateStr = $settings['start_date'] ?? null;
+        $daysCount = $settings['days_count'] ?? 3;
+
+        if (!$startDateStr) return [];
+
+        $days = [];
+        $current = \Carbon\Carbon::parse($startDateStr);
+        for ($i = 0; $i < $daysCount; $i++) {
+            $date = $current->copy()->addDays($i);
+            $days[] = [
+                'date' => $date->toDateString(),
+                'label' => ucfirst($date->translatedFormat('l d F')),
+            ];
+        }
+        return $days;
+    }
+
+    public function getSelectedParticipantProperty()
+    {
+        if (!$this->participantId || $this->participantId === 'new') return null;
+        return collect($this->event_logistic->participants_data ?? [])->firstWhere('id', (string)$this->participantId);
+    }
+
+    public function getCanRequestHotelProperty()
+    {
+        if ($this->participantId === 'new') {
+            return $this->isCoach;
+        }
+        $p = $this->selected_participant;
+        return $p && (($p['role'] ?? '') === 'coach' || str_contains($p['name'] ?? '', '[ENTRAÎNEUR]'));
+    }
     
     public function updatedParticipantId($value)
     {
-        $this->reset(['presence_aller', 'presence_retour', 'transport_mode', 'voiture_seats', 'hotel_needed', 'remarks']);
+        $this->reset(['responses', 'hotel_needed', 'remarks', 'newName', 'isCoach']);
 
-        $participants = $this->event_logistic->participants_data ?? [];
-        $p = collect($participants)->firstWhere('id', (string)$value);
+        if ($value === 'new' || !$value) {
+            return;
+        }
+
+        $p = $this->selected_participant;
         
         if ($p && isset($p['survey_response'])) {
             $r = $p['survey_response'];
-            // Normalize data
-            $this->presence_aller = (array)($r['presence_aller'] ?? []);
-            $this->presence_retour = (array)($r['presence_retour'] ?? []);
-            $this->transport_mode = $r['transport_mode'] ?? null;
-            $this->voiture_seats = $r['voiture_seats'] ?? null;
+            $this->responses = (array)($r['responses'] ?? []);
             $this->hotel_needed = $r['hotel_needed'] ?? false;
             $this->remarks = $r['remarks'] ?? null;
         }
@@ -46,32 +80,48 @@ class Survey extends Component
     {
         $this->validate([
             'participantId' => 'required',
-            'transport_mode' => 'required',
-            'voiture_seats' => 'nullable|integer|min:0',
+            'newName' => 'required_if:participantId,new',
         ]);
         
         $participants = $this->event_logistic->participants_data ?? [];
         $updated = false;
         
-        foreach ($participants as &$p) {
-            if (isset($p['id']) && (string)$p['id'] === (string)$this->participantId) {
-                $p['survey_response'] = [
-                    'presence_aller' => $this->presence_aller,
-                    'presence_retour' => $this->presence_retour,
-                    'transport_mode' => $this->transport_mode,
-                    'voiture_seats' => $this->voiture_seats,
-                    'hotel_needed' => $this->hotel_needed,
-                    'remarks' => $this->remarks,
-                    'filled_at' => now()->toDateTimeString(),
-                ];
-                $updated = true;
-                break;
+        $surveyResponse = [
+            'responses' => $this->responses,
+            'hotel_needed' => $this->can_request_hotel ? $this->hotel_needed : false,
+            'remarks' => $this->remarks,
+            'filled_at' => now()->toDateTimeString(),
+        ];
+
+        if ($this->participantId === 'new') {
+            $name = $this->newName;
+            if ($this->isCoach) {
+                $name = '[ENTRAÎNEUR] ' . $name;
+            }
+
+            $participants[] = [
+                'id' => (string) Str::uuid(),
+                'name' => $name,
+                'role' => $this->isCoach ? 'coach' : 'athlete',
+                'survey_response' => $surveyResponse,
+            ];
+            $updated = true;
+        } else {
+            foreach ($participants as &$p) {
+                if (isset($p['id']) && (string)$p['id'] === (string)$this->participantId) {
+                    $p['survey_response'] = $surveyResponse;
+                    $updated = true;
+                    break;
+                }
             }
         }
         
         if ($updated) {
             $this->event_logistic->update(['participants_data' => $participants]);
             session()->flash('message', 'Merci ! Votre réponse a été enregistrée.');
+            if ($this->participantId === 'new') {
+                $this->reset(['participantId', 'newName', 'isCoach', 'responses', 'hotel_needed', 'remarks']);
+            }
         } else {
             session()->flash('error', 'Participant non trouvé.');
         }
@@ -85,7 +135,8 @@ class Survey extends Component
             ->values();
 
         return view('livewire.logistics.survey', [
-            'participants' => $participants
-        ])->layout('components.layouts.app'); // Trying standard layout first
+            'participants' => $participants,
+            'days' => $this->days
+        ])->layout('components.layouts.app'); 
     }
 }
