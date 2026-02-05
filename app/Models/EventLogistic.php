@@ -13,7 +13,7 @@ class EventLogistic extends Model
 
     protected $casts = [
         'inscriptions_data' => 'array',
-        'raw_schedule' => 'array',
+        'schedule_raw' => 'array',
         'participants_data' => 'array',
         'transport_plan' => 'array',
         'stay_plan' => 'array',

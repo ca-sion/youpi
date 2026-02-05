@@ -56,11 +56,11 @@ class EventLogisticResource extends Resource
                                     ]),
                                 Forms\Components\Grid::make(3)
                                     ->schema([
-                                        Forms\Components\TextInput::make('settings.vitesse_bus')
+                                        Forms\Components\TextInput::make('settings.bus_speed')
                                             ->label('Bus (km/h)')
                                             ->numeric()
                                             ->default(80),
-                                        Forms\Components\TextInput::make('settings.vitesse_voiture')
+                                        Forms\Components\TextInput::make('settings.car_speed')
                                             ->label('Voiture (km/h)')
                                             ->numeric()
                                             ->default(100),
@@ -72,11 +72,11 @@ class EventLogisticResource extends Resource
                                     ]),
                                 Forms\Components\Grid::make(2)
                                     ->schema([
-                                        Forms\Components\TextInput::make('settings.temps_prep_min')
+                                        Forms\Components\TextInput::make('settings.duration_prep_min')
                                             ->label('Prép. (min)')
                                             ->numeric()
                                             ->default(90),
-                                        Forms\Components\TextInput::make('settings.temps_recup_min')
+                                        Forms\Components\TextInput::make('settings.duration_recup_min')
                                             ->label('Récup. (min)')
                                             ->numeric()
                                             ->default(60),
@@ -92,7 +92,7 @@ class EventLogisticResource extends Resource
                                             ->label('')
                                             ->content('Utilisez ce prompt : "A. Analyse ce texte ou document PDF d\'horaire. Extrais les données en JSON pur sous ce format : [{"jour": "Samedi", "time": "14:15", "cat": "U18M", "discipline": "100m"}, ...]. Il faut mapper les disciplines en français (ex: Longueur : Weit, Long). Parfois il y a des tours sur les courses : séries (Z, VL ou rien précisé), demi-finales (DF), finales (F). Parfois il y a plusieurs disciplines pour la même catégorie, il faut les distinguer (ex: Longueur W1, Longueur W2 ou Longueur (4.50)). S\'il n\'y a pas de catégorie spécifique, mettre M (Hommes, Männer) et W (Femmes, Frauen). Ne fournis aucune explication. Je te donne aussi les inscriptions des athlètes au format brutes pour t\'aider à identifier les horaires des disciplines pour chacun. B. Transforme ensuite les inscriptions au format suivant (une ligne par athlète) : Nom Prénom (CAT) : Discipline 1, Discipline 2, … . Il faut que les noms des disciplines de l\'horaire (en sortie JSON) correspondent exactement aux noms des disciplines des inscriptions (en sortie ligne par ligne). Tenir compte (dans le cas de disciplines ayant lieu, indépendamment des finales ou demi-finales, à plusieurs jours différents) des indications de jour si l\'indication est transmise dans les inscriptions des athlètes pour la correspondance exacte. Inscriptions des athlètes brutes :"'),
                                     ]),
-                                Forms\Components\Textarea::make('raw_schedule')
+                                Forms\Components\Textarea::make('schedule_raw')
                                     ->label('JSON Horaire')
                                     ->rows(15)
                                     ->formatStateUsing(fn ($state) => is_string($state) ? $state : json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
@@ -102,7 +102,7 @@ class EventLogisticResource extends Resource
                         Forms\Components\Tabs\Tab::make('Inscriptions')
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema([
-                                Forms\Components\Textarea::make('athletes_inscriptions_raw')
+                                Forms\Components\Textarea::make('inscriptions_raw')
                                     ->label('Inscriptions Brutes')
                                     ->rows(5)
                                     ->placeholder("Dupont Pierre (U18M) : 100m, 200m\nTudor Jean (MAN) : Hauteur")

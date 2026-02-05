@@ -1,8 +1,8 @@
 @php
     $distance = $settings['distance_km'] ?? 0;
-    $speedVoiture = $settings['vitesse_voiture'] ?? 120;
-    $speedBus = $settings['vitesse_bus'] ?? 100;
-    $prepMin = $settings['temps_prep_min'] ?? 90;
+    $speedVoiture = $settings['car_speed'] ?? 120;
+    $speedBus = $settings['bus_speed'] ?? 100;
+    $prepMin = $settings['duration_prep_min'] ?? 90;
 
     $getArrivalTime = function($departureTime, $type) use ($distance, $speedVoiture, $speedBus) {
         if (!$departureTime || !$distance) return null;

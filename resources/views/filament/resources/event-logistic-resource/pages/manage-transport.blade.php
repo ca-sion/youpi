@@ -31,9 +31,9 @@
                             <div class="flex items-center gap-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
                                 <span x-text="settings.distance_km + ' km'"></span>
                                 <span class="text-gray-300">|</span>
-                                <span x-text="'🚗 ' + Math.round(settings.distance_km / (settings.vitesse_voiture || 120) * 60) + 'm'"></span>
+                                <span x-text="'🚗 ' + Math.round(settings.distance_km / (settings.car_speed || 120) * 60) + 'm'"></span>
                                 <span class="text-gray-300">|</span>
-                                <span x-text="'🚌 ' + Math.round(settings.distance_km / (settings.vitesse_bus || 100) * 60) + 'm'"></span>
+                                <span x-text="'🚌 ' + Math.round(settings.distance_km / (settings.bus_speed || 100) * 60) + 'm'"></span>
                             </div>
                         </template>
                     </div>
@@ -459,7 +459,7 @@
 
                 getArrivalTime(v) {
                     if (!v.departure_datetime || !this.settings.distance_km) return null;
-                    const speed = v.type === 'bus' ? (this.settings.vitesse_bus || 100) : (this.settings.vitesse_voiture || 120);
+                    const speed = v.type === 'bus' ? (this.settings.bus_speed || 100) : (this.settings.car_speed || 120);
                     const travelMin = (this.settings.distance_km / speed) * 60;
                     
                     const time = this.getTimeFromDatetime(v.departure_datetime);

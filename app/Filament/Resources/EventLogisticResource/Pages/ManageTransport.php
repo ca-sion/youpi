@@ -92,7 +92,7 @@ class ManageTransport extends Page
         $assignedIds = [];
         
         $settings = $this->record->settings ?? [];
-        $prep = $settings['temps_prep_min'] ?? 90;
+        $prep = $settings['duration_prep_min'] ?? 90;
         $dist = $settings['distance_km'] ?? 0;
 
         $currentDayTransport = $this->transportPlans[$this->selectedDay] ?? [];
@@ -113,7 +113,7 @@ class ManageTransport extends Page
             if (!empty($vehicle['departure_datetime'])) {
                 try {
                     $depTime = Carbon::parse($vehicle['departure_datetime']);
-                    $speed = ($vehicle['type'] === 'bus') ? ($settings['vitesse_bus'] ?? 100) : ($settings['vitesse_voiture'] ?? 120);
+                    $speed = ($vehicle['type'] === 'bus') ? ($settings['bus_speed'] ?? 100) : ($settings['car_speed'] ?? 120);
                     $travelMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
                     
                     $arrivalEst = $depTime->copy()->addMinutes($travelMin);
@@ -354,10 +354,10 @@ class ManageTransport extends Page
 
         // 4. Calculate Departure Times (Approximate based on first competition)
         $dist = $settings['distance_km'] ?? 0;
-        $prep = $settings['temps_prep_min'] ?? 90;
+        $prep = $settings['duration_prep_min'] ?? 90;
         
         foreach ($vehicles as &$v) {
-            $speed = ($v['type'] === 'bus') ? ($settings['vitesse_bus'] ?? 100) : ($settings['vitesse_voiture'] ?? 120);
+            $speed = ($v['type'] === 'bus') ? ($settings['bus_speed'] ?? 100) : ($settings['car_speed'] ?? 120);
             $travelTimeHours = ($speed > 0) ? ($dist / $speed) : 0;
             $travelTimeMin = $travelTimeHours * 60;
             $totalOffset = $prep + $travelTimeMin;

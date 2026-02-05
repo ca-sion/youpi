@@ -19,7 +19,7 @@ class EventLogisticTest extends TestCase
     public function it_can_parse_inscriptions_with_categories()
     {
         $logistic = EventLogistic::factory()->create([
-            'athletes_inscriptions_raw' => "U Bolt (Pro) : 100m\nM Phelps : Swimming",
+            'inscriptions_raw' => "U Bolt (Pro) : 100m\nM Phelps : Swimming",
         ]);
 
         Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
@@ -44,7 +44,7 @@ class EventLogisticTest extends TestCase
                 ['id' => 'p1', 'name' => 'P1'],
                 ['id' => 'p2', 'name' => 'P2'],
             ],
-            'settings' => ['vitesse_bus' => 100, 'distance_km' => 100, 'start_date' => '2024-01-01'],
+            'settings' => ['bus_speed' => 100, 'distance_km' => 100, 'start_date' => '2024-01-01'],
             'transport_plan' => [
                 '2024-01-01' => [
                     [
@@ -82,9 +82,9 @@ class EventLogisticTest extends TestCase
             ],
             'settings' => [
                 'start_date' => '2024-07-15',
-                'vitesse_bus' => 100, 
+                'bus_speed' => 100, 
                 'distance_km' => 100, // 1h travel
-                'temps_prep_min' => 60 
+                'duration_prep_min' => 60 
             ],
             'transport_plan' => [
                 '2024-07-15' => [
@@ -118,7 +118,7 @@ class EventLogisticTest extends TestCase
 
         $logistic = EventLogistic::factory()->create([
             'settings' => ['start_date' => $startDate->toDateString()],
-            'raw_schedule' => $schedule,
+            'schedule_raw' => $schedule,
             'inscriptions_data' => [
                 ['name' => 'Athlete One', 'disciplines' => ['100m', '200m'], 'category' => 'U18M']
             ]
@@ -168,8 +168,8 @@ class EventLogisticTest extends TestCase
             'settings' => [
                 'start_date' => '2024-07-15',
                 'distance_km' => 100, 
-                'vitesse_bus' => 100, // 1h travel
-                'temps_prep_min' => 60 // 1h prep. Total offset = 2h.
+                'bus_speed' => 100, // 1h travel
+                'duration_prep_min' => 60 // 1h prep. Total offset = 2h.
             ],
             'participants_data' => [
                 [
@@ -277,8 +277,8 @@ class EventLogisticTest extends TestCase
     public function it_verifies_the_full_flow_from_parsing_to_survey()
     {
         $logistic = EventLogistic::factory()->create([
-            'athletes_inscriptions_raw' => "BOLT Usain (U18M) : 100m",
-            'raw_schedule' => [['day' => 'Samedi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M']],
+            'inscriptions_raw' => "BOLT Usain (U18M) : 100m",
+            'schedule_raw' => [['day' => 'Samedi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M']],
             'settings' => ['start_date' => now()->format('Y-m-d')]
         ]);
 

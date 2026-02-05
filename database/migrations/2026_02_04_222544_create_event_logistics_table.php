@@ -14,14 +14,16 @@ return new class extends Migration
         Schema::create('event_logistics', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('athletes_inscriptions_raw')->nullable();
+            $table->string('slug')->nullable();
+            $table->text('inscriptions_raw')->nullable();
             $table->json('inscriptions_data')->nullable();
-            $table->json('raw_schedule')->nullable();
+            $table->json('schedule_raw')->nullable();
             $table->json('participants_data')->nullable();
             $table->json('transport_plan')->nullable();
             $table->json('stay_plan')->nullable();
             $table->json('settings')->nullable();
+            $table->json('informations')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamps();
         });
     }

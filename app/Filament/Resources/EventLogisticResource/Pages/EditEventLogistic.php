@@ -43,7 +43,7 @@ class EditEventLogistic extends EditRecord
                     ->icon('heroicon-o-cpu-chip')
                     ->action(function () {
                         $record = $this->getRecord();
-                        $raw = $record->athletes_inscriptions_raw;
+                        $raw = $record->inscriptions_raw;
                         if (!$raw) {
                              \Filament\Notifications\Notification::make()->title('Aucune donnée brute trouvée')->warning()->send();
                              return;
@@ -81,7 +81,7 @@ class EditEventLogistic extends EditRecord
                     ->action(function () {
                         $record = $this->getRecord();
                         $inscriptions = $record->inscriptions_data ?? [];
-                        $schedule = $record->raw_schedule ?? [];
+                        $schedule = $record->schedule_raw ?? [];
                         if (is_string($schedule)) {
                             $schedule = json_decode($schedule, true) ?? [];
                         }
