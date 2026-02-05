@@ -82,6 +82,10 @@ class EditEventLogistic extends EditRecord
                         $record = $this->getRecord();
                         $inscriptions = $record->inscriptions_data ?? [];
                         $schedule = $record->raw_schedule ?? [];
+                        if (is_string($schedule)) {
+                            $schedule = json_decode($schedule, true) ?? [];
+                        }
+
                         $settings = $record->settings ?? [];
                         $startDateStr = $settings['start_date'] ?? null;
 
@@ -98,41 +102,98 @@ class EditEventLogistic extends EditRecord
                         $participants = [];
                         foreach ($inscriptions as $athlete) {
                             $athleteName = $athlete['name'] ?? 'Unknown';
-                            $athleteCat = $athlete['category'] ?? null;
+                            $athleteCat = strtoupper($athlete['category'] ?? '');
                             $disciplines = $athlete['disciplines'] ?? [];
+
+                            // Normalize athlete gender/category
+                            $athleteGender = null;
+                            if (str_ends_with($athleteCat, 'W') || str_ends_with($athleteCat, 'F')) $athleteGender = 'W';
+                            elseif (str_ends_with($athleteCat, 'M')) $athleteGender = 'M';
+                            elseif ($athleteCat === 'MAN' || $athleteCat === 'MEN') $athleteGender = 'M';
+                            elseif ($athleteCat === 'WOMAN' || $athleteCat === 'WOMEN') $athleteGender = 'W';
 
                             $details = ['name' => $athleteName, 'id' => Str::uuid()->toString()];
                             $events = [];
 
                             foreach ($disciplines as $discipline) {
+                                // Clean discipline for matching (lowercase, no parentheses)
+                                $cleanDiscipline = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $discipline)));
+                                if (empty($cleanDiscipline)) continue;
+
                                 foreach ($schedule as $event) {
-                                    // Simple substring match for discipline
-                                    if (isset($event['epreuve']) && stripos($event['epreuve'], $discipline) !== false) {
-                                        // Check Category if available
-                                        if ($athleteCat && isset($event['cat'])) {
-                                            if (stripos($event['cat'], $athleteCat) === false) continue;
-                                        }
-
-                                        try {
-                                            if (!isset($event['heure']) || !isset($event['jour'])) continue;
-                                            
-                                            $time = Carbon::parse($event['heure']);
-                                            $startDayIndex = $startDate->dayOfWeekIso;
-                                            $eventDayName = strtolower($event['jour']);
-                                            $eventDayIndex = $daysMap[$eventDayName] ?? null;
-
-                                            if ($eventDayIndex) {
-                                                $diff = $eventDayIndex - $startDayIndex;
-                                                if ($diff < 0) $diff += 7; 
-                                                $eventDate = $startDate->copy()->addDays($diff);
-                                            } else {
-                                                $eventDate = $startDate->copy();
-                                            }
-                                            
-                                            $eventDt = $eventDate->setTime($time->hour, $time->minute);
-                                            $events[] = $eventDt;
-                                        } catch (\Exception $e) {}
+                                    $eventDiscipline = strtolower($event['discipline'] ?? '');
+                                    $eventCat = strtoupper($event['cat'] ?? '');
+                                    
+                                    // 1. Discipline matching
+                                    $disciplineMatch = false;
+                                    // Try exact match first (case insensitive)
+                                    if (stripos($eventDiscipline, $discipline) !== false) {
+                                        $disciplineMatch = true;
+                                    } elseif (stripos($eventDiscipline, $cleanDiscipline) !== false) {
+                                        $disciplineMatch = true;
                                     }
+
+                                    if (!$disciplineMatch) continue;
+                                    
+                                    // Distinction between flat and hurdles
+                                    $hurdleKeywords = ['haies', 'hurdles', 'h '];
+                                    $athleteIsHurdles = false;
+                                    foreach ($hurdleKeywords as $kw) {
+                                        if (stripos($discipline, $kw) !== false) { $athleteIsHurdles = true; break; }
+                                    }
+                                    if (!$athleteIsHurdles && preg_match('/[0-9]mh/i', $discipline)) $athleteIsHurdles = true;
+                                    if (!$athleteIsHurdles && preg_match('/\bH\b/', $discipline)) $athleteIsHurdles = true;
+
+                                    $eventIsHurdles = false;
+                                    foreach ($hurdleKeywords as $kw) {
+                                        if (stripos($eventDiscipline, $kw) !== false) { $eventIsHurdles = true; break; }
+                                    }
+                                    if (!$eventIsHurdles && preg_match('/[0-9]mh/i', $eventDiscipline)) $eventIsHurdles = true;
+                                    if (!$eventIsHurdles && preg_match('/\bH\b/', $eventDiscipline)) $eventIsHurdles = true;
+
+                                    if ($athleteIsHurdles !== $eventIsHurdles) continue;
+                                    
+                                    // Robustness for Heptathlon/Pentathlon: 
+                                    // Avoid matching "60m" into "Heptathlon 60m" or vice versa unless both are composite
+                                    $eventIsComposite = (stripos($eventDiscipline, 'heptathlon') !== false || stripos($eventDiscipline, 'pentathlon') !== false);
+                                    $athleteIsComposite = (stripos($discipline, 'heptathlon') !== false || stripos($discipline, 'pentathlon') !== false);
+                                    if ($eventIsComposite !== $athleteIsComposite) continue;
+
+                                    // 2. Category matching
+                                    $categoryMatch = false;
+                                    if ($athleteCat === $eventCat) {
+                                        $categoryMatch = true;
+                                    } elseif ($athleteGender && ($eventCat === $athleteGender)) {
+                                        // e.g. U18M matches M
+                                        $categoryMatch = true;
+                                    } elseif ($eventCat === 'M' && (str_ends_with($athleteCat, 'M'))) {
+                                         $categoryMatch = true;
+                                    } elseif ($eventCat === 'W' && (str_ends_with($athleteCat, 'W') || str_ends_with($athleteCat, 'F'))) {
+                                         $categoryMatch = true;
+                                    }
+
+                                    if (!$categoryMatch) continue;
+
+                                    try {
+                                        $dayValue = $event['jour'] ?? $event['day'] ?? null;
+                                        if (!$dayValue || !isset($event['time'])) continue;
+                                        
+                                        $time = Carbon::parse($event['time']);
+                                        $startDayIndex = $startDate->dayOfWeekIso;
+                                        $eventDayName = strtolower($dayValue);
+                                        $eventDayIndex = $daysMap[$eventDayName] ?? null;
+
+                                        if ($eventDayIndex) {
+                                            $diff = $eventDayIndex - $startDayIndex;
+                                            if ($diff < 0) $diff += 7; 
+                                            $eventDate = $startDate->copy()->addDays($diff);
+                                        } else {
+                                            $eventDate = $startDate->copy();
+                                        }
+                                        
+                                        $eventDt = $eventDate->setTime($time->hour, $time->minute);
+                                        $events[] = $eventDt;
+                                    } catch (\Exception $e) {}
                                 }
                             }
 
@@ -141,6 +202,8 @@ class EditEventLogistic extends EditRecord
                                 $details['first_competition_datetime'] = $events[0]->toDateTimeString();
                                 $details['last_competition_datetime'] = end($events)->toDateTimeString();
                             } else {
+                                $details['first_competition_datetime'] = null;
+                                $details['last_competition_datetime'] = null;
                                 $details['note'] = 'Aucune épreuve trouvée';
                             }
                             

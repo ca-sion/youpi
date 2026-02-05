@@ -41,8 +41,8 @@ class EventLogisticResource extends Resource
                                 Forms\Components\Textarea::make('athletes_inscriptions_raw')
                                     ->label('Inscriptions Brutes')
                                     ->rows(10)
-                                    ->placeholder("BOLT Usain (U18M) : 100m, 200m\nPHELPS Michael (SEN) : Natation")
-                                    ->helperText('Copiez-collez ici les inscriptions. Format attendu par ligne : NOM Prénom (CAT) : Discipline 1, Discipline 2'),
+                                    ->placeholder("Dupont Pierre (U18M) : 100m, 200m\nTudor Jean (MAN) : Hauteur")
+                                    ->helperText('Copiez-collez ici les inscriptions. Format attendu par ligne : Nom Prénom (CAT) : Discipline 1, Discipline 2'),
                                 Forms\Components\Repeater::make('inscriptions_data')
                                     ->label('Données Analysées')
                                     ->schema([
@@ -50,6 +50,7 @@ class EventLogisticResource extends Resource
                                         Forms\Components\TextInput::make('category')->label('Catégorie'),
                                         Forms\Components\TagsInput::make('disciplines')->label('Disciplines'),
                                     ])
+                                    ->columns(3)
                                     ->addable(true)
                                     ->deletable(true)
                                     ->reorderable(true)
@@ -58,11 +59,13 @@ class EventLogisticResource extends Resource
                         Forms\Components\Tabs\Tab::make('Horaire')
                             ->schema([
                                 Forms\Components\Placeholder::make('prompt_help')
-                                    ->label('Aide IA')
-                                    ->content('Utilisez ce prompt pour générer le JSON via ChatGPT/Claude : "Analyse ce texte d\'horaire. Extrais les données en JSON pur sous ce format : [{"jour": "Samedi", "heure": "14:15", "cat": "U18M", "epreuve": "100m"}, ...]. Ne fournis aucune explication."'),
+                                    ->label('Instruction pour l\'IA')
+                                    ->content('Utilisez ce prompt pour générer le JSON via une IA : "A. Analyse ce texte ou document PDF d\'horaire. Extrais les données en JSON pur sous ce format : [{"jour": "Samedi", "time": "14:15", "cat": "U18M", "discipline": "100m"}, ...]. Il faut mapper les disciplines en français (ex: Longueur : Weit, Long). Parfois il y a des tours sur les courses : séries (Z, VL ou rien précisé), demi-finales (DF), finales (F). Parfois il y a plusieurs disciplines pour la même catégorie, il faut les distinguer (ex: Longueur W1, Longueur W2 ou Longueur (4.50)). S\'il n\'y a pas de catégorie spécifique, mettre M (Hommes, Männer) et W (Femmes, Frauen). Ne fournis aucune explication. Je te donne aussi les inscriptions des athlètes au format brutes pour t\'aider à identifier les horaires des disciplines pour chacun. B. Transforme ensuite les inscriptions au format suivant (une ligne par athlète) : Nom Prénom (CAT) : Discipline 1, Discipline 2, … . Il faut que les noms des disciplines de l\'horaire (en sortie JSON) correspondent exactement aux noms des disciplines des inscriptions (en sortie ligne par ligne). Tenir compte (dans le cas de disciplines ayant lieu, indépendamment des finales ou demi-finales, à plusieurs jours différents) des indications de jour si l\'indication est transmise dans les inscriptions des athlètes pour la correspondance exacte. Inscriptions des athlètes brutes :"'),
                                 Forms\Components\Textarea::make('raw_schedule')
                                     ->label('JSON Horaire')
-                                    ->rows(20),
+                                    ->rows(20)
+                                    ->formatStateUsing(fn ($state) => is_string($state) ? $state : json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
+                                    ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state),
                             ]),
                         Forms\Components\Tabs\Tab::make('Participants (Planning)')
                             ->schema([
@@ -78,6 +81,7 @@ class EventLogisticResource extends Resource
                                             ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
                                             ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state),
                                     ])
+                                    ->columns(4)
                                     ->addable(false)
                                     ->deletable(false)
                                     ->reorderable(false)
@@ -106,7 +110,13 @@ class EventLogisticResource extends Resource
                                     ->default(60),
                                 Forms\Components\TextInput::make('settings.distance_km')
                                     ->label('Distance (km)')
-                                    ->numeric(),
+                                    ->numeric()
+                                    ->required(),
+                                Forms\Components\TextInput::make('settings.bus_capacity')
+                                    ->label('Capacité du bus')
+                                    ->numeric()
+                                    ->default(9)
+                                    ->required(),
                             ])->columns(3),
                     ])->columnSpanFull()
             ]);

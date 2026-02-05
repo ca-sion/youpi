@@ -107,8 +107,8 @@ class EventLogisticTest extends TestCase
     {
         $startDate = Carbon::create(2024, 7, 15); // Monday
         $schedule = [
-            ['jour' => 'Lundi', 'heure' => '10:00', 'epreuve' => '100m', 'cat' => 'U18M'],
-            ['jour' => 'Lundi', 'heure' => '14:00', 'epreuve' => '200m', 'cat' => 'U18M'],
+            ['day' => 'Lundi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M'],
+            ['day' => 'Lundi', 'time' => '14:00', 'discipline' => '200m', 'cat' => 'U18M'],
         ];
 
         $logistic = EventLogistic::factory()->create([
@@ -219,8 +219,8 @@ class EventLogisticTest extends TestCase
          // Let's implement a check function in the test that simulates this alert logic to ensure data is sufficient.
          
          $schedule = [
-            ['jour' => 'Samedi', 'heure' => '18:00', 'epreuve' => 'Final', 'cat' => 'Pro'], // Late
-            ['jour' => 'Dimanche', 'heure' => '08:00', 'epreuve' => 'Semi', 'cat' => 'Pro'], // Early next day
+            ['day' => 'Samedi', 'time' => '18:00', 'discipline' => 'Final', 'cat' => 'Pro'], // Late
+            ['day' => 'Dimanche', 'time' => '08:00', 'discipline' => 'Semi', 'cat' => 'Pro'], // Early next day
          ];
          // This implies hotel needed.
          
@@ -264,7 +264,7 @@ class EventLogisticTest extends TestCase
     {
         $logistic = EventLogistic::factory()->create([
             'athletes_inscriptions_raw' => "BOLT Usain (U18M) : 100m",
-            'raw_schedule' => [['jour' => 'Samedi', 'heure' => '10:00', 'epreuve' => '100m', 'cat' => 'U18M']],
+            'raw_schedule' => [['day' => 'Samedi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M']],
             'settings' => ['start_date' => now()->format('Y-m-d')]
         ]);
 
@@ -338,6 +338,27 @@ class EventLogisticTest extends TestCase
 
         $logistic->refresh();
         $this->assertCount(2, $logistic->transport_plan); 
+    }
+
+    /** @test */
+    public function it_can_call_hidden_edit_actions()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'transport_plan' => [
+                ['id' => 'v1', 'name' => 'Old Name', 'type' => 'car', 'passengers' => []]
+            ]
+        ]);
+
+        Livewire::test(ManageTransport::class, ['record' => $logistic->id])
+            ->assertActionExists('editVehicle')
+            ->callAction('editVehicle', [
+                'name' => 'New Name',
+                'capacity' => 10,
+            ], ['index' => 0])
+            ->assertHasNoActionErrors();
+
+        $logistic->refresh();
+        $this->assertEquals('New Name', $logistic->transport_plan[0]['name']);
     }
 
     /** @test */

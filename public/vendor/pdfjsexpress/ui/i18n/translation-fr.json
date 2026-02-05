@@ -509,7 +509,7 @@
       "fontStyle": "Font style",
       "dateFormat": "Format de date",
       "month": "Mois",
-      "day": "Jour",
+      "day": "day",
       "year": "An",
       "hour": "Heure",
       "minute": "Minute",

@@ -2,10 +2,11 @@
     <div
         x-data="transportBoard()"
         x-init="initWait()"
+        x-on:refresh-sortables.window="setupSortables()"
         class="space-y-6"
     >
         <!-- Instructions -->
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 shadow-sm">
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 shadow-sm rounded-r-lg">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -14,7 +15,7 @@
                 </div>
                 <div class="ml-3 text-sm text-blue-700">
                     <p>
-                        <strong>Mode d'emploi :</strong> Glissez les athlètes entre les colonnes. Cliquez sur l'icône <svg class="inline w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg> pour modifier les détails d'un transport ou d'une chambre.
+                        <strong>Mode d'emploi :</strong> Glissez les athlètes entre les colonnes. Les sections <strong>Transport</strong> et <strong>Hébergement</strong> sont indépendantes. Utilisez l'icône <svg class="inline w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg> sur les cartes pour modifier les détails.
                     </p>
                 </div>
             </div>
@@ -48,7 +49,7 @@
                 </h3>
                 <div id="transport-unassigned-list" class="flex-1 overflow-y-auto space-y-2 min-h-[100px] p-1" data-group="transport">
                     @foreach($unassignedTransport as $p)
-                        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 cursor-move hover:border-blue-300 hover:shadow-md transition-all relative group" data-id="{{ $p['id'] }}">
+                        <div wire:key="un-t-{{ $p['id'] }}" class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 cursor-move hover:border-blue-300 hover:shadow-md transition-all relative group" data-id="{{ $p['id'] }}">
                             <div class="font-medium text-gray-900">{{ $p['name'] }}</div>
                             <div class="text-[10px] text-gray-500 flex justify-between mt-1">
                                 <span>{{ $p['survey_response']['transport_mode'] ?? '?' }}</span>
@@ -162,7 +163,7 @@
                 </h3>
                 <div id="stay-unassigned-list" class="flex-1 overflow-y-auto space-y-2 min-h-[100px] p-1" data-group="stay">
                     @foreach($unassignedStay as $p)
-                        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-move hover:border-indigo-300 hover:shadow-md transition-all relative group" data-id="{{ $p['id'] }}">
+                        <div wire:key="un-s-{{ $p['id'] }}" class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-move hover:border-indigo-300 hover:shadow-md transition-all relative group" data-id="{{ $p['id'] }}">
                             <div class="font-medium text-gray-900">{{ $p['name'] }}</div>
                              <div class="text-[10px] text-indigo-500 font-bold">🏠 Hôtel requis</div>
                         </div>
@@ -242,19 +243,46 @@
         function transportBoard() {
             return {
                 initWait() {
-                    setTimeout(() => {
-                        this.setupSortables();
-                    }, 100);
+                    this.setupSortables();
+                    
+                    // Hook into Livewire for re-initialization after any update
+                    document.addEventListener('livewire:initialized', () => {
+                        Livewire.hook('commit', ({ component, succeed }) => {
+                            if (component.name === 'manage-transport') {
+                                succeed(() => {
+                                    this.$nextTick(() => this.setupSortables());
+                                });
+                            }
+                        });
+                    });
                 },
 
                 setupSortables() {
+                    if (typeof Sortable === 'undefined') {
+                        console.warn('SortableJS not loaded yet, retrying...');
+                        setTimeout(() => this.setupSortables(), 200);
+                        return;
+                    }
+
                     const containers = document.querySelectorAll('[data-group]');
                     containers.forEach(el => {
-                        new Sortable(el, {
-                            group: el.getAttribute('data-group'), // Separate groups: transport vs stay
+                        // Destroy existing instance to prevent duplicates
+                        if (el.sortableInstance) {
+                            el.sortableInstance.destroy();
+                        }
+                        
+                        el.sortableInstance = new Sortable(el, {
+                            group: el.getAttribute('data-group'),
                             animation: 150,
-                            ghostClass: 'bg-blue-50',
+                            ghostClass: 'bg-indigo-50',
                             dragClass: 'opacity-50',
+                            fallbackOnBody: true,
+                            swapThreshold: 0.65,
+                            forceFallback: true, // Crucial for some browser/layout combinations
+                            scroll: true,
+                            onEnd: (evt) => {
+                                // Potentially trigger a small UI update if needed
+                            }
                         });
                     });
                 },

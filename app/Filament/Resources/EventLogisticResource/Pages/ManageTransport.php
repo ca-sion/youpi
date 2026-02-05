@@ -44,8 +44,8 @@ class ManageTransport extends Page
 
         // Ensure default settings
         $settings = $this->record->settings ?? [];
-        if (!isset($settings['default_bus_capacity'])) {
-            $settings['default_bus_capacity'] = 50;
+        if (!isset($settings['bus_capacity'])) {
+            $settings['bus_capacity'] = 50;
             $this->record->update(['settings' => $settings]);
         }
         
@@ -130,6 +130,8 @@ class ManageTransport extends Page
                  $this->globalAlerts[] = ['type' => 'danger', 'msg' => "Dodo manquant: {$p['name']}"];
             }
         }
+        
+        $this->dispatch('refresh-sortables');
     }
 
     public function saveAllPlans($transport, $stay)
@@ -181,7 +183,7 @@ class ManageTransport extends Page
     public function addVehicle($type = 'car')
     {
         $settings = $this->record->settings ?? [];
-        $defaultBusCapacity = $settings['default_bus_capacity'] ?? 50;
+        $defaultBusCapacity = $settings['bus_capacity'] ?? 50;
 
         $this->transportPlan[] = [
             'id' => 'manual_' . uniqid(),
@@ -211,13 +213,16 @@ class ManageTransport extends Page
         }
 
         // 2. Identify Vehicles
+        $settings = $this->record->settings ?? [];
+        $defaultBusCapacity = $settings['bus_capacity'] ?? 12;
+        
         $vehicles = [];
         // Add a Bus Club by default
         $vehicles[] = [
             'id' => 'bus_1',
             'type' => 'bus',
             'name' => 'Bus Club',
-            'capacity' => 50,
+            'capacity' => $defaultBusCapacity,
             'passengers' => [],
             'driver' => 'Chauffeur Bus'
         ];
@@ -327,7 +332,7 @@ class ManageTransport extends Page
                 ->color('gray'),
 
             Action::make('editVehicle')
-                ->visible(false) // Hide from header but keep available for mountAction
+                ->hidden() // Hide from header but keep available for mountAction
                 ->modalWidth('lg')
                 ->form([
                     \Filament\Forms\Components\TextInput::make('name')->label('Nom du véhicule')->required(),
@@ -355,7 +360,7 @@ class ManageTransport extends Page
                 }),
 
             Action::make('editRoom')
-                ->visible(false) // Hide from header
+                ->hidden() // Hide from header
                 ->modalWidth('lg')
                 ->form([
                     \Filament\Forms\Components\TextInput::make('name')->label('Nom de la chambre')->required(),
