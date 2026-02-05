@@ -55,7 +55,24 @@ class Survey extends Component
             return $this->isCoach;
         }
         $p = $this->selected_participant;
-        return $p && (($p['role'] ?? '') === 'coach' || str_contains($p['name'] ?? '', '[ENTRAÎNEUR]'));
+        return $p && (($p['role'] ?? '') === 'coach' || str_contains($p['name'] ?? '', '[E]'));
+    }
+
+    public function getStatsProperty()
+    {
+        $participants = collect($this->event_logistic->participants_data ?? []);
+        
+        $responded = $participants->filter(fn($p) => isset($p['survey_response']))->sortBy('name');
+        $notResponded = $participants->filter(fn($p) => !isset($p['survey_response']))->sortBy('name');
+
+        return [
+            'total' => $participants->count(),
+            'responded_count' => $responded->count(),
+            'not_responded_count' => $notResponded->count(),
+            'responded' => $responded->pluck('name')->toArray(),
+            'responded_full' => $responded->values()->toArray(),
+            'not_responded' => $notResponded->pluck('name')->toArray(),
+        ];
     }
     
     public function updatedParticipantId($value)
@@ -96,7 +113,7 @@ class Survey extends Component
         if ($this->participantId === 'new') {
             $name = $this->newName;
             if ($this->isCoach) {
-                $name = '[ENTRAÎNEUR] ' . $name;
+                $name = '[E] ' . $name;
             }
 
             $participants[] = [

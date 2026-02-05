@@ -1,12 +1,22 @@
 <div class="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">
+        <div class="px-4 py-5 sm:px-6 bg-indigo-50 border-b border-indigo-100">
+            <h3 class="text-xl leading-6 font-bold text-indigo-900">
                 Logistique : {{ $event_logistic->event_name }}
             </h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                Merci de remplir ce formulaire pour l'organisation des déplacements.
-            </p>
+            <div class="mt-2 text-sm text-indigo-800 space-y-2">
+                <p>
+                    <strong>Pourquoi ce formulaire ?</strong> Il nous aide à organiser les transports (bus du club, covoiturage) de manière efficace pour tout le monde.
+                </p>
+                <div class="bg-white/60 rounded p-3 border border-indigo-200 text-xs sm:text-sm">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>Athlètes :</strong> Sélectionnez votre nom dans la liste.</li>
+                        <li><strong>Parents :</strong> Sélectionnez le nom de votre enfant dans la liste.</li>
+                        <li><strong>Entraîneurs :</strong> Sélectionnez votre nom dans la liste.</li>
+                        <li><strong>Pas dans la liste ?</strong> <span class="text-red-700 font-bold underline">Vérifiez bien toute la liste</span> avant d'ajouter une nouvelle personne via l'option en bas du menu déroulant.</li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <div class="p-6">
@@ -27,7 +37,7 @@
 
             <div class="space-y-6">
                 <div>
-                    <label for="participant" class="block text-sm font-medium text-gray-700">Sélectionnez votre nom (Athlète)</label>
+                    <label for="participant" class="block text-sm font-medium text-gray-700">Sélectionnez votre nom</label>
                     <select wire:model.live="participantId" id="participant" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                         <option value="">-- Choisir dans la liste --</option>
                         @foreach($participants as $p)
@@ -141,9 +151,10 @@
                         @endif
 
                         <div>
-                            <label for="remarks" class="block text-sm font-medium text-gray-700">Remarques / Questions</label>
+                            <label for="remarks" class="block text-sm font-medium text-gray-700">Remarques, questions ou précisions</label>
+                            <p class="text-xs text-gray-500 mb-1">N'hésitez pas à poser vos questions ou donner des détails ici.</p>
                             <div class="mt-1">
-                                <textarea wire:model="remarks" id="remarks" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                                <textarea wire:model="remarks" id="remarks" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Ex: Départ différé, transport uniquement le matin..."></textarea>
                             </div>
                         </div>
 
@@ -156,6 +167,114 @@
                         </div>
                     </form>
                 @endif
+            </div>
+
+            <!-- Compact Summary Table -->
+            <div class="mt-10 border-t pt-8">
+                <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Récapitulatif des réponses</h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Responded -->
+                    <div class="bg-green-50 rounded-lg p-3 border border-green-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-green-800 uppercase">Ont répondu ({{ $this->stats['responded_count'] }})</span>
+                            <svg class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="text-[10px] sm:text-xs text-green-700 line-clamp-3 hover:line-clamp-none transition-all cursor-default">
+                            {{ implode(', ', $this->stats['responded']) ?: 'Aucune réponse pour le moment' }}
+                        </div>
+                    </div>
+
+                    <!-- Not Responded -->
+                    <div class="bg-red-50 rounded-lg p-3 border border-red-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-red-800 uppercase">Attente de réponse ({{ $this->stats['not_responded_count'] }})</span>
+                            <svg class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="text-[10px] sm:text-xs text-red-700 line-clamp-3 hover:line-clamp-none transition-all cursor-default">
+                            {{ implode(', ', $this->stats['not_responded']) ?: 'Tout le monde a répondu !' }}
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Detailed Table -->
+                <div class="mt-8 overflow-hidden border border-gray-100 rounded-lg shadow-sm">
+                    <div class="bg-gray-50 px-3 py-2 border-b border-gray-100 flex justify-between items-center">
+                        <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Détail des présences</h5>
+                        <div class="flex items-center space-x-2 text-[9px] text-gray-400 italic">
+                            <span class="flex items-center">aller</span>
+                            <span class="text-gray-300">|</span>
+                            <span class="flex items-center">retour</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-100">
+                            <thead class="bg-gray-50/50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-500 uppercase">Nom</th>
+                                    @foreach($days as $day)
+                                        <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 min-w-[70px]">
+                                            {{ \Carbon\Carbon::parse($day['date'])->translatedFormat('D d') }}
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                @foreach($this->stats['responded_full'] as $p)
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                        <td class="px-3 py-1.5 whitespace-nowrap text-[11px] font-medium text-gray-700">
+                                            {{ $p['name'] }}
+                                        </td>
+                                        @foreach($days as $day)
+                                            @php
+                                                $resp = $p['survey_response']['responses'][$day['date']] ?? null;
+                                                $aller = $resp['aller']['mode'] ?? '-';
+                                                $retour = $resp['retour']['mode'] ?? '-';
+                                                
+                                                $getIcon = function($mode) {
+                                                    return match($mode) {
+                                                        'bus' => '🚌',
+                                                        'train' => '🚂',
+                                                        'car', 'car_seats' => '🚗',
+                                                        'on_site' => '📍',
+                                                        'absent' => '❌',
+                                                        default => '-'
+                                                    };
+                                                };
+                                            @endphp
+                                            <td class="px-1 py-1.5 border-l border-gray-100">
+                                                <div class="flex items-center justify-center space-x-1.5">
+                                                    <div class="flex items-center bg-gray-50 px-1 rounded-sm border border-gray-100" title="Aller: {{ $aller }}">
+                                                        <span class="text-[10px]">{{ $getIcon($aller) }}</span>
+                                                    </div>
+                                                    <div class="flex items-center bg-gray-50 px-1 rounded-sm border border-gray-100" title="Retour: {{ $retour }}">
+                                                        <span class="text-[10px]">{{ $getIcon($retour) }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-center space-x-4 text-[10px] text-gray-400">
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+                        <span>{{ $this->stats['responded_count'] }} validés</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-red-400 rounded-full mr-1"></div>
+                        <span>{{ $this->stats['not_responded_count'] }} en attente</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

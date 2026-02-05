@@ -45,7 +45,7 @@ class LogisticsSurveyTest extends TestCase
 
         $logistic->refresh();
         $this->assertCount(1, $logistic->participants_data);
-        $this->assertEquals('[ENTRAÎNEUR] Jean Dupont', $logistic->participants_data[0]['name']);
+        $this->assertEquals('[E] Jean Dupont', $logistic->participants_data[0]['name']);
         $this->assertEquals('coach', $logistic->participants_data[0]['role']);
         $this->assertEquals('bus', $logistic->participants_data[0]['survey_response']['responses']['2026-02-05']['aller']['mode']);
     }
@@ -56,7 +56,7 @@ class LogisticsSurveyTest extends TestCase
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
                 ['id' => 'p1', 'name' => 'Athlete', 'role' => 'athlete'],
-                ['id' => 'p2', 'name' => '[ENTRAÎNEUR] Coach', 'role' => 'coach'],
+                ['id' => 'p2', 'name' => '[E] Coach', 'role' => 'coach'],
             ]
         ]);
 
