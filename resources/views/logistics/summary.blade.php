@@ -143,6 +143,7 @@
                         </div>
                     </div>
 
+                    @if(!$loop->last)
                     <!-- Stay/Hosting Section -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 px-1">
@@ -184,6 +185,7 @@
                             @endforelse
                         </div>
                     </div>
+                    @endif
 
                 </div>
             </div>

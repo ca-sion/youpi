@@ -61,7 +61,7 @@ class ManageTransport extends Page
         if (isset($rawTransport[0])) { // Migration from flat array
             $newTransport = [];
             foreach ($rawTransport as $v) {
-                $day = $v['departure_datetime'] ? substr($v['departure_datetime'], 0, 10) : ($this->selectedDay ?? date('Y-m-d'));
+                $day = ($v['departure_datetime'] ?? null) ? substr($v['departure_datetime'], 0, 10) : ($this->selectedDay ?? date('Y-m-d'));
                 $newTransport[$day][] = $v;
             }
             $rawTransport = $newTransport;
@@ -159,27 +159,33 @@ class ManageTransport extends Page
             ->toArray();
 
         // Stay Unassigned
-        $assignedStayIds = [];
-        foreach ($this->stayPlans as $day => $rList) {
-            if ($day === $this->selectedDay) {
-                foreach ($rList as $r) {
-                    $assignedStayIds = array_merge($assignedStayIds, $r['occupant_ids'] ?? []);
+        $isLastDay = !empty($this->days) && $this->selectedDay === end($this->days)['date'];
+
+        if ($isLastDay) {
+            $this->unassignedStay = [];
+        } else {
+            $assignedStayIds = [];
+            foreach ($this->stayPlans as $day => $rList) {
+                if ($day === $this->selectedDay) {
+                    foreach ($rList as $r) {
+                        $assignedStayIds = array_merge($assignedStayIds, $r['occupant_ids'] ?? []);
+                    }
                 }
             }
-        }
-        $this->unassignedStay = collect($participants)
-            ->filter(fn($p) => $p['survey_response']['hotel_needed'] ?? false)
-            ->reject(fn($p) => in_array($p['id'], $assignedStayIds))
-            ->values()
-            ->toArray();
+            $this->unassignedStay = collect($participants)
+                ->filter(fn($p) => $p['survey_response']['hotel_needed'] ?? false)
+                ->reject(fn($p) => in_array($p['id'], $assignedStayIds))
+                ->values()
+                ->toArray();
 
-        foreach ($participants as $p) {
-            // 3. Hotel Alert
-            $surveyHotel = $p['survey_response']['hotel_needed'] ?? false;
-            $inHotel = in_array($p['id'], $assignedStayIds);
+            foreach ($participants as $p) {
+                // 3. Hotel Alert
+                $surveyHotel = $p['survey_response']['hotel_needed'] ?? false;
+                $inHotel = in_array($p['id'], $assignedStayIds);
 
-            if ($surveyHotel && !$inHotel) {
-                 $this->globalAlerts[] = ['type' => 'danger', 'msg' => "Dodo manquant: {$p['name']}"];
+                if ($surveyHotel && !$inHotel) {
+                     $this->globalAlerts[] = ['type' => 'danger', 'msg' => "Dodo manquant: {$p['name']}"];
+                }
             }
         }
         

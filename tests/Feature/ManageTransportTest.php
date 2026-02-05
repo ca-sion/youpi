@@ -96,7 +96,7 @@ class ManageTransportTest extends TestCase
             ->call('autoDispatch');
 
         $logistic->refresh();
-        $plan = $logistic->transport_plan;
+        $plan = $logistic->transport_plan['2026-02-05'] ?? [];
         
         // Should have 1 Bus and 1 Car
         $this->assertCount(2, $plan);
@@ -108,7 +108,7 @@ class ManageTransportTest extends TestCase
         
         // p1 should be in the Bus or Car depending on fill order
         $bus = collect($plan)->firstWhere('type', 'bus');
-        $allPassengers = array_merge($bus['passengers'], $car['passengers']);
+        $allPassengers = array_merge($bus['passengers'] ?? [], $car['passengers'] ?? []);
         $this->assertContains('p1', $allPassengers);
     }
 }

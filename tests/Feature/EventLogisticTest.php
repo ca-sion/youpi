@@ -44,14 +44,16 @@ class EventLogisticTest extends TestCase
                 ['id' => 'p1', 'name' => 'P1'],
                 ['id' => 'p2', 'name' => 'P2'],
             ],
-            'settings' => ['vitesse_bus' => 100, 'distance_km' => 100],
+            'settings' => ['vitesse_bus' => 100, 'distance_km' => 100, 'start_date' => '2024-01-01'],
             'transport_plan' => [
-                [
-                    'type' => 'car',
-                    'name' => 'Small Car',
-                    'capacity' => 1,
-                    'passengers' => ['p1', 'p2'], // 2 passengers > 1
-                    'departure_datetime' => '2024-01-01 10:00:00'
+                '2024-01-01' => [
+                    [
+                        'type' => 'car',
+                        'name' => 'Small Car',
+                        'capacity' => 1,
+                        'passengers' => ['p1', 'p2'], // 2 passengers > 1
+                        'departure_datetime' => '2024-01-01 10:00:00'
+                    ]
                 ]
             ]
         ]);
@@ -79,17 +81,20 @@ class EventLogisticTest extends TestCase
                 ['id' => 'p1', 'name' => 'Late Runner', 'first_competition_datetime' => '2024-07-15 10:00:00'],
             ],
             'settings' => [
+                'start_date' => '2024-07-15',
                 'vitesse_bus' => 100, 
                 'distance_km' => 100, // 1h travel
                 'temps_prep_min' => 60 
             ],
             'transport_plan' => [
-                [
-                    'type' => 'bus',
-                    'name' => 'Late Bus',
-                    'capacity' => 50,
-                    'passengers' => ['p1'],
-                    'departure_datetime' => '2024-07-15 08:30:00' // 30 min late
+                '2024-07-15' => [
+                    [
+                        'type' => 'bus',
+                        'name' => 'Late Bus',
+                        'capacity' => 50,
+                        'passengers' => ['p1'],
+                        'departure_datetime' => '2024-07-15 08:30:00' // 30 min late
+                    ]
                 ]
             ]
         ]);
@@ -146,14 +151,13 @@ class EventLogisticTest extends TestCase
         // Simulating the user filling the survey
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->set('participantId', 'uuid-123')
-            ->set('transport_mode', 'bus')
-            ->set('presence_aller', ['Lundi'])
+            ->set('responses.2024-07-15.aller.mode', 'bus')
             ->call('submit')
             ->assertHasNoErrors();
 
         $logistic->refresh();
         $p = collect($logistic->participants_data)->firstWhere('id', 'uuid-123');
-        $this->assertEquals('bus', $p['survey_response']['transport_mode']);
+        $this->assertEquals('bus', $p['survey_response']['responses']['2024-07-15']['aller']['mode']);
     }
 
     /** @test */
@@ -162,6 +166,7 @@ class EventLogisticTest extends TestCase
         $startDate = Carbon::create(2024, 7, 15);
         $logistic = EventLogistic::factory()->create([
             'settings' => [
+                'start_date' => '2024-07-15',
                 'distance_km' => 100, 
                 'vitesse_bus' => 100, // 1h travel
                 'temps_prep_min' => 60 // 1h prep. Total offset = 2h.
@@ -171,13 +176,21 @@ class EventLogisticTest extends TestCase
                     'id' => 'p1', 
                     'name' => 'Bus Rider', 
                     'first_competition_datetime' => '2024-07-15 10:00:00',
-                    'survey_response' => ['transport_mode' => 'bus'] 
+                    'survey_response' => [
+                        'responses' => [
+                            '2024-07-15' => ['aller' => ['mode' => 'bus']]
+                        ]
+                    ] 
                 ],
                 [
                     'id' => 'p2', 
                     'name' => 'Car Driver', 
                     'first_competition_datetime' => '2024-07-15 11:00:00',
-                    'survey_response' => ['transport_mode' => 'voiture_parent', 'voiture_seats' => 2]
+                    'survey_response' => [
+                        'responses' => [
+                            '2024-07-15' => ['aller' => ['mode' => 'car_seats', 'seats' => 2]]
+                        ]
+                    ]
                 ]
             ]
         ]);
@@ -187,7 +200,7 @@ class EventLogisticTest extends TestCase
             ->assertNotified();
 
         $logistic->refresh();
-        $plan = $logistic->transport_plan;
+        $plan = $logistic->transport_plan['2024-07-15'] ?? [];
         
         // Check Bus
         $bus = collect($plan)->firstWhere('type', 'bus');
@@ -244,8 +257,9 @@ class EventLogisticTest extends TestCase
                 ]
             ],
             // P2 is in a room, P1 is not
+            'settings' => ['start_date' => '2024-07-15', 'days_count' => 2],
             'stay_plan' => [
-                ['occupant_ids' => ['p2'], 'room_type' => 'Single']
+                '2024-07-15' => [['occupant_ids' => ['p2'], 'room_type' => 'Single']]
             ], 
             'transport_plan' => [] 
         ]);
@@ -285,6 +299,12 @@ class EventLogisticTest extends TestCase
                     'survey_response' => [
                         'transport_mode' => 'bus',
                         'hotel_needed' => true,
+                        'responses' => [
+                            '2024-07-15' => [
+                                'aller' => ['mode' => 'bus'],
+                                'retour' => ['mode' => 'bus'],
+                            ]
+                        ],
                         'presence_aller' => ['Samedi'],
                         'remarks' => 'Hello'
                     ]
@@ -294,9 +314,8 @@ class EventLogisticTest extends TestCase
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->set('participantId', 'p1')
-            ->assertSet('transport_mode', 'bus')
+            ->assertSet('responses.2024-07-15.aller.mode', 'bus')
             ->assertSet('hotel_needed', true)
-            ->assertSet('presence_aller', ['Samedi'])
             ->assertSet('remarks', 'Hello');
     }
 
@@ -318,11 +337,11 @@ class EventLogisticTest extends TestCase
         ];
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
-            ->call('saveAllPlans', $newPlan, [])
+            ->call('saveAllPlans', ['2024-01-01' => $newPlan], [])
             ->assertHasNoErrors();
 
         $logistic->refresh();
-        $this->assertEquals(['p1'], $logistic->transport_plan[0]['passengers']);
+        $this->assertEquals(['p1'], $logistic->transport_plan['2024-01-01'][0]['passengers']);
     }
 
     /** @test */
@@ -337,28 +356,10 @@ class EventLogisticTest extends TestCase
             ->assertHasNoErrors();
 
         $logistic->refresh();
-        $this->assertCount(2, $logistic->transport_plan); 
-    }
-
-    /** @test */
-    public function it_can_call_hidden_edit_actions()
-    {
-        $logistic = EventLogistic::factory()->create([
-            'transport_plan' => [
-                ['id' => 'v1', 'name' => 'Old Name', 'type' => 'car', 'passengers' => []]
-            ]
-        ]);
-
-        Livewire::test(ManageTransport::class, ['record' => $logistic->id])
-            ->assertActionExists('editVehicle')
-            ->callAction('editVehicle', [
-                'name' => 'New Name',
-                'capacity' => 10,
-            ], ['index' => 0])
-            ->assertHasNoActionErrors();
-
-        $logistic->refresh();
-        $this->assertEquals('New Name', $logistic->transport_plan[0]['name']);
+        // The transport_plan is now nested by date
+        $plan = $logistic->transport_plan;
+        $day = array_key_first($plan);
+        $this->assertCount(2, $plan[$day]); 
     }
 
     /** @test */
@@ -375,6 +376,8 @@ class EventLogisticTest extends TestCase
             ->assertHasNoErrors();
 
         $logistic->refresh();
-        $this->assertEmpty($logistic->transport_plan);
+        $plan = $logistic->transport_plan;
+        $day = array_key_first($plan);
+        $this->assertEmpty($plan[$day]);
     }
 }

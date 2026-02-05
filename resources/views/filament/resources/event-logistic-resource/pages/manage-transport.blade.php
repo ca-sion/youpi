@@ -214,7 +214,7 @@
 
 
                 <!-- Section 2: Hébergement -->
-                <div class="bg-white border border-gray-200 rounded-xl p-1">
+                <div class="bg-white border border-gray-200 rounded-xl p-1" x-show="!isLastDay()">
                      <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
                          <div class="flex items-center gap-3">
                              <span class="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
@@ -478,6 +478,11 @@
                     if (!p || !p.first_competition_datetime) return null;
                     if (!p.first_competition_datetime.startsWith(this.selectedDay)) return null;
                     return p.first_competition_datetime.split(' ')[1].substring(0, 5);
+                },
+
+                isLastDay() {
+                    if (!this.days || this.days.length === 0) return false;
+                    return this.selectedDay === this.days[this.days.length - 1].date;
                 }
             }
         }
