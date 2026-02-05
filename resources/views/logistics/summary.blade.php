@@ -204,6 +204,112 @@
             </div>
         @endforeach
 
+        <!-- Own Transport Summary -->
+        @php
+            $independentParticipants = $participants->filter(function($p) use ($days, $transportPlan) {
+                foreach ($days as $day) {
+                    $dayPlan = $transportPlan[$day['date']] ?? [];
+                    $assignedAller = [];
+                    $assignedRetour = [];
+                    foreach ($dayPlan as $v) {
+                        if (($v['flow'] ?? 'aller') === 'retour') {
+                            $assignedRetour = array_merge($assignedRetour, $v['passengers'] ?? []);
+                        } else {
+                            $assignedAller = array_merge($assignedAller, $v['passengers'] ?? []);
+                        }
+                    }
+                    
+                    $resp = $p['survey_response']['responses'][$day['date']] ?? null;
+                    if ($resp) {
+                        $allerMode = $resp['aller']['mode'] ?? '';
+                        $retourMode = $resp['retour']['mode'] ?? '';
+                        $independentModes = ['train', 'car', 'on_site'];
+                        
+                        if ((in_array($allerMode, $independentModes) && !in_array($p['id'], $assignedAller)) || 
+                            (in_array($retourMode, $independentModes) && !in_array($p['id'], $assignedRetour))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
+        @endphp
+
+        @if($independentParticipants->isNotEmpty())
+            <div class="pt-6 border-t border-gray-100 space-y-4">
+                <div class="flex items-end justify-between">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900">Transports non organisés</h2>
+                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Par ses propres moyens</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-50/50 border-b border-gray-100 text-[9px] font-black uppercase tracking-widest text-gray-400">
+                                <th class="px-4 py-2">Participant</th>
+                                @foreach($days as $day)
+                                    <th class="px-4 py-2 text-center">{{ $day['label'] }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            @foreach($independentParticipants as $p)
+                                <tr class="hover:bg-gray-50/30 transition-colors">
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <div class="text-[11px] font-black text-gray-900">{{ $p['name'] }}</div>
+                                    </td>
+                                    @foreach($days as $day)
+                                        @php
+                                            $resp = $p['survey_response']['responses'][$day['date']] ?? null;
+                                            $dayPlan = $transportPlan[$day['date']] ?? [];
+                                            $assignedAller = [];
+                                            $assignedRetour = [];
+                                            foreach ($dayPlan as $v) {
+                                                if (($v['flow'] ?? 'aller') === 'retour') {
+                                                    $assignedRetour = array_merge($assignedRetour, $v['passengers'] ?? []);
+                                                } else {
+                                                    $assignedAller = array_merge($assignedAller, $v['passengers'] ?? []);
+                                                }
+                                            }
+                                            
+                                            $aller = $resp['aller']['mode'] ?? null;
+                                            $retour = $resp['retour']['mode'] ?? null;
+                                            $independentModes = ['train', 'car', 'on_site'];
+                                            
+                                            $showAller = $aller && in_array($aller, $independentModes) && !in_array($p['id'], $assignedAller);
+                                            $showRetour = $retour && in_array($retour, $independentModes) && !in_array($p['id'], $assignedRetour);
+                                        @endphp
+                                        <td class="px-4 py-2 whitespace-nowrap text-center">
+                                            @if($showAller || $showRetour)
+                                                <div class="inline-flex items-center gap-1.5">
+                                                    @if($showAller)
+                                                        <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-1 py-0.5 rounded border border-blue-100 text-[9px] font-bold">
+                                                            <x-heroicon-s-arrow-up-right class="w-2.5 h-2.5" />
+                                                            {{ strtoupper($aller) }}
+                                                        </span>
+                                                    @endif
+                                                    @if($showRetour)
+                                                        <span class="inline-flex items-center gap-1 bg-orange-50 text-orange-700 px-1 py-0.5 rounded border border-orange-100 text-[9px] font-bold">
+                                                            <x-heroicon-s-arrow-down-left class="w-2.5 h-2.5" />
+                                                            {{ strtoupper($retour) }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <span class="text-gray-200 text-[10px]">-</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
         <!-- Athletes Planning Compact -->
         <div class="pt-6 border-t border-gray-100 space-y-4">
             <div class="flex items-end justify-between">

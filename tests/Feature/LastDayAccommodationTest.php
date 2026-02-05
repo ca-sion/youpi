@@ -41,16 +41,16 @@ class LastDayAccommodationTest extends TestCase
             ->set('selectedDay', '2026-02-05');
         
         $this->assertNotEmpty($component->get('unassignedStay'));
-        $this->assertContains(['type' => 'danger', 'msg' => "Dodo manquant: Athlete needing hotel"], $component->get('globalAlerts'));
+        $this->assertContains(['type' => 'danger', 'msg' => "Nuit manquante: Athlete needing hotel"], $component->get('globalAlerts'));
 
         // Day 2 (2026-02-06, Last Day) - Should NOT have accommodation logic
         $component->set('selectedDay', '2026-02-06');
         
         $this->assertEmpty($component->get('unassignedStay'));
-        // Check that "Dodo manquant" is NOT in globalAlerts for the last day
+        // Check that "Nuit manquante" is NOT in globalAlerts for the last day
         $globalAlerts = $component->get('globalAlerts');
         foreach ($globalAlerts as $alert) {
-            $this->assertStringNotContainsString('Dodo manquant', $alert['msg']);
+            $this->assertStringNotContainsString('Nuit manquante', $alert['msg']);
         }
     }
 }

@@ -5,9 +5,13 @@
             stayPlans: @entangle('stayPlans'),
             unassignedTransport: @entangle('unassignedTransport'),
             unassignedTransportRetour: @entangle('unassignedTransportRetour'),
+            independentAller: @entangle('independentAller'),
+            independentRetour: @entangle('independentRetour'),
             unassignedStay: @entangle('unassignedStay'),
-            participantsMap: @js($participantsMap),
-            hotelNeededIds: @js($hotelNeededIds),
+            participantsMap: @entangle('participantsMap'),
+            hotelNeededIds: @entangle('hotelNeededIds'),
+            autoHotelIds: @entangle('autoHotelIds'),
+            hotelOverrideIds: @entangle('hotelOverrideIds'),
             globalAlerts: @entangle('globalAlerts'),
             alerts: @entangle('alerts'),
             selectedDay: @entangle('selectedDay').live,
@@ -25,7 +29,7 @@
                     <x-heroicon-o-truck class="w-5 h-5" />
                 </div>
                 <div>
-                    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-tight">Logistique Flux</h2>
+                    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-tight">Informations</h2>
                     <div class="flex items-center gap-2">
                         <p class="text-xs text-gray-500 font-medium" x-text="formatDate(selectedDay)"></p>
                         <template x-if="settings.distance_km">
@@ -63,7 +67,7 @@
         </div>
 
         <div class="flex flex-col gap-8">
-                
+                <div class="bg-white border border-gray-200 rounded-xl p-1">
                     <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
                         <div class="flex items-center gap-3">
                             <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
@@ -83,7 +87,7 @@
                                 <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest">En Attente (Aller)</h3>
                                 <span class="text-xs font-bold bg-white text-blue-600 px-2 py-0.5 rounded-full border border-blue-100" x-text="unassignedTransport.length"></span>
                             </div>
-                            <div wire:ignore id="transport-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="transport-aller">
+                            <div wire:ignore id="transport-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2 border-b border-blue-50" data-group="transport-aller">
                                 <template x-for="p in unassignedTransport" :key="p.id">
                                     <div class="bg-white border border-blue-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group relative" :data-id="p.id">
                                         <div class="flex justify-between items-start gap-2">
@@ -95,11 +99,34 @@
                                                 </div>
                                             </div>
                                             <template x-if="hotelNeededIds.includes(p.id)">
-                                                <x-heroicon-s-home class="w-3 h-3 text-indigo-400 shrink-0" />
+                                                <div class="flex flex-col gap-1 items-end">
+                                                    <template x-if="hotelOverrideIds.includes(p.id)">
+                                                        <span title="Manuel" class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1 rounded uppercase">M</span>
+                                                    </template>
+                                                    <template x-if="autoHotelIds.includes(p.id)">
+                                                        <span title="Suggestion Auto" class="text-[9px] font-black text-amber-600 bg-amber-50 px-1 rounded uppercase">A</span>
+                                                    </template>
+                                                    <x-heroicon-s-home class="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                                                </div>
                                             </template>
                                         </div>
                                     </div>
                                 </template>
+                            </div>
+                            
+                            <!-- INDEPENDENT ALLER -->
+                            <div class="p-2 border-t border-blue-100 bg-blue-50/30">
+                                <h4 class="text-[9px] font-black text-blue-300 uppercase tracking-widest mb-2">Propres moyens</h4>
+                                <div wire:ignore id="transport-aller-independent" class="space-y-1" data-group="transport-aller">
+                                    <template x-for="p in independentAller" :key="p.id">
+                                        <div class="bg-white/50 border border-blue-50 p-1.5 rounded shadow-sm opacity-70 hover:opacity-100 cursor-grab active:cursor-grabbing transition-all" :data-id="p.id">
+                                            <div class="flex justify-between items-center gap-2">
+                                                <span class="text-[10px] font-bold text-gray-500 truncate" x-text="p.name"></span>
+                                                <span class="text-[8px] font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'aller')"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
 
@@ -183,12 +210,20 @@
                                                             <div class="w-1 h-3 rounded-full bg-blue-400 shrink-0"></div>
                                                             <span class="text-xs font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : 'Inconnu'"></span>
                                                         </div>
-                                                        <div class="flex items-center gap-2">
+                                                         <div class="flex items-center gap-2">
                                                             <template x-if="getParticipantFirstTime(pId)">
                                                                 <span class="text-[10px] font-bold text-blue-600 tabular-nums" x-text="getParticipantFirstTime(pId)"></span>
                                                             </template>
                                                             <template x-if="hotelNeededIds.includes(pId)">
-                                                                <x-heroicon-s-home class="w-3 h-3 text-indigo-400 shrink-0" />
+                                                                <div class="flex gap-0.5 items-center">
+                                                                     <template x-if="hotelOverrideIds.includes(pId)">
+                                                                        <span title="Manuel" class="text-[8px] font-black text-indigo-600">M</span>
+                                                                    </template>
+                                                                    <template x-if="autoHotelIds.includes(pId)">
+                                                                        <span title="Suggestion Auto" class="text-[8px] font-black text-amber-600">A</span>
+                                                                    </template>
+                                                                    <x-heroicon-s-home class="w-3 h-3 text-indigo-400 shrink-0" />
+                                                                </div>
                                                             </template>
                                                         </div>
                                                     </div>
@@ -226,7 +261,7 @@
                                 <h3 class="text-xs font-black text-orange-400 uppercase tracking-widest">En Attente (Retour)</h3>
                                 <span class="text-xs font-bold bg-white text-orange-600 px-2 py-0.5 rounded-full border border-orange-100" x-text="unassignedTransportRetour.length"></span>
                             </div>
-                            <div wire:ignore id="transport-retour-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="transport-retour">
+                            <div wire:ignore id="transport-retour-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2 border-b border-orange-50" data-group="transport-retour">
                                 <template x-for="p in unassignedTransportRetour" :key="p.id">
                                     <div class="bg-white border border-orange-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-orange-300 hover:shadow transition-all group relative" :data-id="p.id">
                                         <div class="flex justify-between items-start gap-2">
@@ -240,6 +275,21 @@
                                         </div>
                                     </div>
                                 </template>
+                            </div>
+
+                            <!-- INDEPENDENT RETOUR -->
+                            <div class="p-2 border-t border-orange-100 bg-orange-50/30">
+                                <h4 class="text-[9px] font-black text-orange-300 uppercase tracking-widest mb-2">Propres moyens</h4>
+                                <div wire:ignore id="transport-retour-independent" class="space-y-1" data-group="transport-retour">
+                                    <template x-for="p in independentRetour" :key="p.id">
+                                        <div class="bg-white/50 border border-orange-50 p-1.5 rounded shadow-sm opacity-70 hover:opacity-100 cursor-grab active:cursor-grabbing transition-all" :data-id="p.id">
+                                            <div class="flex justify-between items-center gap-2">
+                                                <span class="text-[10px] font-bold text-gray-500 truncate" x-text="p.name"></span>
+                                                <span class="text-[8px] font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'retour')"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
 
@@ -439,9 +489,13 @@
                 stayPlans: config.stayPlans,
                 unassignedTransport: config.unassignedTransport,
                 unassignedTransportRetour: config.unassignedTransportRetour,
+                independentAller: config.independentAller,
+                independentRetour: config.independentRetour,
                 unassignedStay: config.unassignedStay,
                 participantsMap: config.participantsMap,
                 hotelNeededIds: config.hotelNeededIds,
+                autoHotelIds: config.autoHotelIds,
+                hotelOverrideIds: config.hotelOverrideIds,
                 globalAlerts: config.globalAlerts || [],
                 alerts: config.alerts || {},
                 selectedDay: config.selectedDay,
@@ -494,8 +548,10 @@
                         } else {
                             if (fromGroup === 'transport-aller') {
                                 this.unassignedTransport = this.unassignedTransport.filter(p => p.id != pId);
+                                this.independentAller = this.independentAller.filter(p => p.id != pId);
                             } else {
                                 this.unassignedTransportRetour = this.unassignedTransportRetour.filter(p => p.id != pId);
+                                this.independentRetour = this.independentRetour.filter(p => p.id != pId);
                             }
                         }
 
@@ -506,12 +562,22 @@
                         } else {
                             const pObj = this.participantsMap[pId];
                             if (toGroup === 'transport-aller') {
-                                if (pObj && !this.unassignedTransport.find(p => p.id == pId)) {
-                                    this.unassignedTransport.push(pObj);
+                                if (pObj) {
+                                    const mode = this.getTransportMode(pObj, 'aller');
+                                    if (mode === 'bus') {
+                                        if (!this.unassignedTransport.find(p => p.id == pId)) this.unassignedTransport.push(pObj);
+                                    } else {
+                                        if (!this.independentAller.find(p => p.id == pId)) this.independentAller.push(pObj);
+                                    }
                                 }
                             } else {
-                                if (pObj && !this.unassignedTransportRetour.find(p => p.id == pId)) {
-                                    this.unassignedTransportRetour.push(pObj);
+                                if (pObj) {
+                                    const mode = this.getTransportMode(pObj, 'retour');
+                                    if (mode === 'bus') {
+                                        if (!this.unassignedTransportRetour.find(p => p.id == pId)) this.unassignedTransportRetour.push(pObj);
+                                    } else {
+                                        if (!this.independentRetour.find(p => p.id == pId)) this.independentRetour.push(pObj);
+                                    }
                                 }
                             }
                         }

@@ -29,6 +29,15 @@ class ManageTransport extends Page
     public $hotelNeededIds = [];
     public $days = [];
     public $selectedDay = null;
+    public $independentAller = [];
+    public $independentRetour = [];
+    public $autoHotelIds = [];
+    public $hotelOverrideIds = [];
+
+    public function getTitle(): string
+    {
+        return 'Gestion logistique';
+    }
 
     public function mount(int | string $record): void
     {
@@ -41,8 +50,15 @@ class ManageTransport extends Page
         $settings = $this->record->settings ?? [];
         $startDateStr = $settings['start_date'] ?? null;
         $daysCount = (int)($settings['days_count'] ?? 2);
+        $threshold = $settings['home_departure_threshold'] ?? '07:00';
 
         $this->days = [];
+        $participants = collect($this->record->participants_data ?? [])->map(function($p) {
+            if (isset($p['id'])) $p['id'] = (string)$p['id'];
+            return $p;
+        });
+        $this->participantsMap = $participants->keyBy('id')->toArray();
+
         if ($startDateStr) {
             $startDate = Carbon::parse($startDateStr);
             for ($i = 0; $i < $daysCount; $i++) {
@@ -76,11 +92,60 @@ class ManageTransport extends Page
             $rawStay = [$this->selectedDay => $rawStay];
         }
         $this->stayPlans = $rawStay;
-        $participants = $this->record->participants_data ?? [];
-        $this->participantsMap = collect($participants)->keyBy('id')->toArray();
         $this->alerts = [];
         $this->globalAlerts = [];
-        $this->hotelNeededIds = collect($participants)->filter(fn($p) => $p['survey_response']['hotel_needed'] ?? false)->pluck('id')->toArray();
+
+        $this->hotelOverrideIds = $participants->filter(fn($p) => $p['hotel_override'] ?? false)->pluck('id')->map(fn($id) => (string)$id)->toArray();
+        $this->autoHotelIds = [];
+
+        // Auto suggestion logic
+        foreach ($participants as $p) {
+            $neededAuto = false;
+            
+            // A. Consecutive days
+            $pDays = [];
+            foreach ($this->days as $d) {
+                if (isset($p['survey_response']['responses'][$d['date']])) {
+                    $pDays[] = $d['date'];
+                }
+            }
+            
+            $currentDayIdx = array_search($this->selectedDay, array_column($this->days, 'date'));
+            if ($currentDayIdx !== false && $currentDayIdx < count($this->days) - 1) {
+                $nextDay = $this->days[$currentDayIdx + 1]['date'];
+                if (in_array($this->selectedDay, $pDays) && in_array($nextDay, $pDays)) {
+                    $neededAuto = true;
+                }
+            }
+
+            // B. Early start
+            if (!$neededAuto && isset($p['first_competition_datetime'])) {
+                $firstComp = Carbon::parse($p['first_competition_datetime']);
+                if ($firstComp->toDateString() === $this->selectedDay) {
+                    $prep = (int)($settings['duration_prep_min'] ?? 90);
+                    $dist = (float)($settings['distance_km'] ?? 0);
+                    $carSpeed = (float)($settings['car_speed'] ?? 100);
+                    $travelTime = ($carSpeed > 0) ? ($dist / $carSpeed * 60) : 0;
+                    
+                    $departureFromHome = $firstComp->copy()->subMinutes($prep)->subMinutes($travelTime);
+                    if ($departureFromHome->format('H:i') < $threshold) {
+                        $neededAuto = true;
+                    }
+                }
+            }
+
+            if ($neededAuto) {
+                $this->autoHotelIds[] = (string)$p['id'];
+            }
+        }
+
+        $surveyHotelIds = $participants->filter(fn($p) => $p['survey_response']['hotel_needed'] ?? false)->pluck('id')->map(fn($id) => (string)$id)->toArray();
+        
+        $this->hotelNeededIds = array_values(array_unique(array_merge(
+            $this->hotelOverrideIds,
+            $this->autoHotelIds,
+            $surveyHotelIds
+        )));
 
         // Ensure default settings
         $settings = $this->record->settings ?? [];
@@ -92,10 +157,6 @@ class ManageTransport extends Page
         // Calculate unassigned & Alerts
         $assignedIds = [];
         
-        $settings = $this->record->settings ?? [];
-        $prep = $settings['duration_prep_min'] ?? 90;
-        $dist = $settings['distance_km'] ?? 0;
-
         $currentDayTransport = $this->transportPlans[$this->selectedDay] ?? [];
         foreach ($currentDayTransport as $index => $vehicle) {
             $vPassengers = $vehicle['passengers'] ?? [];
@@ -114,11 +175,13 @@ class ManageTransport extends Page
             if (!empty($vehicle['departure_datetime'])) {
                 try {
                     $depTime = Carbon::parse($vehicle['departure_datetime']);
+                    $dist = $settings['distance_km'] ?? 0;
                     $speed = ($vehicle['type'] === 'bus') ? ($settings['bus_speed'] ?? 100) : ($settings['car_speed'] ?? 120);
                     $travelMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
                     
                     $arrivalEst = $depTime->copy()->addMinutes($travelMin);
                     $flow = $vehicle['flow'] ?? 'aller';
+                    $prep = $settings['duration_prep_min'] ?? 90;
 
                     foreach ($vPassengers as $pid) {
                         $p = $this->participantsMap[$pid] ?? null;
@@ -149,7 +212,7 @@ class ManageTransport extends Page
             }
         }
 
-        // Transport Unassigned (Aller vs Retour)
+        // Transport Unassigned vs Independent
         $assignedAllerIds = [];
         $assignedRetourIds = [];
         
@@ -165,24 +228,42 @@ class ManageTransport extends Page
                 }
             }
         }
-        
-        $this->unassignedTransport = collect($participants)
+
+        $allDayParticipants = $participants->filter(function($p) {
+            return isset($p['survey_response']['responses'][$this->selectedDay]);
+        });
+
+        $this->unassignedTransport = $allDayParticipants
             ->filter(function($p) {
-                $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
-                if (!$dayResp) return false;
-                $allerMode = $dayResp['aller']['mode'] ?? '';
-                return in_array($allerMode, ['bus', 'car_seats']);
+                $mode = $p['survey_response']['responses'][$this->selectedDay]['aller']['mode'] ?? '';
+                return $mode === 'bus';
             })
             ->reject(fn($p) => in_array($p['id'], $assignedAllerIds))
             ->values()
             ->toArray();
 
-        $this->unassignedTransportRetour = collect($participants)
+        $this->independentAller = $allDayParticipants
             ->filter(function($p) {
-                $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
-                if (!$dayResp) return false;
-                $retourMode = $dayResp['retour']['mode'] ?? '';
-                return in_array($retourMode, ['bus', 'car_seats']);
+                $mode = $p['survey_response']['responses'][$this->selectedDay]['aller']['mode'] ?? '';
+                return in_array($mode, ['train', 'car', 'on_site']);
+            })
+            ->reject(fn($p) => in_array($p['id'], $assignedAllerIds))
+            ->values()
+            ->toArray();
+
+        $this->unassignedTransportRetour = $allDayParticipants
+            ->filter(function($p) {
+                $mode = $p['survey_response']['responses'][$this->selectedDay]['retour']['mode'] ?? '';
+                return $mode === 'bus';
+            })
+            ->reject(fn($p) => in_array($p['id'], $assignedRetourIds))
+            ->values()
+            ->toArray();
+
+        $this->independentRetour = $allDayParticipants
+            ->filter(function($p) {
+                $mode = $p['survey_response']['responses'][$this->selectedDay]['retour']['mode'] ?? '';
+                return in_array($mode, ['train', 'car', 'on_site']);
             })
             ->reject(fn($p) => in_array($p['id'], $assignedRetourIds))
             ->values()
@@ -202,19 +283,20 @@ class ManageTransport extends Page
                     }
                 }
             }
+
             $this->unassignedStay = collect($participants)
-                ->filter(fn($p) => $p['survey_response']['hotel_needed'] ?? false)
+                ->filter(fn($p) => in_array($p['id'], $this->hotelNeededIds))
                 ->reject(fn($p) => in_array($p['id'], $assignedStayIds))
                 ->values()
                 ->toArray();
 
             foreach ($participants as $p) {
                 // 3. Hotel Alert
-                $surveyHotel = $p['survey_response']['hotel_needed'] ?? false;
+                $needsHotel = in_array($p['id'], $this->hotelNeededIds);
                 $inHotel = in_array($p['id'], $assignedStayIds);
 
-                if ($surveyHotel && !$inHotel) {
-                     $this->globalAlerts[] = ['type' => 'danger', 'msg' => "Dodo manquant: {$p['name']}"];
+                if ($needsHotel && !$inHotel) {
+                     $this->globalAlerts[] = ['type' => 'danger', 'msg' => "Nuit manquante: {$p['name']}"];
                 }
             }
         }

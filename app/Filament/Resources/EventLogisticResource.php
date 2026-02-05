@@ -80,7 +80,7 @@ class EventLogisticResource extends Resource
                                             ->default(9)
                                             ->required(),
                                     ]),
-                                Forms\Components\Grid::make(2)
+                                Forms\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('settings.duration_prep_min')
                                             ->label('Prép. (min)')
@@ -90,6 +90,10 @@ class EventLogisticResource extends Resource
                                             ->label('Récup. (min)')
                                             ->numeric()
                                             ->default(60),
+                                        Forms\Components\TextInput::make('settings.home_departure_threshold')
+                                            ->label('Seuil heure de départ du domicile pour l\'hôtel')
+                                            ->placeholder('07:00')
+                                            ->default('07:00'),
                                     ]),
                             ]),
                         Forms\Components\Tabs\Tab::make('Horaire')
@@ -134,17 +138,24 @@ class EventLogisticResource extends Resource
                         Forms\Components\Tabs\Tab::make('Participants (Planning)')
                             ->icon('heroicon-o-calendar-days')
                             ->schema([
-                                Forms\Components\Repeater::make('participants_data')
+                                 Forms\Components\Repeater::make('participants_data')
                                     ->label('Planning détaillé')
                                     ->schema([
-                                        Forms\Components\Grid::make(3)
+                                        Forms\Components\Grid::make(4)
                                             ->schema([
-                                                Forms\Components\TextInput::make('name')->label('Nom')->required(),
-                                                Forms\Components\TextInput::make('first_competition_datetime')->label('1er départ'),
-                                                Forms\Components\TextInput::make('last_competition_datetime')->label('Dernier départ'),
+                                                Forms\Components\TextInput::make('name')
+                                                    ->label('Nom')
+                                                    ->required(),
+                                                Forms\Components\TextInput::make('first_competition_datetime')
+                                                    ->label('1ère discipline'),
+                                                Forms\Components\TextInput::make('last_competition_datetime')
+                                                    ->label('Dernière discipline'),
+                                                Forms\Components\Checkbox::make('hotel_override')
+                                                    ->label('Hôtel requis (Manuel)')
+                                                    ->inline(false),
                                             ]),
                                         Forms\Components\Textarea::make('survey_response')
-                                            ->label('Sondage')
+                                            ->label('Sondage (Brut)')
                                             ->rows(2)
                                             ->formatStateUsing(fn ($state) => is_string($state) ? $state : json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
                                             ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state),

@@ -269,7 +269,7 @@ class EventLogisticTest extends TestCase
         $alerts = $component->get('globalAlerts');
         $this->assertNotEmpty($alerts);
         $this->assertEquals('danger', $alerts[0]['type']);
-        $this->assertStringContainsString('Dodo manquant', $alerts[0]['msg']);
+        $this->assertStringContainsString('Nuit manquante', $alerts[0]['msg']);
         $this->assertStringContainsString('Need Hotel', $alerts[0]['msg']);
     }
 
@@ -379,5 +379,105 @@ class EventLogisticTest extends TestCase
         $plan = $logistic->transport_plan;
         $day = array_key_first($plan);
         $this->assertEmpty($plan[$day]);
+    }
+
+    /** @test */
+    public function it_suggests_hotel_for_consecutive_days()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => ['start_date' => '2024-07-15', 'days_count' => 2],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 
+                    'name' => 'Consecutive Athlete', 
+                    'survey_response' => [
+                        'responses' => [
+                            '2024-07-15' => ['aller' => ['mode' => 'bus']],
+                            '2024-07-16' => ['aller' => ['mode' => 'bus']],
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        $this->assertContains('p1', $component->get('autoHotelIds'));
+        $this->assertContains('p1', $component->get('hotelNeededIds'));
+    }
+
+    /** @test */
+    public function it_suggests_hotel_for_early_departure()
+    {
+        // 100km at 100km/h = 60min travel
+        // 90min prep
+        // Comp at 09:00 -> Departure at 06:30 (< 07:00)
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'start_date' => '2024-07-15', 
+                'distance_km' => 100, 
+                'car_speed' => 100,
+                'duration_prep_min' => 90,
+                'home_departure_threshold' => '07:00'
+            ],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 
+                    'name' => 'Early Athlete', 
+                    'first_competition_datetime' => '2024-07-15 09:00:00',
+                    'survey_response' => [
+                        'responses' => [
+                            '2024-07-15' => ['aller' => ['mode' => 'bus']]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        $this->assertContains('p1', $component->get('autoHotelIds'));
+    }
+
+    /** @test */
+    public function it_respects_manual_hotel_override()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => ['start_date' => '2024-07-15'],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 
+                    'name' => 'Manual Athlete', 
+                    'hotel_override' => true,
+                    'survey_response' => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]]
+                ]
+            ]
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        $this->assertContains('p1', $component->get('hotelOverrideIds'));
+        $this->assertContains('p1', $component->get('hotelNeededIds'));
+    }
+
+    /** @test */
+    public function it_identifies_independent_participants()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => ['start_date' => '2024-07-15'],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 
+                    'name' => 'Train Athlete', 
+                    'survey_response' => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'train'], 'retour' => ['mode' => 'car']]]]
+                ]
+            ]
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        $this->assertCount(1, $component->get('independentAller'));
+        $this->assertEquals('p1', $component->get('independentAller')[0]['id']);
+        $this->assertCount(1, $component->get('independentRetour'));
     }
 }
