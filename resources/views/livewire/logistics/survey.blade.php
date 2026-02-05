@@ -2,7 +2,7 @@
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6 border-b">
             <h1 class="text-xl leading-6 font-bold">
-                Sondage logistique : {{ $event_logistic->event_name }}
+                Sondage logistique : {{ $event_logistic->name }}
             </h1>
             <div class="mt-2 text-sm space-y-2">
                 <p>

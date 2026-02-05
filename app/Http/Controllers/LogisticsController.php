@@ -29,8 +29,8 @@ class LogisticsController extends Controller
             }
         }
 
-        SEOMeta::setTitle($event->event_name.' - Résumé logistique');
-        OpenGraph::setTitle($event->event_name.' - Résumé logistique');
+        SEOMeta::setTitle($event->name.' - Résumé logistique');
+        OpenGraph::setTitle($event->name.' - Résumé logistique');
 
         return view('logistics.summary', [
             'event' => $event,

@@ -25,7 +25,7 @@ class EventLogisticResource extends Resource
             ->schema([
                 Forms\Components\Section::make()
                     ->schema([
-                        Forms\Components\TextInput::make('event_name')
+                        Forms\Components\TextInput::make('name')
                             ->label('Nom de l\'événement')
                             ->required()
                             ->live(onBlur: true)
@@ -155,7 +155,7 @@ class EventLogisticResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('event_name')
+                Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

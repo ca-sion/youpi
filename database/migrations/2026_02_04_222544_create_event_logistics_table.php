@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('event_logistics', function (Blueprint $table) {
             $table->id();
-            $table->string('event_name');
+            $table->string('name');
             $table->string('slug')->unique();
             $table->text('athletes_inscriptions_raw')->nullable();
             $table->json('inscriptions_data')->nullable();

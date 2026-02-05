@@ -26,7 +26,7 @@
                         <li class="text-gray-500">Résumé</li>
                     </ol>
                 </nav>
-                <h1 class="text-4xl font-black text-gray-900 tracking-tight">{{ $event->event_name }}</h1>
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight">{{ $event->name }}</h1>
             </div>
             
             <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">

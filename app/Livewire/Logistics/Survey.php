@@ -24,8 +24,8 @@ class Survey extends Component
     {
         $this->event_logistic = $event_logistic;
 
-        SEOMeta::setTitle($event_logistic->event_name.' - Sondage logistique');
-        OpenGraph::setTitle($event_logistic->event_name.' - Sondage logistique');
+        SEOMeta::setTitle($event_logistic->name.' - Sondage logistique');
+        OpenGraph::setTitle($event_logistic->name.' - Sondage logistique');
     }
 
     public function getDaysProperty()

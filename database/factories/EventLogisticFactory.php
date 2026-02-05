@@ -19,7 +19,7 @@ class EventLogisticFactory extends Factory
     {
         $name = $this->faker->sentence(3);
         return [
-            'event_name' => $name,
+            'name' => $name,
             'slug' => Str::slug($name),
             'athletes_inscriptions_raw' => null,
             'inscriptions_data' => [],
