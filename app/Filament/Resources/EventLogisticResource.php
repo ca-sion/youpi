@@ -59,13 +59,18 @@ class EventLogisticResource extends Resource
                                             ->numeric()
                                             ->default(2)
                                             ->required(),
+                                        Forms\Components\Select::make('document_id')
+                                            ->label('Document Voyage')
+                                            ->relationship('document', 'name')
+                                            ->searchable()
+                                            ->preload(),
+                                    ]),
+                                Forms\Components\Grid::make(4)
+                                    ->schema([
                                         Forms\Components\TextInput::make('settings.distance_km')
                                             ->label('Distance (km)')
                                             ->numeric()
                                             ->required(),
-                                    ]),
-                                Forms\Components\Grid::make(3)
-                                    ->schema([
                                         Forms\Components\TextInput::make('settings.bus_speed')
                                             ->label('Bus (km/h)')
                                             ->numeric()

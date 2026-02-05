@@ -19,4 +19,8 @@ class EventLogistic extends Model
         'stay_plan' => 'array',
         'settings' => 'array',
     ];
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
+    }
 }

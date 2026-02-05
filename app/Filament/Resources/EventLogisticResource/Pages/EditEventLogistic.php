@@ -226,6 +226,157 @@ class EditEventLogistic extends EditRecord
             ->icon('heroicon-o-wrench-screwdriver')
             ->color('gray'),
 
+            Actions\Action::make('prepare_document')
+                ->label('Préparer Document Voyage')
+                ->icon('heroicon-o-document-text')
+                ->requiresConfirmation()
+                ->action(function () {
+                    $record = $this->getRecord();
+                    $document = $record->document;
+
+                    if (!$document) {
+                        $document = \App\Models\Document::create([
+                            'name' => 'Document Voyage - ' . $record->name,
+                            'type' => \App\Enums\DocumentType::TRAVEL,
+                            'status' => \App\Enums\DocumentStatus::VALIDATED,
+                            'published_on' => now(),
+                        ]);
+                        $record->update(['document_id' => $document->id]);
+                    }
+
+                    $settings = $record->settings ?? [];
+                    $startDateStr = $settings['start_date'] ?? null;
+                    if (!$startDateStr) {
+                         Notification::make()->title('Date de début manquante')->danger()->send();
+                         return;
+                    }
+                    $startDate = Carbon::parse($startDateStr);
+                    $daysCount = (int)($settings['days_count'] ?? 2);
+                    $participants = collect($record->participants_data ?? []);
+
+                    $travelData = [
+                        'data' => [
+                            'modification_deadline' => null,
+                            'modification_deadline_phone' => null,
+                            'location' => $record->name,
+                            'date' => $startDateStr,
+                            'departures' => [],
+                            'arrivals' => [],
+                            'nights' => [],
+                            'accomodation' => '',
+                            'competition' => $record->name,
+                            'competition_informations_important' => '',
+                            'competition_informations' => '',
+                            'competition_schedules' => '',
+                        ]
+                    ];
+
+                    $transportPlan = $record->transport_plan ?? [];
+                    $stayPlan = $record->stay_plan ?? [];
+
+                    // 1. Map Transport Plan
+                    foreach ($transportPlan as $day => $vehicles) {
+                        foreach ($vehicles as $v) {
+                            $entry = [
+                                'day_hour' => Carbon::parse($v['departure_datetime'] ?? $day)->translatedFormat('D d.m H:i'),
+                                'location' => $v['departure_location'] ?? '',
+                                'means' => ($v['type'] === 'bus' ? 'Bus' : 'Voiture'),
+                                'driver' => $v['driver'] ?? '',
+                                'travelers' => $participants->whereIn('id', $v['passengers'] ?? [])->pluck('name')->implode(', '),
+                                'travelers_number' => count($v['passengers'] ?? []),
+                            ];
+
+                            if (($v['flow'] ?? 'aller') === 'retour') {
+                                $travelData['data']['arrivals'][] = $entry;
+                            } else {
+                                $travelData['data']['departures'][] = $entry;
+                            }
+                        }
+                    }
+
+                    // 2. Map Independents
+                    for ($i = 0; $i < $daysCount; $i++) {
+                        $date = $startDate->copy()->addDays($i)->toDateString();
+                        $dateLabel = $startDate->copy()->addDays($i)->translatedFormat('D d.m');
+                        
+                        $assignedAllerIds = [];
+                        $assignedRetourIds = [];
+                        foreach ($transportPlan as $d => $vList) {
+                            if ($d === $date) {
+                                foreach ($vList as $v) {
+                                    if (($v['flow'] ?? 'aller') === 'retour') {
+                                        $assignedRetourIds = array_merge($assignedRetourIds, $v['passengers'] ?? []);
+                                    } else {
+                                        $assignedAllerIds = array_merge($assignedAllerIds, $v['passengers'] ?? []);
+                                    }
+                                }
+                            }
+                        }
+
+                        $indepAller = $participants->filter(function($p) use ($date, $assignedAllerIds) {
+                            $mode = $p['survey_response']['responses'][$date]['aller']['mode'] ?? '';
+                            return in_array($mode, ['train', 'car', 'on_site']) && !in_array($p['id'], $assignedAllerIds);
+                        });
+
+                        if ($indepAller->count() > 0) {
+                            $travelData['data']['departures'][] = [
+                                'day_hour' => $dateLabel,
+                                'location' => 'Individuel',
+                                'means' => 'Par ses propres moyens',
+                                'driver' => '-',
+                                'travelers' => $indepAller->pluck('name')->implode(', '),
+                                'travelers_number' => $indepAller->count(),
+                            ];
+                        }
+
+                        $indepRetour = $participants->filter(function($p) use ($date, $assignedRetourIds) {
+                            $mode = $p['survey_response']['responses'][$date]['retour']['mode'] ?? '';
+                            return in_array($mode, ['train', 'car', 'on_site']) && !in_array($p['id'], $assignedRetourIds);
+                        });
+
+                        if ($indepRetour->count() > 0) {
+                            $travelData['data']['arrivals'][] = [
+                                'day_hour' => $dateLabel,
+                                'location' => 'Individuel',
+                                'means' => 'Par ses propres moyens',
+                                'driver' => '-',
+                                'travelers' => $indepRetour->pluck('name')->implode(', '),
+                                'travelers_number' => $indepRetour->count(),
+                            ];
+                        }
+                    }
+
+                    // 3. Map Stay Plan (Nights)
+                    foreach ($stayPlan as $day => $rooms) {
+                        foreach ($rooms as $r) {
+                            $travelData['data']['nights'][] = [
+                                'day' => Carbon::parse($day)->translatedFormat('D d.m'),
+                                'travelers' => $participants->whereIn('id', $r['occupant_ids'] ?? [])->pluck('name')->implode(', '),
+                            ];
+                        }
+                    }
+
+                    // 4. Map Schedules
+                    $schedules = $participants->map(function($p) use ($startDate) {
+                        if (!isset($p['first_competition_datetime'])) return null;
+                        $first = Carbon::parse($p['first_competition_datetime']);
+                        $last = isset($p['last_competition_datetime']) ? Carbon::parse($p['last_competition_datetime']) : null;
+                        
+                        $label = $p['name'] . ' : (' . $first->translatedFormat('D') . ') ' . $first->format('H:i');
+                        if ($last) {
+                            $label .= ' - ' . $last->format('H:i');
+                        }
+                        return $label;
+                    })->filter()->implode("\n");
+                    
+                    $travelData['data']['competition_schedules'] = $schedules;
+
+                    $document->update(['travel_data' => $travelData]);
+
+                    Notification::make()->title('Document préparé avec succès')->success()->send();
+                    $this->fillForm();
+                }),
+
             Actions\DeleteAction::make(),
         ];
     }
