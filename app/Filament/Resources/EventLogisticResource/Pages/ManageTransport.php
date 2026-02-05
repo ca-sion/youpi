@@ -396,24 +396,6 @@ class ManageTransport extends Page
                 ->action(fn() => $this->autoDispatch())
                 ->color('danger')
                 ->icon('heroicon-o-arrow-path'),
-             
-             Action::make('add_car')
-                ->label('Voiture')
-                ->icon('heroicon-o-plus')
-                ->action(fn() => $this->addVehicle('car'))
-                ->color('gray'),
-
-             Action::make('add_bus')
-                ->label('Bus')
-                ->icon('heroicon-o-plus')
-                ->action(fn() => $this->addVehicle('bus'))
-                ->color('gray'),
-
-            Action::make('add_room')
-                ->label('Chambre')
-                ->icon('heroicon-o-home')
-                ->action(fn() => $this->addRoom())
-                ->color('gray'),
         ];
     }
 
