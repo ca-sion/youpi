@@ -16,8 +16,8 @@
     
     <div
         x-data="transportBoard({
-            transportPlans: @entangle('transportPlans'),
-            stayPlans: @entangle('stayPlans'),
+            transportPlans: @entangle('transportPlans').live,
+            stayPlans: @entangle('stayPlans').live,
             unassignedTransport: @entangle('unassignedTransport'),
             unassignedTransportRetour: @entangle('unassignedTransportRetour'),
             independentAller: @entangle('independentAller'),
@@ -29,6 +29,8 @@
             hotelOverrideIds: @entangle('hotelOverrideIds'),
             globalAlerts: @entangle('globalAlerts'),
             alerts: @entangle('alerts'),
+            hotelBlockedIds: @entangle('hotelBlockedIds'),
+            planningMode: @entangle('planningMode').live,
             selectedDay: @entangle('selectedDay').live,
             days: @js($days),
             settings: @js($record->settings)
@@ -108,23 +110,49 @@
                                     <template x-for="p in unassignedTransport" :key="p.id">
                                         <div class="bg-white border border-blue-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow transition-all group relative" :data-id="p.id">
                                             <div class="flex justify-between items-center gap-2">
-                                                <div class="min-w-0 flex-1 flex items-center justify-between gap-1.5">
+                                                <div class="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden">
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        <div class="text-[8px] font-black px-1 rounded border leading-tight" :class="getParticipantSourceColor(p.id)" x-text="getParticipantSource(p.id)" :title="getParticipantSourceTitle(p.id)"></div>
+                                                    </div>
                                                     <div class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></div>
+                                                    <template x-if="isCoach(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                    </template>
                                                     <div class="flex items-center gap-1 shrink-0" x-show="getParticipantFirstTime(p.id)">
-                                                         <span class="text-10px font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(p.id)"></span>
+                                                         <span class="text-[10px] font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(p.id)"></span>
                                                     </div>
                                                 </div>
-                                                <template x-if="hotelNeededIds.includes(p.id)">
-                                                    <div class="flex items-center gap-1 bg-indigo-50 px-1 py-0.5 rounded border border-indigo-100">
-                                                        <template x-if="hotelOverrideIds.includes(p.id)">
-                                                            <span title="Manuel" class="text-8px font-black text-indigo-600 uppercase">M</span>
+                                                <!-- HOTEL TOGGLE -->
+                                                <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                    :class="{
+                                                        'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id),
+                                                        'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(p.id),
+                                                        'border-transparent': !hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id)
+                                                    }"
+                                                    @click.stop="$wire.toggleHotel(p.id)"
+                                                    :title="hotelOverrideIds.includes(p.id) ? 'Hôtel Forcé' : (hotelBlockedIds.includes(p.id) ? 'Hôtel Bloqué' : 'Hôtel Automatique')"
+                                                >
+                                                    <template x-if="hotelOverrideIds.includes(p.id)">
+                                                        <span class="text-[7px] font-black text-indigo-600 uppercase">F</span>
+                                                    </template>
+                                                    <template x-if="hotelBlockedIds.includes(p.id)">
+                                                        <span class="text-[7px] font-black text-gray-400 uppercase">B</span>
+                                                    </template>
+                                                    <template x-if="autoHotelIds.includes(p.id) && !hotelOverrideIds.includes(p.id) && !hotelBlockedIds.includes(p.id)">
+                                                        <span class="text-[7px] font-black text-amber-600 uppercase">A</span>
+                                                    </template>
+                                                    
+                                                    <div class="relative">
+                                                        <div :class="hotelBlockedIds.includes(p.id) ? 'text-gray-300' : (hotelNeededIds.includes(p.id) ? 'text-indigo-500' : 'text-gray-200')">
+                                                            <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                        </div>
+                                                        <template x-if="hotelBlockedIds.includes(p.id)">
+                                                            <div class="absolute inset-0 flex items-center justify-center">
+                                                                <div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div>
+                                                            </div>
                                                         </template>
-                                                        <template x-if="autoHotelIds.includes(p.id)">
-                                                            <span title="Suggestion Auto" class="text-8px font-black text-amber-600 uppercase">A</span>
-                                                        </template>
-                                                        <x-heroicon-s-home class="w-3 h-3 text-indigo-500 shrink-0" />
                                                     </div>
-                                                </template>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
@@ -136,10 +164,39 @@
                                 <h4 class="text-9px font-black text-blue-300 uppercase tracking-widest mb-1.5">Propres moyens</h4>
                                 <div wire:ignore id="transport-aller-independent" class="space-y-1" data-group="transport-aller">
                                     <template x-for="p in independentAller" :key="p.id">
-                                        <div class="bg-white/50 border border-blue-50 p-1.5 rounded shadow-sm opacity-70 hover:opacity-100 cursor-grab active:cursor-grabbing transition-all" :data-id="p.id">
-                                            <div class="flex justify-between items-center gap-2">
-                                                <span class="text-10px font-bold text-gray-500 truncate" x-text="p.name"></span>
-                                                <span class="text-9px font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'aller')"></span>
+                                        <div class="bg-white border border-blue-50 p-1.5 rounded-lg shadow-sm opacity-80 hover:opacity-100 cursor-grab active:cursor-grabbing hover:border-blue-400 transition-all group" :data-id="p.id">
+                                            <div class="flex justify-between items-center gap-2 overflow-hidden">
+                                                <div class="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden">
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        <div class="text-[8px] font-black px-1 rounded border leading-none shrink-0" :class="getParticipantSourceColor(p.id)" x-text="getParticipantSource(p.id)"></div>
+                                                    </div>
+                                                    <span class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></span>
+                                                    <template x-if="isCoach(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                    </template>
+                                                    <div class="flex items-center gap-1 shrink-0" x-show="getParticipantFirstTime(p.id)">
+                                                        <span class="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(p.id)"></span>
+                                                   </div>
+                                                </div>
+                                                <!-- HOTEL TOGGLE -->
+                                                <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                    :class="{
+                                                        'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id),
+                                                        'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(p.id),
+                                                        'border-transparent': !hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id)
+                                                    }"
+                                                    @click.stop="$wire.toggleHotel(p.id)"
+                                                >
+                                                    <template x-if="hotelOverrideIds.includes(p.id)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                    <template x-if="hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                    <template x-if="autoHotelIds.includes(p.id) && !hotelOverrideIds.includes(p.id) && !hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                    <div class="relative">
+                                                        <div :class="hotelBlockedIds.includes(p.id) ? 'text-gray-300' : (hotelNeededIds.includes(p.id) ? 'text-indigo-500' : 'text-gray-200')">
+                                                            <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                        </div>
+                                                        <template x-if="hotelBlockedIds.includes(p.id)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
@@ -165,12 +222,20 @@
                                                 </div>
                                             </template>
                                             <div class="flex-1 min-w-0">
-                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-11px font-black uppercase text-gray-900 focus:ring-0 w-full truncate placeholder-gray-300 tracking-tight" placeholder="NOM VÉHICULE">
+                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-11px font-black text-gray-900 focus:ring-0 w-full truncate placeholder-gray-300 tracking-tight" placeholder="NOM VÉHICULE">
                                                 <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-10px font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300 -mt-1" placeholder="Chauffeur...">
                                             </div>
                                         </div>
                                         
                                         <div class="flex items-center gap-1.5 shrink-0">
+                                            <button x-on:click="$wire.toggleLock('vehicle', index)" class="p-1 rounded-lg transition-colors" :class="v.locked ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:bg-gray-100'">
+                                                <template x-if="v.locked">
+                                                    <x-heroicon-s-lock-closed class="w-4 h-4" />
+                                                </template>
+                                                <template x-if="!v.locked">
+                                                    <x-heroicon-o-lock-open class="w-4 h-4" />
+                                                </template>
+                                            </button>
                                             <div class="flex items-center bg-white border border-gray-200 rounded-lg px-2 py-0.5 shadow-sm">
                                                 <span class="text-11px font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-500' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
                                                 <span class="text-10px text-gray-300 mx-0.5">/</span>
@@ -224,27 +289,39 @@
                                                 </div>
                                             </template>
                                             <template x-for="pId in v.passengers" :key="pId">
-                                                <div class="bg-white border border-gray-200 rounded px-1.5 py-1 shadow-sm group/p hover:border-blue-400 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
+                                                <div class="bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm group/p hover:border-blue-400 cursor-grab active:cursor-grabbing overflow-hidden transition-all" :data-id="pId">
                                                     <div class="flex items-center justify-between w-full gap-2">
                                                         <div class="flex items-center gap-1.5 overflow-hidden">
-                                                            <div class="w-0.5 h-3 rounded-full bg-blue-400 shrink-0"></div>
-                                                            <span class="text-10px font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
+                                                            <div class="flex items-center gap-1 shrink-0">
+                                                                <div class="text-[8px] font-black px-1 rounded border leading-tight" :class="getParticipantSourceColor(pId)" x-text="getParticipantSource(pId)" :title="getParticipantSourceTitle(pId)"></div>
+                                                            </div>
+                                                            <div class="text-xs font-bold text-gray-800 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></div>
+                                                            <template x-if="isCoach(pId)">
+                                                                <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                            </template>
+                                                            <div class="flex items-center gap-1 shrink-0" x-show="getParticipantFirstTime(pId)">
+                                                                 <span class="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(pId)"></span>
+                                                            </div>
                                                         </div>
-                                                         <div class="flex items-center gap-1 shrink-0">
-                                                            <template x-if="getParticipantFirstTime(pId)">
-                                                                <span class="text-9px font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(pId)"></span>
-                                                            </template>
-                                                            <template x-if="hotelNeededIds.includes(pId)">
-                                                                <div class="flex gap-0.5 items-center px-1 bg-indigo-50 rounded border border-indigo-100">
-                                                                     <template x-if="hotelOverrideIds.includes(pId)">
-                                                                        <span title="Manuel" class="text-7px font-black text-indigo-600">M</span>
-                                                                    </template>
-                                                                    <template x-if="autoHotelIds.includes(pId)">
-                                                                        <span title="Suggestion Auto" class="text-7px font-black text-amber-600">A</span>
-                                                                    </template>
-                                                                    <x-heroicon-s-home class="w-2.5 h-2.5 text-indigo-400 shrink-0" />
+                                                        <!-- HOTEL TOGGLE (Vehicle Aller) -->
+                                                        <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                            :class="{
+                                                                'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(pId) && !hotelBlockedIds.includes(pId),
+                                                                'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(pId),
+                                                                'border-transparent': !hotelNeededIds.includes(pId) && !hotelBlockedIds.includes(pId)
+                                                            }"
+                                                            @click.stop="$wire.toggleHotel(pId)"
+                                                            :title="hotelOverrideIds.includes(pId) ? 'Hôtel Forcé' : (hotelBlockedIds.includes(pId) ? 'Hôtel Bloqué' : 'Hôtel Automatique')"
+                                                        >
+                                                            <template x-if="hotelOverrideIds.includes(pId)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                            <template x-if="hotelBlockedIds.includes(pId)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                            <template x-if="autoHotelIds.includes(pId) && !hotelOverrideIds.includes(pId) && !hotelBlockedIds.includes(pId)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                            <div class="relative">
+                                                                <div :class="hotelBlockedIds.includes(pId) ? 'text-gray-300' : (hotelNeededIds.includes(pId) ? 'text-indigo-500' : 'text-gray-200')">
+                                                                    <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
                                                                 </div>
-                                                            </template>
+                                                                <template x-if="hotelBlockedIds.includes(pId)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -286,10 +363,36 @@
                                     <template x-for="p in unassignedTransportRetour" :key="p.id">
                                         <div class="bg-white border border-orange-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-orange-400 hover:shadow transition-all group relative" :data-id="p.id">
                                             <div class="flex justify-between items-center gap-2">
-                                                <div class="min-w-0 flex-1 flex items-center justify-between gap-1.5">
+                                                <div class="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden">
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        <div class="text-[8px] font-black px-1 rounded border leading-tight" :class="getParticipantSourceColor(p.id)" x-text="getParticipantSource(p.id)" :title="getParticipantSourceTitle(p.id)"></div>
+                                                    </div>
                                                     <div class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></div>
+                                                    <template x-if="isCoach(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                    </template>
                                                     <div class="flex items-center gap-1 shrink-0" x-show="getParticipantLastTime(p.id)">
-                                                         <span class="text-10px font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(p.id)"></span>
+                                                         <span class="text-[10px] font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(p.id)"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- HOTEL TOGGLE (Retour Unassigned) -->
+                                                <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                    :class="{
+                                                        'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id),
+                                                        'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(p.id),
+                                                        'border-transparent': !hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id)
+                                                    }"
+                                                    @click.stop="$wire.toggleHotel(p.id)"
+                                                    :title="hotelOverrideIds.includes(p.id) ? 'Hôtel Forcé' : (hotelBlockedIds.includes(p.id) ? 'Hôtel Bloqué' : 'Hôtel Automatique')"
+                                                >
+                                                    <template x-if="hotelOverrideIds.includes(p.id)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                    <template x-if="hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                    <template x-if="autoHotelIds.includes(p.id) && !hotelOverrideIds.includes(p.id) && !hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                    <div class="relative">
+                                                        <div :class="hotelBlockedIds.includes(p.id) ? 'text-gray-300' : (hotelNeededIds.includes(p.id) ? 'text-indigo-500' : 'text-gray-200')">
+                                                            <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                        </div>
+                                                        <template x-if="hotelBlockedIds.includes(p.id)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
                                                     </div>
                                                 </div>
                                             </div>
@@ -303,10 +406,36 @@
                                 <h4 class="text-9px font-black text-orange-300 uppercase tracking-widest mb-1.5">Propres moyens</h4>
                                 <div wire:ignore id="transport-retour-independent" class="space-y-1" data-group="transport-retour">
                                     <template x-for="p in independentRetour" :key="p.id">
-                                        <div class="bg-white/50 border border-orange-50 p-1.5 rounded shadow-sm opacity-70 hover:opacity-100 cursor-grab active:cursor-grabbing transition-all" :data-id="p.id">
-                                            <div class="flex justify-between items-center gap-2">
-                                                <span class="text-10px font-bold text-gray-500 truncate" x-text="p.name"></span>
-                                                <span class="text-9px font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'retour')"></span>
+                                        <div class="bg-white/50 border border-orange-50 p-1.5 rounded-lg shadow-sm opacity-80 hover:opacity-100 cursor-grab active:cursor-grabbing hover:border-orange-400 transition-all group" :data-id="p.id">
+                                            <div class="flex justify-between items-center gap-2 overflow-hidden">
+                                                <div class="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden">
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        <div class="text-[8px] font-black px-1 rounded border leading-none shrink-0" :class="getParticipantSourceColor(p.id)" x-text="getParticipantSource(p.id)"></div>
+                                                    </div>
+                                                    <span class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></span>
+                                                    <div class="flex items-center gap-1 shrink-0" x-show="getParticipantLastTime(p.id)">
+                                                        <span class="text-[9px] font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(p.id)"></span>
+                                                   </div>
+                                                </div>
+                                                <!-- HOTEL TOGGLE -->
+                                                <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                    :class="{
+                                                        'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id),
+                                                        'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(p.id),
+                                                        'border-transparent': !hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id)
+                                                    }"
+                                                    @click.stop="$wire.toggleHotel(p.id)"
+                                                >
+                                                    <template x-if="hotelOverrideIds.includes(p.id)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                    <template x-if="hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                    <template x-if="autoHotelIds.includes(p.id) && !hotelOverrideIds.includes(p.id) && !hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                    <div class="relative">
+                                                        <div :class="hotelBlockedIds.includes(p.id) ? 'text-gray-300' : (hotelNeededIds.includes(p.id) ? 'text-indigo-500' : 'text-gray-200')">
+                                                            <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                        </div>
+                                                        <template x-if="hotelBlockedIds.includes(p.id)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
@@ -332,12 +461,20 @@
                                                 </div>
                                             </template>
                                             <div class="flex-1 min-w-0">
-                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-11px font-black uppercase text-gray-900 focus:ring-0 w-full truncate placeholder-gray-300 tracking-tight" placeholder="NOM VÉHICULE">
+                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-11px font-black text-gray-900 focus:ring-0 w-full truncate placeholder-gray-300 tracking-tight" placeholder="NOM VÉHICULE">
                                                 <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-10px font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300 -mt-1" placeholder="Chauffeur...">
                                             </div>
                                         </div>
                                         
                                         <div class="flex items-center gap-1.5 shrink-0">
+                                            <button x-on:click="$wire.toggleLock('vehicle', index)" class="p-1 rounded-lg transition-colors" :class="v.locked ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:bg-gray-100'">
+                                                <template x-if="v.locked">
+                                                    <x-heroicon-s-lock-closed class="w-4 h-4" />
+                                                </template>
+                                                <template x-if="!v.locked">
+                                                    <x-heroicon-o-lock-open class="w-4 h-4" />
+                                                </template>
+                                            </button>
                                             <div class="flex items-center bg-white border border-gray-200 rounded-lg px-2 py-0.5 shadow-sm">
                                                 <span class="text-11px font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-500' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
                                                 <span class="text-10px text-gray-300 mx-0.5">/</span>
@@ -384,15 +521,40 @@
                                                 </div>
                                             </template>
                                             <template x-for="pId in v.passengers" :key="pId">
-                                                <div class="bg-white border border-gray-200 rounded px-1.5 py-1 shadow-sm group/p hover:border-orange-400 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
+                                                <div class="bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm group/p hover:border-orange-400 cursor-grab active:cursor-grabbing overflow-hidden transition-all" :data-id="pId">
                                                     <div class="flex items-center justify-between w-full gap-2">
                                                         <div class="flex items-center gap-1.5 overflow-hidden">
-                                                            <div class="w-0.5 h-3 rounded-full bg-orange-400 shrink-0"></div>
-                                                            <span class="text-10px font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
+                                                            <div class="flex items-center gap-1 shrink-0">
+                                                                <div class="text-[8px] font-black px-1 rounded border leading-tight" :class="getParticipantSourceColor(pId)" x-text="getParticipantSource(pId)" :title="getParticipantSourceTitle(pId)"></div>
+                                                            </div>
+                                                            <div class="text-xs font-bold text-gray-800 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></div>
+                                                            <template x-if="isCoach(pId)">
+                                                                <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                            </template>
+                                                            <div class="flex items-center gap-1 shrink-0" x-show="getParticipantLastTime(pId)">
+                                                                 <span class="text-[9px] font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(pId)"></span>
+                                                            </div>
                                                         </div>
-                                                        <template x-if="getParticipantLastTime(pId)">
-                                                            <span class="text-10px font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(pId)"></span>
-                                                        </template>
+                                                        <!-- HOTEL TOGGLE (Vehicle Retour) -->
+                                                        <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                            :class="{
+                                                                'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(pId) && !hotelBlockedIds.includes(pId),
+                                                                'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(pId),
+                                                                'border-transparent': !hotelNeededIds.includes(pId) && !hotelBlockedIds.includes(pId)
+                                                            }"
+                                                            @click.stop="$wire.toggleHotel(pId)"
+                                                            :title="hotelOverrideIds.includes(pId) ? 'Hôtel Forcé' : (hotelBlockedIds.includes(pId) ? 'Hôtel Bloqué' : 'Hôtel Automatique')"
+                                                        >
+                                                            <template x-if="hotelOverrideIds.includes(pId)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                            <template x-if="hotelBlockedIds.includes(pId)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                            <template x-if="autoHotelIds.includes(pId) && !hotelOverrideIds.includes(pId) && !hotelBlockedIds.includes(pId)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                            <div class="relative">
+                                                                <div :class="hotelBlockedIds.includes(pId) ? 'text-gray-300' : (hotelNeededIds.includes(pId) ? 'text-indigo-500' : 'text-gray-200')">
+                                                                    <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                                </div>
+                                                                <template x-if="hotelBlockedIds.includes(pId)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </template>
@@ -427,8 +589,37 @@
                             </div>
                             <div wire:ignore id="stay-unassigned" class="flex-1 overflow-y-auto p-1.5 space-y-1.5" data-group="stay">
                                 <template x-for="p in unassignedStay" :key="p.id">
-                                    <div class="bg-white border border-indigo-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-400 hover:shadow transition-all group" :data-id="p.id">
-                                        <div class="text-10px font-bold text-gray-700 truncate" x-text="p.name"></div>
+                                    <div class="bg-white border border-indigo-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-400 hover:shadow transition-all group relative" :data-id="p.id">
+                                        <div class="flex justify-between items-center gap-2">
+                                            <div class="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden">
+                                                <div class="flex items-center gap-1 shrink-0">
+                                                    <div class="text-[8px] font-black px-1 rounded border leading-tight" :class="getParticipantSourceColor(p.id)" x-text="getParticipantSource(p.id)" :title="getParticipantSourceTitle(p.id)"></div>
+                                                </div>
+                                                <div class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></div>
+                                                <template x-if="isCoach(p.id)">
+                                                    <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                </template>
+                                            </div>
+                                            <!-- HOTEL TOGGLE (Stay Unassigned) -->
+                                            <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                :class="{
+                                                    'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id),
+                                                    'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(p.id),
+                                                    'border-transparent': !hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id)
+                                                }"
+                                                @click.stop="$wire.toggleHotel(p.id)"
+                                            >
+                                                <template x-if="hotelOverrideIds.includes(p.id)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                <template x-if="hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                <template x-if="autoHotelIds.includes(p.id) && !hotelOverrideIds.includes(p.id) && !hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                <div class="relative">
+                                                    <div :class="hotelBlockedIds.includes(p.id) ? 'text-gray-300' : (hotelNeededIds.includes(p.id) ? 'text-indigo-500' : 'text-gray-200')">
+                                                        <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                    </div>
+                                                    <template x-if="hotelBlockedIds.includes(p.id)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -440,6 +631,14 @@
                                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-300 transition-all flex flex-col">
                                     <div class="px-2.5 py-1.5 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center gap-2">
                                         <div class="flex items-center gap-2 flex-1 min-w-0">
+                                            <button x-on:click="$wire.toggleLock('room', index)" class="p-1 rounded-lg transition-colors" :class="r.locked ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:bg-gray-100'">
+                                                <template x-if="r.locked">
+                                                    <x-heroicon-s-lock-closed class="w-4 h-4" />
+                                                </template>
+                                                <template x-if="!r.locked">
+                                                    <x-heroicon-o-lock-open class="w-4 h-4" />
+                                                </template>
+                                            </button>
                                             <div class="p-1 bg-indigo-500 text-white rounded-md shadow-sm">
                                                 <x-heroicon-s-home class="w-3.5 h-3.5" />
                                             </div>
@@ -466,8 +665,37 @@
                                             </template>
 
                                             <template x-for="pId in (r.occupant_ids || [])" :key="pId">
-                                                <div class="flex items-center justify-between px-2 py-1 bg-white border border-indigo-100 rounded shadow-sm text-indigo-900 cursor-grab active:cursor-grabbing hover:border-indigo-400 transition-all" :data-id="pId">
-                                                    <span class="text-10px font-bold truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
+                                                <div class="bg-white border border-indigo-100 rounded-lg p-1.5 shadow-sm group hover:border-indigo-400 cursor-grab active:cursor-grabbing transition-all" :data-id="pId">
+                                                    <div class="flex items-center justify-between w-full gap-2">
+                                                        <div class="flex items-center gap-1.5 overflow-hidden">
+                                                            <div class="flex items-center gap-1 shrink-0">
+                                                                <div class="text-[8px] font-black px-1 rounded border leading-tight" :class="getParticipantSourceColor(pId)" x-text="getParticipantSource(pId)" :title="getParticipantSourceTitle(pId)"></div>
+                                                            </div>
+                                                            <div class="text-xs font-bold text-indigo-900 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></div>
+                                                            <template x-if="isCoach(pId)">
+                                                                <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                            </template>
+                                                        </div>
+                                                        <!-- HOTEL TOGGLE (Room Occupant) -->
+                                                        <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                            :class="{
+                                                                'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(pId) && !hotelBlockedIds.includes(pId),
+                                                                'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(pId),
+                                                                'border-transparent': !hotelNeededIds.includes(pId) && !hotelBlockedIds.includes(pId)
+                                                            }"
+                                                            @click.stop="$wire.toggleHotel(pId)"
+                                                        >
+                                                            <template x-if="hotelOverrideIds.includes(pId)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                            <template x-if="hotelBlockedIds.includes(pId)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                            <template x-if="autoHotelIds.includes(pId) && !hotelOverrideIds.includes(pId) && !hotelBlockedIds.includes(pId)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                            <div class="relative">
+                                                                <div :class="hotelBlockedIds.includes(pId) ? 'text-gray-300' : (hotelNeededIds.includes(pId) ? 'text-indigo-500' : 'text-gray-200')">
+                                                                    <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                                </div>
+                                                                <template x-if="hotelBlockedIds.includes(pId)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </template>
                                         </div>
@@ -525,6 +753,7 @@
                 hotelOverrideIds: config.hotelOverrideIds,
                 globalAlerts: config.globalAlerts || [],
                 alerts: config.alerts || {},
+                planningMode: config.planningMode,
                 selectedDay: config.selectedDay,
                 days: config.days,
                 settings: config.settings,
@@ -704,21 +933,52 @@
 
                 getParticipantFirstTime(pId) {
                     const p = this.participantsMap[pId];
-                    if (!p || !p.first_competition_datetime) return null;
-                    if (!p.first_competition_datetime.startsWith(this.selectedDay)) return null;
-                    return p.first_competition_datetime.split(' ')[1].substring(0, 5);
+                    if (!p) return null;
+                    const time = p.competition_days?.[this.selectedDay]?.first || p.first_competition_datetime;
+                    if (!time || !time.includes(' ')) return null;
+                    if (!time.startsWith(this.selectedDay)) return null;
+                    return time.split(' ')[1].substring(0, 5);
                 },
 
                 getParticipantLastTime(pId) {
                     const p = this.participantsMap[pId];
-                    if (!p || !p.last_competition_datetime) return null;
-                    if (!p.last_competition_datetime.startsWith(this.selectedDay)) return null;
-                    return p.last_competition_datetime.split(' ')[1].substring(0, 5);
+                    if (!p) return null;
+                    const time = p.competition_days?.[this.selectedDay]?.last || p.last_competition_datetime;
+                    if (!time || !time.includes(' ')) return null;
+                    if (!time.startsWith(this.selectedDay)) return null;
+                    return time.split(' ')[1].substring(0, 5);
                 },
 
                 isLastDay() {
                     if (!this.days || this.days.length === 0) return false;
                     return this.selectedDay === this.days[this.days.length - 1].date;
+                },
+
+                getParticipantSource(pId) {
+                    const p = this.participantsMap[pId];
+                    if (!p) return '?';
+                    if (p.is_manual) return 'M';
+                    if (p.survey_response?.responses?.[this.selectedDay]) return 'S';
+                    if (p.competition_days?.[this.selectedDay]) return 'H';
+                    return '?';
+                },
+
+                getParticipantSourceTitle(pId) {
+                    const s = this.getParticipantSource(pId);
+                    return s === 'M' ? 'Manuel' : (s === 'S' ? 'Sondage' : 'Horaire');
+                },
+
+                getParticipantSourceColor(pId) {
+                    const s = this.getParticipantSource(pId);
+                    if (s === 'M') return 'bg-orange-50 text-orange-600 border-orange-100';
+                    if (s === 'S') return 'bg-blue-50 text-blue-600 border-blue-100';
+                    if (s === 'H') return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                    return 'bg-gray-50 text-gray-400 border-gray-100';
+                },
+
+                isCoach(pId) {
+                    const p = this.participantsMap[pId];
+                    return p && p.role === 'coach';
                 }
             }
         }

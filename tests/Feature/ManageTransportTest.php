@@ -13,214 +13,229 @@ class ManageTransportTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function it_filters_unassigned_participants_by_selected_day()
+    public function it_can_switch_planning_modes()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => [
-                'start_date' => '2026-02-05',
-                'days_count' => 2,
-            ],
+            'settings' => ['planning_mode' => 'survey'],
+        ]);
+
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->call('updatePlanningMode', 'schedule')
+            ->assertSet('planningMode', 'schedule');
+
+        $logistic->refresh();
+        $this->assertEquals('schedule', $logistic->settings['planning_mode']);
+    }
+
+    /** @test */
+    public function it_filters_unassigned_participants_based_on_schedule_mode()
+    {
+        // Athlete with competition but NO survey
+        $logistic = EventLogistic::factory()->create([
+            'settings'          => ['start_date' => '2024-07-15'],
             'participants_data' => [
                 [
-                    'id'              => 'p1',
-                    'name'            => 'Day 1 Bus',
-                    'survey_response' => [
-                        'responses' => [
-                            '2026-02-05' => ['aller' => ['mode' => 'bus']],
-                            '2026-02-06' => ['aller' => ['mode' => 'car']],
-                        ],
-                    ],
-                ],
-                [
-                    'id'              => 'p2',
-                    'name'            => 'Day 2 Bus',
-                    'survey_response' => [
-                        'responses' => [
-                            '2026-02-05' => ['aller' => ['mode' => 'car']],
-                            '2026-02-06' => ['aller' => ['mode' => 'bus']],
-                        ],
-                    ],
+                    'id'               => 'p1',
+                    'name'             => 'Athlete Schedule',
+                    'competition_days' => ['2024-07-15' => true],
+                    'survey_response'  => ['responses' => []],
                 ],
             ],
         ]);
 
-        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        // In survey mode, p1 is NOT unassigned (because no bus request in survey)
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15')
+            ->set('planningMode', 'survey');
 
-        // On Day 1, only p1 should be in unassigned transport
-        $component->set('selectedDay', '2026-02-05');
-        $unassigned = array_values($component->get('unassignedTransport'));
-        $this->assertCount(1, $unassigned);
-        $this->assertEquals('p1', $unassigned[0]['id']);
+        $this->assertEmpty($component->get('unassignedTransport'));
 
-        // On Day 2, only p2 should be in unassigned transport
-        $component->set('selectedDay', '2026-02-06');
-        $unassigned = array_values($component->get('unassignedTransport'));
-        $this->assertCount(1, $unassigned);
-        $this->assertEquals('p2', $unassigned[0]['id']);
+        // In schedule mode, p1 SHOULD be unassigned
+        $component->call('updatePlanningMode', 'schedule');
+        $this->assertNotEmpty($component->get('unassignedTransport'));
+        $this->assertEquals('p1', $component->get('unassignedTransport')[0]['id']);
     }
 
     /** @test */
-    public function it_filters_unassigned_participants_by_selected_day_retour()
+    public function it_can_lock_and_unlock_vehicles()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => [
-                'start_date' => '2026-02-05',
-                'days_count' => 1,
-            ],
-            'participants_data' => [
-                [
-                    'id'              => 'p1',
-                    'name'            => 'Need Retour',
-                    'survey_response' => [
-                        'responses' => [
-                            '2026-02-05' => ['retour' => ['mode' => 'bus']],
-                        ],
-                    ],
-                ],
-                [
-                    'id'              => 'p2',
-                    'name'            => 'No Retour',
-                    'survey_response' => [
-                        'responses' => [
-                            '2026-02-05' => ['retour' => ['mode' => 'car']],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-
-        $component->set('selectedDay', '2026-02-05');
-        $unassigned = array_values($component->get('unassignedTransportRetour'));
-        $this->assertCount(1, $unassigned);
-        $this->assertEquals('p1', $unassigned[0]['id']);
-    }
-
-    /** @test */
-    public function it_auto_dispatches_for_selected_day()
-    {
-        $logistic = EventLogistic::factory()->create([
-            'settings' => [
-                'start_date'   => '2026-02-05',
-                'days_count'   => 2,
-                'bus_capacity' => 50,
-            ],
-            'participants_data' => [
-                [
-                    'id'              => 'p1',
-                    'name'            => 'Need Bus Day 1',
-                    'survey_response' => [
-                        'responses' => [
-                            '2026-02-05' => ['aller' => ['mode' => 'bus']],
-                        ],
-                    ],
-                ],
-                [
-                    'id'              => 'p2',
-                    'name'            => 'Offers Car Day 1',
-                    'survey_response' => [
-                        'responses' => [
-                            '2026-02-05' => ['aller' => ['mode' => 'car_seats', 'seats' => 2]],
-                        ],
-                    ],
+            'settings'       => ['start_date' => '2024-07-15'],
+            'transport_plan' => [
+                '2024-07-15' => [
+                    ['id' => 'v1', 'name' => 'Bus', 'locked' => false, 'passengers' => []],
                 ],
             ],
         ]);
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
-            ->set('selectedDay', '2026-02-05')
+            ->set('selectedDay', '2024-07-15')
+            ->call('toggleLock', 'vehicle', 0);
+
+        $logistic->refresh();
+        $this->assertTrue($logistic->transport_plan['2024-07-15'][0]['locked']);
+
+        // Unlock
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15')
+            ->call('toggleLock', 'vehicle', 0);
+
+        $logistic->refresh();
+        $this->assertFalse($logistic->transport_plan['2024-07-15'][0]['locked'] ?? false);
+    }
+
+    /** @test */
+    public function it_respects_locked_vehicles_during_auto_dispatch()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'start_date'        => '2024-07-15',
+                'distance_km'       => 100,
+                'bus_speed'         => 100,
+                'duration_prep_min' => 60,
+            ],
+            'participants_data' => [
+                [
+                    'id'              => 'p1', 'name' => 'Athlete 1',
+                    'survey_response' => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]],
+                ],
+            ],
+            'transport_plan' => [
+                '2024-07-15' => [
+                    [
+                        'id'         => 'locked-v',
+                        'name'       => 'Special Van',
+                        'locked'     => true,
+                        'capacity'   => 2,
+                        'passengers' => ['p1'],
+                        'flow'       => 'aller',
+                    ],
+                ],
+            ],
+        ]);
+
+        // Auto dispatch should NOT replace the locked vehicle
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15')
             ->call('autoDispatch');
 
         $logistic->refresh();
-        $plan = $logistic->transport_plan['2026-02-05'] ?? [];
+        $plan = $logistic->transport_plan['2024-07-15'];
 
-        // Should have 1 Bus and 1 Car
-        $this->assertCount(2, $plan);
+        $this->assertCount(1, $plan);
+        $this->assertEquals('locked-v', $plan[0]['id']);
+        $this->assertContains('p1', $plan[0]['passengers']);
+    }
 
-        $car = collect($plan)->firstWhere('type', 'car');
-        $this->assertNotNull($car);
-        $this->assertEquals(2, $car['capacity']);
-        $this->assertContains('p2', $car['passengers']);
+    /** @test */
+    public function it_can_add_manual_participants()
+    {
+        $logistic = EventLogistic::factory()->create(['participants_data' => []]);
 
-        // p1 should be in the Bus or Car depending on fill order
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->call('addManualParticipant', 'Coach Pierre', 'coach');
+
+        $logistic->refresh();
+        $participants = $logistic->participants_data;
+        $this->assertCount(1, $participants);
+        $this->assertEquals('coach', $participants[0]['role']);
+        $this->assertTrue($participants[0]['is_manual']);
+        $this->assertStringContainsString('Coach Pierre', $participants[0]['name']);
+    }
+
+    /** @test */
+    public function manual_participants_are_always_included_in_unassigned()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings'          => ['start_date' => '2024-07-15'],
+            'participants_data' => [
+                [
+                    'id'              => 'm1',
+                    'name'            => 'Coach Pierre',
+                    'role'            => 'coach',
+                    'is_manual'       => true,
+                    'survey_response' => ['responses' => []],
+                ],
+            ],
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15');
+
+        $this->assertNotEmpty($component->get('unassignedTransport'));
+        $this->assertEquals('m1', $component->get('unassignedTransport')[0]['id']);
+    }
+
+    /** @test */
+    public function it_filters_unassigned_participants_based_on_all_mode()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings'          => ['start_date' => '2024-07-15'],
+            'participants_data' => [
+                [
+                    'id'               => 'p1',
+                    'name'             => 'Athlete Silent',
+                    'competition_days' => [],
+                    'survey_response'  => ['responses' => []],
+                ],
+            ],
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15')
+            ->call('updatePlanningMode', 'all');
+
+        $this->assertNotEmpty($component->get('unassignedTransport'));
+    }
+
+    /** @test */
+    public function it_can_lock_and_unlock_rooms()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings'  => ['start_date' => '2024-07-15'],
+            'stay_plan' => [
+                '2024-07-15' => [
+                    ['id' => 'r1', 'name' => 'Room 101', 'locked' => false, 'occupant_ids' => []],
+                ],
+            ],
+        ]);
+
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15')
+            ->call('toggleLock', 'room', 0);
+
+        $logistic->refresh();
+        $this->assertTrue($logistic->stay_plan['2024-07-15'][0]['locked']);
+    }
+
+    /** @test */
+    public function it_calculates_departure_times_correcty_in_auto_dispatch()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'start_date'        => '2024-07-15',
+                'distance_km'       => 100, // 100km
+                'bus_speed'         => 100, // 1h travel
+                'duration_prep_min' => 60, // 1h prep. Total 2h.
+            ],
+            'participants_data' => [
+                [
+                    'id'                         => 'p1', 'name' => 'Athlete 1',
+                    'first_competition_datetime' => '2024-07-15 10:00:00',
+                    'survey_response'            => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]],
+                ],
+            ],
+        ]);
+
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15')
+            ->call('autoDispatch');
+
+        $logistic->refresh();
+        $plan = $logistic->transport_plan['2024-07-15'];
+
         $bus = collect($plan)->firstWhere('type', 'bus');
-        $allPassengers = array_merge($bus['passengers'] ?? [], $car['passengers'] ?? []);
-        $this->assertContains('p1', $allPassengers);
-    }
-
-    /** @test */
-    public function it_auto_dispatches_retour_trips_with_proper_timing()
-    {
-        $logistic = EventLogistic::factory()->create([
-            'settings' => [
-                'start_date'   => '2026-02-05',
-                'days_count'   => 1,
-                'bus_capacity' => 50,
-            ],
-            'participants_data' => [
-                [
-                    'id'                        => 'p1',
-                    'name'                      => 'Athlete 1',
-                    'last_competition_datetime' => '2026-02-05 16:00:00',
-                    'survey_response'           => [
-                        'responses' => [
-                            '2026-02-05' => ['retour' => ['mode' => 'bus']],
-                        ],
-                    ],
-                ],
-                [
-                    'id'                        => 'p2',
-                    'name'                      => 'Athlete 2',
-                    'last_competition_datetime' => '2026-02-05 16:45:00',
-                    'survey_response'           => [
-                        'responses' => [
-                            '2026-02-05' => ['retour' => ['mode' => 'bus']],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
-            ->set('selectedDay', '2026-02-05')
-            ->call('autoDispatch');
-
-        $logistic->refresh();
-        $plan = $logistic->transport_plan['2026-02-05'] ?? [];
-
-        $busRetour = collect($plan)->firstWhere('flow', 'retour');
-        $this->assertNotNull($busRetour);
-        $this->assertCount(2, $busRetour['passengers']);
-
-        // Timing should be max(last_competition) + 30 min = 16:45 + 30 = 17:15
-        $this->assertEquals('2026-02-05 17:15:00', $busRetour['departure_datetime']);
-    }
-
-    /** @test */
-    public function it_shows_out_of_sync_warning_when_survey_is_updated()
-    {
-        $logistic = EventLogistic::factory()->create([
-            'settings' => [
-                'survey_updated_at'     => '2026-02-05 10:00:00',
-                'last_auto_dispatch_at' => '2026-02-05 09:00:00',
-            ],
-        ]);
-
-        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-
-        $component->assertSet('globalAlerts', function ($alerts) {
-            return collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul auto" pour synchroniser.');
-        });
-
-        // After autoDispatch, warning should be gone
-        $component->call('autoDispatch');
-
-        $component->assertSet('globalAlerts', function ($alerts) {
-            return ! collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul auto" pour synchroniser.');
-        });
-
-        $logistic->refresh();
-        $this->assertNotNull($logistic->settings['last_auto_dispatch_at']);
+        // 10:00 - 2h = 08:00
+        $this->assertEquals('2024-07-15 08:00:00', $bus['departure_datetime']);
     }
 }

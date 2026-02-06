@@ -1,8 +1,9 @@
 @php
     $distance = $settings['distance_km'] ?? 0;
     $speedVoiture = $settings['car_speed'] ?? 120;
-    $speedBus = $settings['bus_speed'] ?? 100;
+    $speedBus = $settings['bus_speed'] ?? 80;
     $prepMin = $settings['duration_prep_min'] ?? 90;
+    $recupMin = $settings['duration_recup_min'] ?? 60;
 
     $getTravelTime = function($type) use ($distance, $speedVoiture, $speedBus) {
         if (!$distance) return 0;
@@ -158,16 +159,39 @@
                                                         @foreach($vehicle['passengers'] as $pid)
                                                             @php 
                                                                 $p = $participants[$pid] ?? null;
-                                                                $timeKey = ($flow === 'retour' ? 'last_competition_datetime' : 'first_competition_datetime');
-                                                                $compTime = $p && isset($p[$timeKey]) ? \Carbon\Carbon::parse($p[$timeKey]) : null;
+                                                                $isOnDay = false;
+                                                                $pFirst = null;
+                                                                $pLast = null;
+
+                                                                if ($p) {
+                                                                    if (isset($p['competition_days'][$day['date']])) {
+                                                                        $pFirst = $p['competition_days'][$day['date']]['first'];
+                                                                        $pLast = $p['competition_days'][$day['date']]['last'];
+                                                                        $isOnDay = true;
+                                                                    } else {
+                                                                        $pFirst = $p['first_competition_datetime'] ?? null;
+                                                                        $pLast = $p['last_competition_datetime'] ?? null;
+                                                                        $isOnDay = $pFirst && str_starts_with($pFirst, $day['date']);
+                                                                    }
+                                                                }
+
+                                                                $compTime = $isOnDay ? \Carbon\Carbon::parse($flow === 'retour' ? $pLast : $pFirst) : null;
                                                                 $isTight = false;
-                                                                if ($flow === 'aller') {
-                                                                    $isTight = $arrival && $compTime && $arrival->copy()->addMinutes($prepMin)->gt($compTime);
-                                                                } else {
-                                                                    $isTight = $vehicle['departure_datetime'] && $compTime && \Carbon\Carbon::parse($vehicle['departure_datetime'])->lt($compTime);
+                                                                $isImpossible = false;
+
+                                                                if ($compTime) {
+                                                                    if ($flow === 'aller') {
+                                                                        $isImpossible = $arrival && $arrival->gt($compTime);
+                                                                        $isTight = $arrival && $arrival->copy()->addMinutes($prepMin)->gt($compTime);
+                                                                    } else {
+                                                                        $dep = $vehicle['departure_datetime'] ? \Carbon\Carbon::parse($vehicle['departure_datetime']) : null;
+                                                                        $isImpossible = $dep && $dep->lt($compTime);
+                                                                        $isTight = $dep && $dep->lt($compTime->copy()->addMinutes($recupMin));
+                                                                    }
                                                                 }
                                                             @endphp
-                                                            <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] shadow-sm {{ $isTight ? 'text-red-600 border-red-100 bg-red-50 ring-1 ring-red-100' : 'text-gray-700 bg-white border-gray-100' }}">
+                                                            <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] shadow-sm 
+                                                                {{ $isImpossible ? 'text-red-600 border-red-200 bg-red-50 ring-1 ring-red-100' : ($isTight ? 'text-orange-600 border-orange-200 bg-orange-50 ring-1 ring-orange-100' : 'text-gray-700 bg-white border-gray-100') }}">
                                                                 <span class="font-bold">{{ $p['name'] ?? '?' }}</span>
                                                                 @if($compTime && $compTime->toDateString() === $day['date'])
                                                                     <span class="text-[9px] opacity-60 font-mono font-bold">({{ $compTime->format('H:i') }})</span>

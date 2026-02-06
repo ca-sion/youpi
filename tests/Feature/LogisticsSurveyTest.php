@@ -166,22 +166,22 @@ class LogisticsSurveyTest extends TestCase
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
                 [
-                    'id' => 'p1',
-                    'name' => 'Filament Created',
-                    'survey_response' => [] // Empty response created by Filament
+                    'id'              => 'p1',
+                    'name'            => 'Filament Created',
+                    'survey_response' => [], // Empty response created by Filament
                 ],
                 [
-                    'id' => 'p2',
-                    'name' => 'Real Response',
+                    'id'              => 'p2',
+                    'name'            => 'Real Response',
                     'survey_response' => [
                         'filled_at' => now()->toDateTimeString(),
-                        'responses' => []
-                    ]
+                        'responses' => [],
+                    ],
                 ],
                 [
-                    'id' => 'p3',
+                    'id'   => 'p3',
                     'name' => 'No Response',
-                ]
+                ],
             ],
         ]);
 
@@ -214,15 +214,15 @@ class LogisticsSurveyTest extends TestCase
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
                 [
-                    'id' => 'p1',
-                    'name' => 'Existing',
+                    'id'              => 'p1',
+                    'name'            => 'Existing',
                     'survey_response' => [
-                        'filled_at' => now()->toDateTimeString(),
-                        'remarks' => 'My Remarks',
+                        'filled_at'    => now()->toDateTimeString(),
+                        'remarks'      => 'My Remarks',
                         'hotel_needed' => true,
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ]);
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
@@ -236,8 +236,8 @@ class LogisticsSurveyTest extends TestCase
     {
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
-                ['id' => 'p1', 'name' => 'Existing', 'role' => 'athlete']
-            ]
+                ['id' => 'p1', 'name' => 'Existing', 'role' => 'athlete'],
+            ],
         ]);
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
@@ -266,7 +266,7 @@ class LogisticsSurveyTest extends TestCase
             'participants_data' => [
                 ['id' => 'p1', 'name' => 'Athlete 1', 'survey_response' => ['filled_at' => now()]],
                 ['id' => 'p2', 'name' => 'Athlete 2'],
-            ]
+            ],
         ]);
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])

@@ -448,14 +448,14 @@ class EventLogisticTest extends TestCase
     public function it_can_manage_stay_rooms()
     {
         $logistic = EventLogistic::factory()->create(['settings' => ['start_date' => '2024-01-01']]);
-        
+
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         // Add Room
         $component->call('addRoom');
         $logistic->refresh();
         $this->assertCount(1, $logistic->stay_plan['2024-01-01']);
-        
+
         // Remove Room
         $component->call('removeRoom', 0);
         $logistic->refresh();
@@ -466,7 +466,7 @@ class EventLogisticTest extends TestCase
     public function it_updates_property_when_day_is_selected()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => '2024-07-15', 'days_count' => 2]
+            'settings' => ['start_date' => '2024-07-15', 'days_count' => 2],
         ]);
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
@@ -478,22 +478,22 @@ class EventLogisticTest extends TestCase
     public function it_returns_participant_times_helpers()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => '2024-07-15'],
+            'settings'          => ['start_date' => '2024-07-15'],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'P1', 
-                    'first_competition_datetime' => '2024-07-15 10:00:00', 
-                    'last_competition_datetime' => '2024-07-15 12:00:00',
-                    'competition_days' => [
-                        '2024-07-15' => ['first' => '2024-07-15 10:00:00', 'last' => '2024-07-15 12:00:00']
-                    ]
-                ]
-            ]
+                    'id'                         => 'p1',
+                    'name'                       => 'P1',
+                    'first_competition_datetime' => '2024-07-15 10:00:00',
+                    'last_competition_datetime'  => '2024-07-15 12:00:00',
+                    'competition_days'           => [
+                        '2024-07-15' => ['first' => '2024-07-15 10:00:00', 'last' => '2024-07-15 12:00:00'],
+                    ],
+                ],
+            ],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         $this->assertEquals('10:00', $component->instance()->getParticipantStartTime('p1'));
         $this->assertEquals('12:00', $component->instance()->getParticipantEndTime('p1'));
         $this->assertEquals('10:00 - 12:00', $component->instance()->getParticipantTimes('p1'));
@@ -608,17 +608,17 @@ class EventLogisticTest extends TestCase
             'schedule_raw'      => [['day' => 'Lundi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M']],
             'participants_data' => [
                 [
-                    'id'   => 'manual-coach',
-                    'name' => '[E] Coach Test',
-                    'role' => 'coach',
-                    'survey_response' => ['filled_at' => '2024-01-01 10:00:00', 'remarks' => 'Keep me']
+                    'id'              => 'manual-coach',
+                    'name'            => '[E] Coach Test',
+                    'role'            => 'coach',
+                    'survey_response' => ['filled_at' => '2024-01-01 10:00:00', 'remarks' => 'Keep me'],
                 ],
                 [
-                    'id'   => 'existing-athlete',
-                    'name' => 'athlete one', // Lowecase in DB
-                    'role' => 'athlete',
-                    'survey_response' => ['filled_at' => '2024-01-01 10:00:00', 'responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]]
-                ]
+                    'id'              => 'existing-athlete',
+                    'name'            => 'athlete one', // Lowecase in DB
+                    'role'            => 'athlete',
+                    'survey_response' => ['filled_at' => '2024-01-01 10:00:00', 'responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]],
+                ],
             ],
             'inscriptions_data' => [
                 ['name' => 'Athlete One', 'disciplines' => ['100m'], 'category' => 'U18M'], // Uppercase in Inscriptions

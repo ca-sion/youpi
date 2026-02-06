@@ -262,10 +262,15 @@ class EditEventLogistic extends EditRecord
                                     } elseif ($athleteGender && ($eventCat === $athleteGender)) {
                                         // U16M matches M. But check if a better U16M match exists in the schedule for this discipline.
                                         $betterMatchExists = collect($schedule)->contains(function ($item) use ($athleteCat, $baseEvent, $eventDayName, $roundsRegex) {
-                                            if (strtoupper($item['cat'] ?? '') !== $athleteCat) return false;
-                                            if (($item['jour'] ?? $item['day'] ?? '') !== $eventDayName) return false;
+                                            if (strtoupper($item['cat'] ?? '') !== $athleteCat) {
+                                                return false;
+                                            }
+                                            if (($item['jour'] ?? $item['day'] ?? '') !== $eventDayName) {
+                                                return false;
+                                            }
                                             $cleanItem = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $item['discipline'] ?? '')));
                                             $baseItem = trim(preg_replace($roundsRegex, '', $cleanItem));
+
                                             return $baseItem === $baseEvent;
                                         });
 
@@ -312,7 +317,7 @@ class EditEventLogistic extends EditRecord
 
                                         $eventDt = $eventDate->setTime($time->hour, $time->minute);
                                         $events[] = [
-                                            'datetime' => $eventDt,
+                                            'datetime'   => $eventDt,
                                             'discipline' => $eventDisciplineRaw,
                                         ];
                                     } catch (\Exception $e) {
@@ -322,7 +327,7 @@ class EditEventLogistic extends EditRecord
 
                             if (count($events) > 0) {
                                 // Sort by datetime
-                                usort($events, fn($a, $b) => $a['datetime'] <=> $b['datetime']);
+                                usort($events, fn ($a, $b) => $a['datetime'] <=> $b['datetime']);
 
                                 $details['first_competition_datetime'] = $events[0]['datetime']->toDateTimeString();
                                 $details['last_competition_datetime'] = end($events)['datetime']->toDateTimeString();
@@ -331,15 +336,15 @@ class EditEventLogistic extends EditRecord
                                 $days = [];
                                 foreach ($events as $ev) {
                                     $date = $ev['datetime']->toDateString();
-                                    if (!isset($days[$date])) {
+                                    if (! isset($days[$date])) {
                                         $days[$date] = [
-                                            'first' => $ev['datetime']->toDateTimeString(),
-                                            'last' => $ev['datetime']->toDateTimeString(),
+                                            'first'       => $ev['datetime']->toDateTimeString(),
+                                            'last'        => $ev['datetime']->toDateTimeString(),
                                             'disciplines' => [$ev['discipline']],
                                         ];
                                     } else {
                                         $days[$date]['last'] = $ev['datetime']->toDateTimeString();
-                                        if (!in_array($ev['discipline'], $days[$date]['disciplines'])) {
+                                        if (! in_array($ev['discipline'], $days[$date]['disciplines'])) {
                                             $days[$date]['disciplines'][] = $ev['discipline'];
                                         }
                                     }
