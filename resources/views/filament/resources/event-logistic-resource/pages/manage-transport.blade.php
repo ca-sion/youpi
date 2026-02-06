@@ -1,4 +1,19 @@
 <x-filament-panels::page>
+    <style>
+        .text-11px { font-size: 11px; }
+        .text-10px { font-size: 10px; }
+        .text-9px { font-size: 9px; }
+        .text-8px { font-size: 8px; }
+        .text-7px { font-size: 7px; }
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
     <div
         x-data="transportBoard({
             transportPlans: @entangle('transportPlans'),
@@ -23,7 +38,7 @@
         class="space-y-4"
     >
         <!-- Header -->
-        <div class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div class="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow-sm -mx-2 mb-6">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                     <x-heroicon-o-truck class="w-5 h-5" />
@@ -67,11 +82,12 @@
         </div>
 
         <div class="flex flex-col gap-8">
-                <div class="bg-white border border-gray-200 rounded-xl p-1">
-                    <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
+                <!-- Section 1: Transports Aller -->
+                <div class="bg-blue-50/20 border border-blue-100 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-blue-50 bg-blue-50/30">
                         <div class="flex items-center gap-3">
-                            <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">1. Transports Aller</h3>
+                            <span class="w-1.5 h-5 bg-blue-500 rounded-full"></span>
+                            <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">1. Transports Aller</h3>
                         </div>
                         <div class="flex gap-2">
                              <x-filament::button wire:click="mountAction('auto_dispatch')" color="gray" size="sm" variant="outlined">Auto Distribute</x-filament::button>
@@ -80,49 +96,50 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-3">
+                    <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-4">
                         <!-- ALLER WAITING LIST -->
-                        <div class="lg:col-span-1 bg-blue-50 border border-blue-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden">
-                            <div class="p-3 border-b border-blue-100 bg-blue-50/50 flex justify-between items-center">
-                                <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest">En Attente (Aller)</h3>
-                                <span class="text-xs font-bold bg-white text-blue-600 px-2 py-0.5 rounded-full border border-blue-100" x-text="unassignedTransport.length"></span>
-                            </div>
-                            <div wire:ignore id="transport-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2 border-b border-blue-50" data-group="transport-aller">
-                                <template x-for="p in unassignedTransport" :key="p.id">
-                                    <div class="bg-white border border-blue-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-300 hover:shadow transition-all group relative" :data-id="p.id">
-                                        <div class="flex justify-between items-start gap-2">
-                                            <div>
-                                                <span class="text-xs font-bold text-gray-800 leading-tight w-full" x-text="p.name"></span>
-                                                <div class="inline-flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" x-show="getParticipantFirstTime(p.id)">
-                                                     <span class="text-[10px] font-black text-gray-400 uppercase leading-none">Départ</span>
-                                                     <span class="text-xs font-mono font-bold text-blue-600" x-text="getParticipantFirstTime(p.id)"></span>
+                        <div class="lg:col-span-1 bg-white border border-blue-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden shadow-sm">
+                            <div>
+                                <div class="px-3 py-2 border-b border-blue-50 bg-blue-50/30 flex justify-between items-center">
+                                    <h3 class="text-10px font-black text-blue-500 uppercase tracking-widest">En Attente</h3>
+                                    <span class="text-10px font-bold bg-white text-blue-600 px-1.5 py-0.5 rounded-md border border-blue-100" x-text="unassignedTransport.length"></span>
+                                </div>
+                                <div wire:ignore id="transport-unassigned" class="overflow-y-auto p-1.5 space-y-1.5" data-group="transport-aller">
+                                    <template x-for="p in unassignedTransport" :key="p.id">
+                                        <div class="bg-white border border-blue-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow transition-all group relative" :data-id="p.id">
+                                            <div class="flex justify-between items-center gap-2">
+                                                <div class="min-w-0 flex-1 flex items-center justify-between gap-1.5">
+                                                    <div class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></div>
+                                                    <div class="flex items-center gap-1 shrink-0" x-show="getParticipantFirstTime(p.id)">
+                                                         <span class="text-10px font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(p.id)"></span>
+                                                    </div>
                                                 </div>
+                                                <template x-if="hotelNeededIds.includes(p.id)">
+                                                    <div class="flex items-center gap-1 bg-indigo-50 px-1 py-0.5 rounded border border-indigo-100">
+                                                        <template x-if="hotelOverrideIds.includes(p.id)">
+                                                            <span title="Manuel" class="text-8px font-black text-indigo-600 uppercase">M</span>
+                                                        </template>
+                                                        <template x-if="autoHotelIds.includes(p.id)">
+                                                            <span title="Suggestion Auto" class="text-8px font-black text-amber-600 uppercase">A</span>
+                                                        </template>
+                                                        <x-heroicon-s-home class="w-3 h-3 text-indigo-500 shrink-0" />
+                                                    </div>
+                                                </template>
                                             </div>
-                                            <template x-if="hotelNeededIds.includes(p.id)">
-                                                <div class="flex flex-col gap-1 items-end">
-                                                    <template x-if="hotelOverrideIds.includes(p.id)">
-                                                        <span title="Manuel" class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1 rounded uppercase">M</span>
-                                                    </template>
-                                                    <template x-if="autoHotelIds.includes(p.id)">
-                                                        <span title="Suggestion Auto" class="text-[9px] font-black text-amber-600 bg-amber-50 px-1 rounded uppercase">A</span>
-                                                    </template>
-                                                    <x-heroicon-s-home class="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                                                </div>
-                                            </template>
                                         </div>
-                                    </div>
-                                </template>
+                                    </template>
+                                </div>
                             </div>
                             
                             <!-- INDEPENDENT ALLER -->
-                            <div class="p-2 border-t border-blue-100 bg-blue-50/30">
-                                <h4 class="text-[9px] font-black text-blue-300 uppercase tracking-widest mb-2">Propres moyens</h4>
+                            <div class="px-3 py-2 bg-blue-50/10">
+                                <h4 class="text-9px font-black text-blue-300 uppercase tracking-widest mb-1.5">Propres moyens</h4>
                                 <div wire:ignore id="transport-aller-independent" class="space-y-1" data-group="transport-aller">
                                     <template x-for="p in independentAller" :key="p.id">
                                         <div class="bg-white/50 border border-blue-50 p-1.5 rounded shadow-sm opacity-70 hover:opacity-100 cursor-grab active:cursor-grabbing transition-all" :data-id="p.id">
                                             <div class="flex justify-between items-center gap-2">
-                                                <span class="text-[10px] font-bold text-gray-500 truncate" x-text="p.name"></span>
-                                                <span class="text-[8px] font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'aller')"></span>
+                                                <span class="text-10px font-bold text-gray-500 truncate" x-text="p.name"></span>
+                                                <span class="text-9px font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'aller')"></span>
                                             </div>
                                         </div>
                                     </template>
@@ -135,94 +152,97 @@
                         <template x-for="(v, index) in (transportPlans[selectedDay] || [])" :key="v.id || index">
                             <template x-if="(v.flow || 'aller') === 'aller'">
                                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all group overflow-hidden flex flex-col">
-                                    <div class="px-3 py-2 bg-gray-50 border-b border-gray-100 flex justify-between items-start gap-2">
-                                        <div class="flex-1 min-w-0 space-y-1">
-                                            <div class="flex items-center gap-2">
-                                                <template x-if="v.type === 'bus'">
-                                                    <div class="p-1 bg-blue-100 text-blue-600 rounded">
-                                                        <x-heroicon-s-truck class="w-3.5 h-3.5" />
-                                                    </div>
-                                                </template>
-                                                <template x-if="v.type !== 'bus'">
-                                                    <div class="p-1 bg-gray-100 text-gray-500 rounded">
-                                                        <x-heroicon-s-users class="w-3.5 h-3.5" />
-                                                    </div>
-                                                </template>
-                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-gray-800 focus:ring-0 w-full truncate placeholder-gray-300" placeholder="NOM VÉHICULE">
-                                            </div>
-                                            <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-xs font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300" placeholder="Nom du chauffeur...">
-                                            
-                                            <div class="flex flex-col gap-1 mt-1">
-                                                <template x-for="alert in (alerts[index] || [])">
-                                                    <div class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border"
-                                                         :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
-                                                        <x-heroicon-s-exclamation-triangle class="w-3 h-3 shrink-0" />
-                                                        <span x-text="alert.msg"></span>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-col items-end gap-1">
-                                            <button x-on:click="removeVehicle(index)" class="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors" title="Supprimer">
-                                                <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
-                                            </button>
-                                            <div class="flex items-center bg-white border border-gray-200 rounded px-1.5 py-0.5">
-                                                <span class="text-xs font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-600' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
-                                                <span class="text-xs text-gray-300 mx-0.5">/</span>
-                                                <input type="number" x-model.number="v.capacity" class="w-6 p-0 border-none bg-transparent text-xs font-bold text-gray-500 focus:ring-0 text-center">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="px-3 py-2 grid grid-cols-2 gap-2 border-b border-gray-50">
-                                        <div class="flex flex-col gap-1">
-                                            <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors relative">
-                                                <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Départ</label>
-                                                <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4">
-                                            </div>
-                                            <template x-if="getArrivalTime(v)">
-                                                <div class="px-2 text-[9px] font-bold text-indigo-500 flex items-center gap-1">
-                                                    <x-heroicon-m-arrow-right-circle class="w-2.5 h-2.5" />
-                                                    <span>Arr. est. <span x-text="getArrivalTime(v)"></span></span>
+                                    <div class="px-2.5 py-1.5 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center gap-2">
+                                        <div class="flex-1 min-w-0 flex items-center gap-2">
+                                            <template x-if="v.type === 'bus'">
+                                                <div class="p-1 bg-blue-500 text-white rounded-md shadow-sm">
+                                                    <x-heroicon-s-truck class="w-3.5 h-3.5" />
                                                 </div>
                                             </template>
+                                            <template x-if="v.type !== 'bus'">
+                                                <div class="p-1 bg-slate-600 text-white rounded-md shadow-sm">
+                                                    <x-heroicon-s-users class="w-3.5 h-3.5" />
+                                                </div>
+                                            </template>
+                                            <div class="flex-1 min-w-0">
+                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-11px font-black uppercase text-gray-900 focus:ring-0 w-full truncate placeholder-gray-300 tracking-tight" placeholder="NOM VÉHICULE">
+                                                <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-10px font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300 -mt-1" placeholder="Chauffeur...">
+                                            </div>
                                         </div>
-                                        <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-colors h-fit">
-                                            <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Lieu</label>
-                                            <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Ex: Stade">
+                                        
+                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            <div class="flex items-center bg-white border border-gray-200 rounded-lg px-2 py-0.5 shadow-sm">
+                                                <span class="text-11px font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-500' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
+                                                <span class="text-10px text-gray-300 mx-0.5">/</span>
+                                                <input type="number" x-model.number="v.capacity" class="w-7 p-0 border-none bg-transparent text-11px font-bold text-gray-400 focus:ring-0 text-center">
+                                            </div>
+                                            <button x-on:click="removeVehicle(index)" class="text-gray-300 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                                <x-heroicon-m-x-mark class="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <div class="flex-1 bg-gray-50/30 p-2">
+                                    <div class="px-2.5 py-1.5 grid grid-cols-2 gap-2 bg-white/50 border-b border-gray-50">
+                                        <div class="bg-gray-50/50 rounded-lg px-2 py-0.5 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-all shadow-sm">
+                                            <label class="text-7px font-black text-gray-400 uppercase leading-none block">Départ</label>
+                                            <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-11px font-bold text-gray-700 focus:ring-0 h-4">
+                                        </div>
+                                        <div class="bg-gray-50/50 rounded-lg px-2 py-0.5 border border-gray-100 focus-within:border-blue-300 focus-within:bg-white transition-all shadow-sm">
+                                            <label class="text-7px font-black text-gray-400 uppercase leading-none block">Lieu</label>
+                                            <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-11px font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Lieu...">
+                                        </div>
+                                    </div>
+
+                                    <template x-if="getArrivalTime(v)">
+                                        <div class="px-3 py-1 bg-indigo-50/40 text-9px font-black text-indigo-600 flex items-center justify-center gap-1.5 border-b border-indigo-50/50">
+                                            <x-heroicon-s-clock class="w-3 h-3" />
+                                            <span>ARRIVÉE ESTIMÉE <span class="bg-indigo-100 px-1 rounded" x-text="getArrivalTime(v)"></span></span>
+                                        </div>
+                                    </template>
+
+                                    <div class="flex flex-col px-2 pt-1 gap-1">
+                                        <template x-for="alert in (alerts[index] || [])">
+                                            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-9px font-bold border"
+                                                 :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
+                                                <x-heroicon-s-exclamation-triangle class="w-2.5 h-2.5 shrink-0" />
+                                                <span x-text="alert.msg"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div class="flex-1 bg-gray-50/40 p-1.5 min-h-[50px]">
                                         <div wire:ignore
-                                             class="min-h-[60px] space-y-1 rounded border-2 border-dashed border-transparent transition-colors" 
-                                             :class="(v.passengers || []).length === 0 ? 'border-gray-200 bg-gray-50 flex items-center justify-center' : ''"
+                                             class="min-h-[40px] space-y-1 rounded-lg border-2 border-dashed border-transparent transition-colors" 
+                                             :class="(v.passengers || []).length === 0 ? 'border-blue-100 bg-blue-50/20 flex flex-col items-center justify-center' : ''"
                                              :id="'v-list-' + index" 
                                              data-group="transport-aller" 
                                              :data-index="index">
                                             <template x-if="(v.passengers || []).length === 0">
-                                                <span class="text-xs text-gray-300 font-medium select-none pointer-events-none">Glisser ici</span>
+                                                <div class="flex flex-col items-center opacity-40">
+                                                    <x-heroicon-o-plus-circle class="w-4 h-4 text-blue-400" />
+                                                    <span class="text-9px text-blue-400 font-black uppercase tracking-tighter">Déposer</span>
+                                                </div>
                                             </template>
                                             <template x-for="pId in v.passengers" :key="pId">
-                                                <div class="bg-white border border-gray-200 rounded shadow-sm group/p hover:border-blue-300 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
-                                                    <div class="flex items-center justify-between px-2 py-1.5 w-full">
-                                                        <div class="flex items-center gap-2 overflow-hidden">
-                                                            <div class="w-1 h-3 rounded-full bg-blue-400 shrink-0"></div>
-                                                            <span class="text-xs font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : 'Inconnu'"></span>
+                                                <div class="bg-white border border-gray-200 rounded px-1.5 py-1 shadow-sm group/p hover:border-blue-400 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
+                                                    <div class="flex items-center justify-between w-full gap-2">
+                                                        <div class="flex items-center gap-1.5 overflow-hidden">
+                                                            <div class="w-0.5 h-3 rounded-full bg-blue-400 shrink-0"></div>
+                                                            <span class="text-10px font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
                                                         </div>
-                                                         <div class="flex items-center gap-2">
+                                                         <div class="flex items-center gap-1 shrink-0">
                                                             <template x-if="getParticipantFirstTime(pId)">
-                                                                <span class="text-[10px] font-bold text-blue-600 tabular-nums" x-text="getParticipantFirstTime(pId)"></span>
+                                                                <span class="text-9px font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(pId)"></span>
                                                             </template>
                                                             <template x-if="hotelNeededIds.includes(pId)">
-                                                                <div class="flex gap-0.5 items-center">
+                                                                <div class="flex gap-0.5 items-center px-1 bg-indigo-50 rounded border border-indigo-100">
                                                                      <template x-if="hotelOverrideIds.includes(pId)">
-                                                                        <span title="Manuel" class="text-[8px] font-black text-indigo-600">M</span>
+                                                                        <span title="Manuel" class="text-7px font-black text-indigo-600">M</span>
                                                                     </template>
                                                                     <template x-if="autoHotelIds.includes(pId)">
-                                                                        <span title="Suggestion Auto" class="text-[8px] font-black text-amber-600">A</span>
+                                                                        <span title="Suggestion Auto" class="text-7px font-black text-amber-600">A</span>
                                                                     </template>
-                                                                    <x-heroicon-s-home class="w-3 h-3 text-indigo-400 shrink-0" />
+                                                                    <x-heroicon-s-home class="w-2.5 h-2.5 text-indigo-400 shrink-0" />
                                                                 </div>
                                                             </template>
                                                         </div>
@@ -231,8 +251,8 @@
                                             </template>
                                         </div>
                                     </div>
-                                    <div class="p-2 border-t border-gray-100 bg-gray-50">
-                                        <input type="text" x-model="v.note" class="w-full p-1.5 border border-gray-200 rounded text-xs text-gray-600 focus:border-blue-400 focus:ring-0" placeholder="Note interne...">
+                                    <div class="px-2 py-1.5 border-t border-gray-100 bg-gray-50/50">
+                                        <input type="text" x-model="v.note" class="w-full px-2 py-1 border border-gray-200 rounded-md text-10px text-gray-600 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 placeholder-gray-300" placeholder="Note interne...">
                                     </div>
                                 </div>
                             </template>
@@ -242,11 +262,11 @@
                 </div>
 
                 <!-- Section 2: Transports Retour -->
-                <div class="bg-white border border-gray-200 rounded-xl p-1">
-                    <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
+                <div class="bg-orange-50/20 border border-orange-100 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-orange-50 bg-orange-50/30">
                         <div class="flex items-center gap-3">
-                            <span class="w-1.5 h-6 bg-orange-500 rounded-full"></span>
-                            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">2. Transports Retour</h3>
+                            <span class="w-1.5 h-5 bg-orange-500 rounded-full"></span>
+                            <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">2. Transports Retour</h3>
                         </div>
                         <div class="flex gap-2">
                              <x-filament::button wire:click="addVehicle('car', 'retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Retour</x-filament::button>
@@ -254,38 +274,39 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-3">
+                    <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-4">
                         <!-- RETOUR WAITING LIST -->
-                        <div class="lg:col-span-1 bg-orange-50 border border-orange-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden">
-                            <div class="p-3 border-b border-orange-100 bg-orange-50/50 flex justify-between items-center">
-                                <h3 class="text-xs font-black text-orange-400 uppercase tracking-widest">En Attente (Retour)</h3>
-                                <span class="text-xs font-bold bg-white text-orange-600 px-2 py-0.5 rounded-full border border-orange-100" x-text="unassignedTransportRetour.length"></span>
-                            </div>
-                            <div wire:ignore id="transport-retour-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2 border-b border-orange-50" data-group="transport-retour">
-                                <template x-for="p in unassignedTransportRetour" :key="p.id">
-                                    <div class="bg-white border border-orange-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-orange-300 hover:shadow transition-all group relative" :data-id="p.id">
-                                        <div class="flex justify-between items-start gap-2">
-                                            <div>
-                                                <span class="text-xs font-bold text-gray-800 leading-tight w-full" x-text="p.name"></span>
-                                                <div class="inline-flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100" x-show="getParticipantLastTime(p.id)">
-                                                     <span class="text-[10px] font-black text-gray-400 uppercase leading-none">Fin</span>
-                                                     <span class="text-xs font-mono font-bold text-orange-600" x-text="getParticipantLastTime(p.id)"></span>
+                        <div class="lg:col-span-1 bg-white border border-orange-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden shadow-sm">
+                            <div>
+                                <div class="px-3 py-2 border-b border-orange-50 bg-orange-50/30 flex justify-between items-center">
+                                    <h3 class="text-10px font-black text-orange-500 uppercase tracking-widest">En Attente</h3>
+                                    <span class="text-10px font-bold bg-white text-orange-600 px-1.5 py-0.5 rounded-md border border-orange-100" x-text="unassignedTransportRetour.length"></span>
+                                </div>
+                                <div wire:ignore id="transport-retour-unassigned" class="overflow-y-auto p-1.5 space-y-1.5" data-group="transport-retour">
+                                    <template x-for="p in unassignedTransportRetour" :key="p.id">
+                                        <div class="bg-white border border-orange-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-orange-400 hover:shadow transition-all group relative" :data-id="p.id">
+                                            <div class="flex justify-between items-center gap-2">
+                                                <div class="min-w-0 flex-1 flex items-center justify-between gap-1.5">
+                                                    <div class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></div>
+                                                    <div class="flex items-center gap-1 shrink-0" x-show="getParticipantLastTime(p.id)">
+                                                         <span class="text-10px font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(p.id)"></span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
+                                    </template>
+                                </div>
                             </div>
 
                             <!-- INDEPENDENT RETOUR -->
-                            <div class="p-2 border-t border-orange-100 bg-orange-50/30">
-                                <h4 class="text-[9px] font-black text-orange-300 uppercase tracking-widest mb-2">Propres moyens</h4>
+                            <div class="px-3 py-2 bg-orange-50/10">
+                                <h4 class="text-9px font-black text-orange-300 uppercase tracking-widest mb-1.5">Propres moyens</h4>
                                 <div wire:ignore id="transport-retour-independent" class="space-y-1" data-group="transport-retour">
                                     <template x-for="p in independentRetour" :key="p.id">
                                         <div class="bg-white/50 border border-orange-50 p-1.5 rounded shadow-sm opacity-70 hover:opacity-100 cursor-grab active:cursor-grabbing transition-all" :data-id="p.id">
                                             <div class="flex justify-between items-center gap-2">
-                                                <span class="text-[10px] font-bold text-gray-500 truncate" x-text="p.name"></span>
-                                                <span class="text-[8px] font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'retour')"></span>
+                                                <span class="text-10px font-bold text-gray-500 truncate" x-text="p.name"></span>
+                                                <span class="text-9px font-black px-1 rounded bg-gray-100 text-gray-400 uppercase" x-text="getTransportMode(p, 'retour')"></span>
                                             </div>
                                         </div>
                                     </template>
@@ -298,83 +319,87 @@
                         <template x-for="(v, index) in (transportPlans[selectedDay] || [])" :key="v.id || index">
                             <template x-if="v.flow === 'retour'">
                                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-orange-300 transition-all group overflow-hidden flex flex-col">
-                                    <div class="px-3 py-2 bg-gray-50 border-b border-gray-100 flex justify-between items-start gap-2">
-                                        <div class="flex-1 min-w-0 space-y-1">
-                                            <div class="flex items-center gap-2">
-                                                <template x-if="v.type === 'bus'">
-                                                    <div class="p-1 bg-orange-100 text-orange-600 rounded">
-                                                        <x-heroicon-s-truck class="w-3.5 h-3.5" />
-                                                    </div>
-                                                </template>
-                                                <template x-if="v.type !== 'bus'">
-                                                    <div class="p-1 bg-gray-100 text-gray-500 rounded">
-                                                        <x-heroicon-s-users class="w-3.5 h-3.5" />
-                                                    </div>
-                                                </template>
-                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-gray-800 focus:ring-0 w-full truncate placeholder-gray-300" placeholder="NOM VÉHICULE">
-                                            </div>
-                                            <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-xs font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300" placeholder="Nom du chauffeur...">
-                                            
-                                            <div class="flex flex-col gap-1 mt-1">
-                                                <template x-for="alert in (alerts[index] || [])">
-                                                    <div class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border"
-                                                         :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
-                                                        <x-heroicon-s-exclamation-triangle class="w-3 h-3 shrink-0" />
-                                                        <span x-text="alert.msg"></span>
-                                                    </div>
-                                                </template>
+                                    <div class="px-2.5 py-1.5 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center gap-2">
+                                        <div class="flex-1 min-w-0 flex items-center gap-2">
+                                            <template x-if="v.type === 'bus'">
+                                                <div class="p-1 bg-orange-500 text-white rounded-md shadow-sm">
+                                                    <x-heroicon-s-truck class="w-3.5 h-3.5" />
+                                                </div>
+                                            </template>
+                                            <template x-if="v.type !== 'bus'">
+                                                <div class="p-1 bg-slate-600 text-white rounded-md shadow-sm">
+                                                    <x-heroicon-s-users class="w-3.5 h-3.5" />
+                                                </div>
+                                            </template>
+                                            <div class="flex-1 min-w-0">
+                                                <input type="text" x-model="v.name" class="p-0 border-none bg-transparent text-11px font-black uppercase text-gray-900 focus:ring-0 w-full truncate placeholder-gray-300 tracking-tight" placeholder="NOM VÉHICULE">
+                                                <input type="text" x-model="v.driver" class="block w-full p-0 border-none bg-transparent text-10px font-medium text-gray-500 italic focus:ring-0 placeholder-gray-300 -mt-1" placeholder="Chauffeur...">
                                             </div>
                                         </div>
-                                        <div class="flex flex-col items-end gap-1">
-                                            <button x-on:click="removeVehicle(index)" class="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors" title="Supprimer">
-                                                <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
+                                        
+                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            <div class="flex items-center bg-white border border-gray-200 rounded-lg px-2 py-0.5 shadow-sm">
+                                                <span class="text-11px font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-500' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
+                                                <span class="text-10px text-gray-300 mx-0.5">/</span>
+                                                <input type="number" x-model.number="v.capacity" class="w-7 p-0 border-none bg-transparent text-11px font-bold text-gray-400 focus:ring-0 text-center">
+                                            </div>
+                                            <button x-on:click="removeVehicle(index)" class="text-gray-300 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-colors">
+                                                <x-heroicon-m-x-mark class="w-4 h-4" />
                                             </button>
-                                            <div class="flex items-center bg-white border border-gray-200 rounded px-1.5 py-0.5">
-                                                <span class="text-xs font-bold" :class="(v.passengers || []).length > (v.capacity || 0) ? 'text-red-600' : 'text-gray-700'" x-text="(v.passengers || []).length"></span>
-                                                <span class="text-xs text-gray-300 mx-0.5">/</span>
-                                                <input type="number" x-model.number="v.capacity" class="w-6 p-0 border-none bg-transparent text-xs font-bold text-gray-500 focus:ring-0 text-center">
+                                        </div>
+                                    </div>
+
+                                    <div class="px-2.5 py-1.5 grid grid-cols-2 gap-2 bg-white/50 border-b border-gray-50">
+                                        <div class="bg-gray-50/50 rounded-lg px-2 py-0.5 border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-all shadow-sm">
+                                            <label class="text-7px font-black text-gray-400 uppercase leading-none block">Départ</label>
+                                            <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-11px font-bold text-gray-700 focus:ring-0 h-4">
+                                        </div>
+                                        <div class="bg-gray-50/50 rounded-lg px-2 py-0.5 border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-all shadow-sm">
+                                            <label class="text-7px font-black text-gray-400 uppercase leading-none block">Lieu</label>
+                                            <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-11px font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Lieu...">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col px-2 pt-1 gap-1">
+                                        <template x-for="alert in (alerts[index] || [])">
+                                            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-9px font-bold border"
+                                                 :class="alert.type === 'danger' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'">
+                                                <x-heroicon-s-exclamation-triangle class="w-2.5 h-2.5 shrink-0" />
+                                                <span x-text="alert.msg"></span>
                                             </div>
-                                        </div>
+                                        </template>
                                     </div>
 
-                                    <div class="px-3 py-2 grid grid-cols-2 gap-2 border-b border-gray-50">
-                                        <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors relative">
-                                            <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Départ</label>
-                                            <input type="time" :value="getTimeFromDatetime(v.departure_datetime)" x-on:change="v.departure_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4">
-                                        </div>
-                                        <div class="bg-gray-50 rounded px-2 py-1 border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors h-fit">
-                                            <label class="text-[8px] font-black text-gray-400 uppercase block leading-none mb-0.5">Lieu</label>
-                                            <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-xs font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Ex: Stade">
-                                        </div>
-                                    </div>
-
-                                    <div class="flex-1 bg-gray-50/30 p-2">
+                                    <div class="flex-1 bg-gray-50/40 p-1.5 min-h-[50px]">
                                         <div wire:ignore
-                                             class="min-h-[60px] space-y-1 rounded border-2 border-dashed border-transparent transition-colors" 
-                                             :class="(v.passengers || []).length === 0 ? 'border-orange-200 bg-orange-50 flex items-center justify-center' : ''"
+                                             class="min-h-[40px] space-y-1 rounded-lg border-2 border-dashed border-transparent transition-colors" 
+                                             :class="(v.passengers || []).length === 0 ? 'border-orange-100 bg-orange-50/20 flex flex-col items-center justify-center' : ''"
                                              :id="'v-list-' + index" 
                                              data-group="transport-retour" 
                                              :data-index="index">
                                             <template x-if="(v.passengers || []).length === 0">
-                                                <span class="text-xs text-orange-300 font-medium select-none pointer-events-none">Glisser ici</span>
+                                                <div class="flex flex-col items-center opacity-40">
+                                                    <x-heroicon-o-plus-circle class="w-4 h-4 text-orange-400" />
+                                                    <span class="text-9px text-orange-400 font-black uppercase tracking-tighter">Déposer</span>
+                                                </div>
                                             </template>
                                             <template x-for="pId in v.passengers" :key="pId">
-                                                <div class="bg-white border border-gray-200 rounded shadow-sm group/p hover:border-orange-300 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
-                                                    <div class="flex items-center justify-between px-2 py-1.5 w-full">
-                                                        <div class="flex items-center gap-2 overflow-hidden">
-                                                            <div class="w-1 h-3 rounded-full bg-orange-400 shrink-0"></div>
-                                                            <span class="text-xs font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : 'Inconnu'"></span>
+                                                <div class="bg-white border border-gray-200 rounded px-1.5 py-1 shadow-sm group/p hover:border-orange-400 cursor-grab active:cursor-grabbing overflow-hidden flex" :data-id="pId">
+                                                    <div class="flex items-center justify-between w-full gap-2">
+                                                        <div class="flex items-center gap-1.5 overflow-hidden">
+                                                            <div class="w-0.5 h-3 rounded-full bg-orange-400 shrink-0"></div>
+                                                            <span class="text-10px font-bold text-gray-700 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
                                                         </div>
                                                         <template x-if="getParticipantLastTime(pId)">
-                                                            <span class="text-[10px] font-bold text-orange-600 tabular-nums" x-text="getParticipantLastTime(pId)"></span>
+                                                            <span class="text-10px font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(pId)"></span>
                                                         </template>
                                                     </div>
                                                 </div>
                                             </template>
                                         </div>
                                     </div>
-                                    <div class="p-2 border-t border-gray-100 bg-gray-50">
-                                        <input type="text" x-model="v.note" class="w-full p-1.5 border border-gray-200 rounded text-xs text-gray-600 focus:border-orange-400 focus:ring-0" placeholder="Note interne...">
+                                    <div class="px-2 py-1.5 border-t border-gray-100 bg-gray-50/50">
+                                        <input type="text" x-model="v.note" class="w-full px-2 py-1 border border-gray-200 rounded-md text-10px text-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-100 placeholder-gray-300" placeholder="Note interne...">
                                     </div>
                                 </div>
                             </template>
@@ -384,26 +409,26 @@
                 </div>
 
                 <!-- Section 3: Hébergement -->
-                <div class="bg-white border border-gray-200 rounded-xl p-1" x-show="!isLastDay()">
-                     <div class="flex items-center justify-between p-3 border-b border-gray-100 mb-2">
+                <div class="bg-indigo-50/20 border border-indigo-100 rounded-2xl overflow-hidden shadow-sm" x-show="!isLastDay()">
+                     <div class="flex items-center justify-between px-4 py-3 border-b border-indigo-50 bg-indigo-50/30">
                          <div class="flex items-center gap-3">
-                             <span class="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
-                             <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">3. Hébergement & Chambres</h3>
+                             <span class="w-1.5 h-5 bg-indigo-500 rounded-full"></span>
+                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">3. Hébergement & Chambres</h3>
                          </div>
                          <x-filament::button wire:click="addRoom" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Ajouter Chambre</x-filament::button>
                      </div>
 
-                     <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-3">
+                     <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-4">
                         <!-- HOUSING WAITING LIST -->
-                        <div class="lg:col-span-1 bg-indigo-50 border border-indigo-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden">
-                            <div class="p-3 border-b border-indigo-100 bg-indigo-50/50 flex justify-between items-center">
-                                <h3 class="text-xs font-black text-indigo-400 uppercase tracking-widest">En Attente</h3>
-                                <span class="text-xs font-bold bg-white text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100" x-text="unassignedStay.length"></span>
+                        <div class="lg:col-span-1 bg-white border border-indigo-100 rounded-xl flex flex-col min-h-[100px] overflow-hidden shadow-sm">
+                            <div class="px-3 py-2 border-b border-indigo-50 bg-indigo-50/30 flex justify-between items-center">
+                                <h3 class="text-10px font-black text-indigo-500 uppercase tracking-widest">En Attente</h3>
+                                <span class="text-10px font-bold bg-white text-indigo-600 px-1.5 py-0.5 rounded-md border border-indigo-100" x-text="unassignedStay.length"></span>
                             </div>
-                            <div wire:ignore id="stay-unassigned" class="flex-1 overflow-y-auto p-2 space-y-2" data-group="stay">
+                            <div wire:ignore id="stay-unassigned" class="flex-1 overflow-y-auto p-1.5 space-y-1.5" data-group="stay">
                                 <template x-for="p in unassignedStay" :key="p.id">
-                                    <div class="bg-white border border-indigo-100 p-2.5 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-300 hover:shadow" :data-id="p.id">
-                                        <div class="text-xs font-bold text-gray-700 truncate" x-text="p.name"></div>
+                                    <div class="bg-white border border-indigo-100 p-2 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-400 hover:shadow transition-all group" :data-id="p.id">
+                                        <div class="text-10px font-bold text-gray-700 truncate" x-text="p.name"></div>
                                     </div>
                                 </template>
                             </div>
@@ -413,40 +438,43 @@
                         <div class="lg:col-span-5 grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
                             <template x-for="(r, index) in (stayPlans[selectedDay] || [])" :key="r.id || index">
                                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-300 transition-all flex flex-col">
-                                    <div class="px-3 py-2 bg-indigo-50/30 border-b border-indigo-50 flex justify-between items-center">
-                                        <div class="flex items-center gap-2 flex-1">
-                                            <div class="text-indigo-500">
+                                    <div class="px-2.5 py-1.5 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center gap-2">
+                                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                                            <div class="p-1 bg-indigo-500 text-white rounded-md shadow-sm">
                                                 <x-heroicon-s-home class="w-3.5 h-3.5" />
                                             </div>
-                                            <input type="text" x-model="r.name" class="p-0 border-none bg-transparent text-xs font-black uppercase text-indigo-900 focus:ring-0 w-full placeholder-indigo-300" placeholder="NOM CHAMBRE">
+                                            <input type="text" x-model="r.name" class="p-0 border-none bg-transparent text-11px font-black uppercase text-indigo-900 focus:ring-0 w-full placeholder-indigo-300 tracking-tight" placeholder="NOM CHAMBRE">
                                         </div>
-                                        <button x-on:click="removeRoom(index)" class="text-gray-300 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors">
-                                            <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
+                                        <button x-on:click="removeRoom(index)" class="text-gray-300 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-colors">
+                                            <x-heroicon-m-x-mark class="w-4 h-4" />
                                         </button>
                                     </div>
                                     
-                                    <div class="flex-1 p-2">
+                                    <div class="flex-1 p-1.5 bg-gray-50/40 min-h-[60px]">
                                         <div wire:ignore
-                                             class="min-h-[80px] space-y-1 rounded border-2 border-dashed border-transparent transition-all"
-                                             :class="(r.occupant_ids || []).length === 0 ? 'border-indigo-100 bg-indigo-50/10 flex items-center justify-center' : ''"
+                                             class="min-h-[50px] space-y-1 rounded-lg border-2 border-dashed border-transparent transition-all"
+                                             :class="(r.occupant_ids || []).length === 0 ? 'border-indigo-100 bg-indigo-50/20 flex flex-col items-center justify-center' : ''"
                                              :id="'r-list-' + index" 
                                              data-group="stay" 
                                              :data-index="index">
                                              
                                             <template x-if="(r.occupant_ids || []).length === 0">
-                                                <span class="text-xs text-indigo-200 font-medium select-none pointer-events-none">Glisser occupants</span>
+                                                <div class="flex flex-col items-center opacity-40">
+                                                    <x-heroicon-o-plus-circle class="w-4 h-4 text-indigo-400" />
+                                                    <span class="text-9px text-indigo-400 font-black uppercase tracking-tighter">Déposer</span>
+                                                </div>
                                             </template>
 
                                             <template x-for="pId in (r.occupant_ids || [])" :key="pId">
-                                                <div class="flex items-center justify-between px-2 py-1.5 bg-indigo-50 border border-indigo-100 rounded text-indigo-900 cursor-grab active:cursor-grabbing hover:bg-white hover:shadow-sm transition-all" :data-id="pId">
-                                                    <span class="text-xs font-bold truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
+                                                <div class="flex items-center justify-between px-2 py-1 bg-white border border-indigo-100 rounded shadow-sm text-indigo-900 cursor-grab active:cursor-grabbing hover:border-indigo-400 transition-all" :data-id="pId">
+                                                    <span class="text-10px font-bold truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></span>
                                                 </div>
                                             </template>
                                         </div>
                                     </div>
                                     
-                                    <div class="p-2 border-t border-gray-50">
-                                        <textarea x-model="r.note" rows="1" class="w-full p-1.5 bg-gray-50 border border-gray-100 rounded text-xs text-gray-600 focus:border-indigo-300 focus:ring-0 resize-none" placeholder="Note chambre..."></textarea>
+                                    <div class="px-2 py-1.5 border-t border-gray-100 bg-white/50">
+                                        <textarea x-model="r.note" rows="1" class="w-full px-2 py-1 bg-gray-50/50 border border-gray-100 rounded-md text-10px text-gray-600 focus:border-indigo-300 focus:ring-1 focus:ring-indigo-100 resize-none placeholder-gray-300" placeholder="Note chambre..."></textarea>
                                     </div>
                                 </div>
                             </template>
@@ -480,7 +508,6 @@
     <x-filament-actions::modals />
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script>
         function transportBoard(config) {
@@ -520,9 +547,14 @@
                             delay: 0,
                             delayOnTouchOnly: true,
                             touchStartThreshold: 3, 
-                            ghostClass: 'opacity-50',
+                            ghostClass: 'opacity-30',
+                            chosenClass: 'ring-2',
                             dragClass: 'opacity-100',
+                            onStart: (evt) => {
+                                document.body.classList.add('is-dragging');
+                            },
                             onEnd: (evt) => {
+                                document.body.classList.remove('is-dragging');
                                 this.handleSort(evt);
                             }
                         });
