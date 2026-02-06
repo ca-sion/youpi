@@ -195,4 +195,84 @@ class LogisticsSurveyTest extends TestCase
             ->assertSet('stats.responded_count', 2)
             ->assertSet('stats.not_responded_count', 1);
     }
+
+    /** @test */
+    public function it_validates_form_on_submit()
+    {
+        $logistic = EventLogistic::factory()->create();
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->set('participantId', 'new')
+            ->set('newName', '') // Invalid
+            ->call('submit')
+            ->assertHasErrors(['newName' => 'required_if']);
+    }
+
+    /** @test */
+    public function it_loads_existing_data_on_participant_change()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'participants_data' => [
+                [
+                    'id' => 'p1',
+                    'name' => 'Existing',
+                    'survey_response' => [
+                        'filled_at' => now()->toDateTimeString(),
+                        'remarks' => 'My Remarks',
+                        'hotel_needed' => true,
+                    ]
+                ]
+            ]
+        ]);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->set('participantId', 'p1')
+            ->assertSet('remarks', 'My Remarks')
+            ->assertSet('hotel_needed', true);
+    }
+
+    /** @test */
+    public function it_updates_existing_response_without_duplication()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'participants_data' => [
+                ['id' => 'p1', 'name' => 'Existing', 'role' => 'athlete']
+            ]
+        ]);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->set('participantId', 'p1')
+            ->set('remarks', 'Initial')
+            ->call('submit');
+
+        $logistic->refresh();
+        $this->assertCount(1, $logistic->participants_data);
+        $this->assertEquals('Initial', $logistic->participants_data[0]['survey_response']['remarks']);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->set('participantId', 'p1')
+            ->set('remarks', 'Updated')
+            ->call('submit');
+
+        $logistic->refresh();
+        $this->assertCount(1, $logistic->participants_data);
+        $this->assertEquals('Updated', $logistic->participants_data[0]['survey_response']['remarks']);
+    }
+
+    /** @test */
+    public function it_shows_correct_stats_in_view()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'participants_data' => [
+                ['id' => 'p1', 'name' => 'Athlete 1', 'survey_response' => ['filled_at' => now()]],
+                ['id' => 'p2', 'name' => 'Athlete 2'],
+            ]
+        ]);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->assertSee('Ont répondu (1)')
+            ->assertSee('Attente de réponse (1)')
+            ->assertSee('Athlete 1')
+            ->assertSee('Athlete 2');
+    }
 }

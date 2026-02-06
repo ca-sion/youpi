@@ -103,7 +103,9 @@ class EditEventLogistic extends EditRecord
                             'vendredi' => 5, 'samedi' => 6, 'dimanche' => 7,
                         ];
 
-                        $participants = [];
+                        $existingParticipants = collect($record->participants_data ?? []);
+                        $processedIds = [];
+                        $newParticipants = [];
                         foreach ($inscriptions as $athlete) {
                             $athleteName = $athlete['name'] ?? 'Unknown';
                             $athleteCat = strtoupper($athlete['category'] ?? '');
@@ -140,6 +142,11 @@ class EditEventLogistic extends EditRecord
                                 // Base discipline for matching (lowercase, no parentheses, no rounds)
                                 $cleanDiscipline = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $discipline)));
                                 $baseDiscipline = trim(preg_replace($roundsRegex, '', $cleanDiscipline));
+
+                                // Also strip day names from baseDiscipline if we found a prefDay
+                                if ($prefDay) {
+                                    $baseDiscipline = trim(str_ireplace($prefDay, '', $baseDiscipline));
+                                }
 
                                 if (empty($baseDiscipline)) {
                                     continue;
@@ -345,17 +352,39 @@ class EditEventLogistic extends EditRecord
                                 $details['note'] = 'Aucune épreuve trouvée';
                             }
 
-                            // Preserve existing ID/Survey
-                            $existing = collect($record->participants_data ?? [])->firstWhere('name', $athleteName);
+                            // Preserve existing ID/Survey (Robust Matching)
+                            $normalize = function ($n) {
+                                $n = mb_strtolower(trim($n), 'UTF-8');
+                                $n = preg_replace('/^\[e\]\s+/', '', $n); // Strip coach prefix for matching
+                                $n = preg_replace('/\s+/', ' ', $n);
+
+                                return $n;
+                            };
+                            $normAthleteName = $normalize($athleteName);
+
+                            $existing = $existingParticipants->first(function ($p) use ($normalize, $normAthleteName) {
+                                return $normalize($p['name'] ?? '') === $normAthleteName;
+                            });
+
                             if ($existing) {
                                 $details['id'] = $existing['id'] ?? $details['id'];
                                 $details['survey_response'] = $existing['survey_response'] ?? null;
+                                $details['role'] = $existing['role'] ?? 'athlete';
+                                // Keep the existing name if it was manually added/modified to preserve prefixes or custom formatting
+                                if (str_starts_with($existing['name'] ?? '', '[E]') || ! empty($existing['survey_response']['filled_at'])) {
+                                    $details['name'] = $existing['name'];
+                                }
+                                $processedIds[] = $details['id'];
                             }
 
-                            $participants[] = $details;
+                            $newParticipants[] = $details;
                         }
 
-                        $record->update(['participants_data' => $participants]);
+                        // Preserve manual additions (e.g. coaches, late survey additions)
+                        $manualAdditions = $existingParticipants->whereNotIn('id', $processedIds);
+                        $finalParticipants = array_merge($newParticipants, $manualAdditions->toArray());
+
+                        $record->update(['participants_data' => $finalParticipants]);
                         Notification::make()->title('Calcul du planning terminé')->success()->send();
                         $this->fillForm();
                     }),

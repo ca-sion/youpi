@@ -140,6 +140,67 @@ class EventLogisticTest extends TestCase
     }
 
     /** @test */
+    public function it_differentiates_hurdles_from_flat_in_magic_match()
+    {
+        $startDate = Carbon::create(2024, 7, 15);
+        $schedule = [
+            ['day' => 'Lundi', 'time' => '10:00', 'discipline' => '60m', 'cat' => 'U18M'],
+            ['day' => 'Lundi', 'time' => '11:00', 'discipline' => '60m Haies', 'cat' => 'U18M'],
+        ];
+
+        $logistic = EventLogistic::factory()->create([
+            'settings'          => ['start_date' => $startDate->toDateString()],
+            'schedule_raw'      => $schedule,
+            'inscriptions_data' => [
+                ['name' => 'Flat Runner', 'disciplines' => ['60m'], 'category' => 'U18M'],
+                ['name' => 'Hurdle Runner', 'disciplines' => ['60m Haies'], 'category' => 'U18M'],
+            ],
+        ]);
+
+        Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
+            ->callAction('magic_match');
+
+        $logistic->refresh();
+        $flat = collect($logistic->participants_data)->firstWhere('name', 'Flat Runner');
+        $hurdle = collect($logistic->participants_data)->firstWhere('name', 'Hurdle Runner');
+
+        $this->assertEquals('2024-07-15 10:00:00', $flat['first_competition_datetime']);
+        $this->assertEquals('2024-07-15 11:00:00', $hurdle['first_competition_datetime']);
+    }
+
+    /** @test */
+    public function it_respects_day_progression_rule_in_magic_match()
+    {
+        // Athlete registered for Sunday should NOT match a Saturday morning event
+        $startDate = Carbon::create(2024, 7, 13); // Saturday
+        $schedule = [
+            ['day' => 'Samedi', 'time' => '09:00', 'discipline' => '100m', 'cat' => 'U18M'], // Series
+            ['day' => 'Dimanche', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M'], // Final
+        ];
+
+        $logistic = EventLogistic::factory()->create([
+            'settings'          => ['start_date' => $startDate->toDateString()],
+            'schedule_raw'      => $schedule,
+            'inscriptions_data' => [
+                ['name' => 'Sunday Athlete', 'disciplines' => ['100m Dimanche'], 'category' => 'U18M'],
+                ['name' => 'Saturday Athlete', 'disciplines' => ['100m Samedi'], 'category' => 'U18M'],
+            ],
+        ]);
+
+        Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
+            ->callAction('magic_match');
+
+        $logistic->refresh();
+        $sun = collect($logistic->participants_data)->firstWhere('name', 'Sunday Athlete');
+        $sat = collect($logistic->participants_data)->firstWhere('name', 'Saturday Athlete');
+
+        // Sunday athlete should only have Sunday event
+        $this->assertEquals('2024-07-14 10:00:00', $sun['first_competition_datetime']);
+        // Saturday athlete matches Saturday. (The Sunday matching might depend on how "progression" is defined, usually it only matches the requested day)
+        $this->assertEquals('2024-07-13 09:00:00', $sat['first_competition_datetime']);
+    }
+
+    /** @test */
     public function it_can_handle_survey_flow()
     {
         $logistic = EventLogistic::factory()->create([
@@ -308,6 +369,7 @@ class EventLogisticTest extends TestCase
                         ],
                         'presence_aller' => ['Samedi'],
                         'remarks'        => 'Hello',
+                        'filled_at'      => now()->toDateTimeString(),
                     ],
                 ],
             ],
@@ -380,6 +442,61 @@ class EventLogisticTest extends TestCase
         $plan = $logistic->transport_plan;
         $day = array_key_first($plan);
         $this->assertEmpty($plan[$day]);
+    }
+
+    /** @test */
+    public function it_can_manage_stay_rooms()
+    {
+        $logistic = EventLogistic::factory()->create(['settings' => ['start_date' => '2024-01-01']]);
+        
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        // Add Room
+        $component->call('addRoom');
+        $logistic->refresh();
+        $this->assertCount(1, $logistic->stay_plan['2024-01-01']);
+        
+        // Remove Room
+        $component->call('removeRoom', 0);
+        $logistic->refresh();
+        $this->assertEmpty($logistic->stay_plan['2024-01-01']);
+    }
+
+    /** @test */
+    public function it_updates_property_when_day_is_selected()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => ['start_date' => '2024-07-15', 'days_count' => 2]
+        ]);
+
+        Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-16')
+            ->assertSet('selectedDay', '2024-07-16');
+    }
+
+    /** @test */
+    public function it_returns_participant_times_helpers()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => ['start_date' => '2024-07-15'],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 
+                    'name' => 'P1', 
+                    'first_competition_datetime' => '2024-07-15 10:00:00', 
+                    'last_competition_datetime' => '2024-07-15 12:00:00',
+                    'competition_days' => [
+                        '2024-07-15' => ['first' => '2024-07-15 10:00:00', 'last' => '2024-07-15 12:00:00']
+                    ]
+                ]
+            ]
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
+        
+        $this->assertEquals('10:00', $component->instance()->getParticipantStartTime('p1'));
+        $this->assertEquals('12:00', $component->instance()->getParticipantEndTime('p1'));
+        $this->assertEquals('10:00 - 12:00', $component->instance()->getParticipantTimes('p1'));
     }
 
     /** @test */
@@ -480,5 +597,58 @@ class EventLogisticTest extends TestCase
         $this->assertCount(1, $component->get('independentAller'));
         $this->assertEquals('p1', $component->get('independentAller')[0]['id']);
         $this->assertCount(1, $component->get('independentRetour'));
+    }
+
+    /** @test */
+    public function it_preserves_existing_participants_during_magic_match()
+    {
+        $startDate = Carbon::create(2024, 7, 15);
+        $logistic = EventLogistic::factory()->create([
+            'settings'          => ['start_date' => $startDate->toDateString()],
+            'schedule_raw'      => [['day' => 'Lundi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M']],
+            'participants_data' => [
+                [
+                    'id'   => 'manual-coach',
+                    'name' => '[E] Coach Test',
+                    'role' => 'coach',
+                    'survey_response' => ['filled_at' => '2024-01-01 10:00:00', 'remarks' => 'Keep me']
+                ],
+                [
+                    'id'   => 'existing-athlete',
+                    'name' => 'athlete one', // Lowecase in DB
+                    'role' => 'athlete',
+                    'survey_response' => ['filled_at' => '2024-01-01 10:00:00', 'responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]]
+                ]
+            ],
+            'inscriptions_data' => [
+                ['name' => 'Athlete One', 'disciplines' => ['100m'], 'category' => 'U18M'], // Uppercase in Inscriptions
+                ['name' => 'Coach Test', 'disciplines' => ['100m'], 'category' => 'U18M'], // No [E] in inscriptions
+                ['name' => 'New Athlete', 'disciplines' => ['100m'], 'category' => 'U18M'],
+            ],
+        ]);
+
+        Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
+            ->callAction('magic_match');
+
+        $logistic->refresh();
+        $participants = collect($logistic->participants_data);
+
+        // 1. Coach should still be there
+        $this->assertTrue($participants->contains('id', 'manual-coach'), 'Coach should be preserved');
+
+        // 2. Athlete One should still have their survey response (matched lowercase to uppercase)
+        $a1 = $participants->firstWhere('id', 'existing-athlete');
+        $this->assertNotEmpty($a1, 'Athlete One should be preserved by normalized name');
+        $this->assertEquals('bus', $a1['survey_response']['responses']['2024-07-15']['aller']['mode']);
+        $this->assertEquals('2024-01-01 10:00:00', $a1['survey_response']['filled_at'], 'filled_at should be preserved');
+
+        // 3. Coach Test should match [E] Coach Test and remain coach
+        $coach = $participants->firstWhere('id', 'manual-coach');
+        $this->assertNotEmpty($coach, 'Coach should be matched even if [E] prefix is missing in inscriptions');
+        $this->assertEquals('coach', $coach['role']);
+        $this->assertStringContainsString('[E]', $coach['name']);
+
+        // 3. New Athlete should be added
+        $this->assertTrue($participants->contains('name', 'New Athlete'), 'New athlete should be added');
     }
 }
