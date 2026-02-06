@@ -287,9 +287,9 @@ class ManageTransport extends Page
                                 $firstEvent = Carbon::parse($firstCompStr);
                                 $prep = (int) ($settings['duration_prep_min'] ?? 90);
                                 if ($arrivalEst->gt($firstEvent)) {
-                                    $this->alerts[$index][] = ['type' => 'danger', 'msg' => "RETARD ÉCHAUFFEMENT: {$p['name']} arrive à {$arrivalEst->format('H:i')} alors que l'épreuve commence à {$firstEvent->format('H:i')}"];
+                                    $this->alerts[$index][] = ['type' => 'danger', 'msg' => "RETARD: {$p['name']} arrive à {$arrivalEst->format('H:i')} alors que l'épreuve commence à {$firstEvent->format('H:i')}"];
                                 } elseif ($arrivalEst->copy()->addMinutes($prep)->gt($firstEvent)) {
-                                    $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Prépa. courte: {$p['name']} (arrivée est. {$arrivalEst->format('H:i')} + {$prep}m > {$firstEvent->format('H:i')})"];
+                                    $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Retard prépa: {$p['name']} (arrivée est. {$arrivalEst->format('H:i')} + {$prep}m > {$firstEvent->format('H:i')})"];
                                 }
                             }
                         }
