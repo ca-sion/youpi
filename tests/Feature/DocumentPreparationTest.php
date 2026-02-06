@@ -2,15 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\EventLogistic;
+use Tests\TestCase;
+use Livewire\Livewire;
 use App\Models\Document;
 use App\Enums\DocumentType;
 use App\Enums\DocumentStatus;
-use App\Filament\Resources\EventLogisticResource\Pages\EditEventLogistic;
+use App\Models\EventLogistic;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
-use Tests\TestCase;
-use Carbon\Carbon;
+use App\Filament\Resources\EventLogisticResource\Pages\EditEventLogistic;
 
 class DocumentPreparationTest extends TestCase
 {
@@ -20,7 +19,7 @@ class DocumentPreparationTest extends TestCase
     public function it_creates_a_new_document_if_none_linked()
     {
         $logistic = EventLogistic::factory()->create([
-            'name' => 'Event Test',
+            'name'     => 'Event Test',
             'settings' => ['start_date' => '2024-07-15'],
         ]);
 
@@ -31,7 +30,7 @@ class DocumentPreparationTest extends TestCase
 
         $logistic->refresh();
         $this->assertNotNull($logistic->document_id);
-        
+
         $document = $logistic->document;
         $this->assertEquals('Document Voyage - Event Test', $document->name);
         $this->assertEquals(DocumentType::TRAVEL, $document->type);
@@ -41,16 +40,16 @@ class DocumentPreparationTest extends TestCase
     public function it_replaces_data_if_document_already_exists()
     {
         $document = Document::create([
-            'name' => 'Existing Doc',
-            'type' => DocumentType::TRAVEL,
-            'status' => DocumentStatus::VALIDATED,
-            'travel_data' => ['data' => ['old_key' => 'old_value']]
+            'name'        => 'Existing Doc',
+            'type'        => DocumentType::TRAVEL,
+            'status'      => DocumentStatus::VALIDATED,
+            'travel_data' => ['data' => ['old_key' => 'old_value']],
         ]);
 
         $logistic = EventLogistic::factory()->create([
-            'name' => 'Event Updated',
+            'name'        => 'Event Updated',
             'document_id' => $document->id,
-            'settings' => ['start_date' => '2024-07-15'],
+            'settings'    => ['start_date' => '2024-07-15'],
         ]);
 
         Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
@@ -66,8 +65,8 @@ class DocumentPreparationTest extends TestCase
     {
         $startDate = '2024-07-15';
         $logistic = EventLogistic::factory()->create([
-            'name' => 'Transport Event',
-            'settings' => ['start_date' => $startDate, 'days_count' => 1],
+            'name'              => 'Transport Event',
+            'settings'          => ['start_date' => $startDate, 'days_count' => 1],
             'participants_data' => [
                 ['id' => 'p1', 'name' => 'Bus Athlete', 'survey_response' => ['responses' => [$startDate => ['aller' => ['mode' => 'bus']]]]],
                 ['id' => 'p2', 'name' => 'Train Athlete', 'survey_response' => ['responses' => [$startDate => ['aller' => ['mode' => 'train']]]]],
@@ -75,16 +74,16 @@ class DocumentPreparationTest extends TestCase
             'transport_plan' => [
                 $startDate => [
                     [
-                        'id' => 'v1',
-                        'type' => 'bus',
-                        'flow' => 'aller',
-                        'departure_datetime' => $startDate . ' 08:00:00',
+                        'id'                 => 'v1',
+                        'type'               => 'bus',
+                        'flow'               => 'aller',
+                        'departure_datetime' => $startDate.' 08:00:00',
                         'departure_location' => 'Sion',
-                        'driver' => 'Jean',
-                        'passengers' => ['p1']
-                    ]
-                ]
-            ]
+                        'driver'             => 'Jean',
+                        'passengers'         => ['p1'],
+                    ],
+                ],
+            ],
         ]);
 
         Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
@@ -110,18 +109,18 @@ class DocumentPreparationTest extends TestCase
     {
         $startDate = '2024-07-15';
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => $startDate],
+            'settings'          => ['start_date' => $startDate],
             'participants_data' => [
                 ['id' => 'p1', 'name' => 'Sleeper'],
             ],
             'stay_plan' => [
                 $startDate => [
                     [
-                        'id' => 'r1',
+                        'id'           => 'r1',
                         'occupant_ids' => ['p1'],
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ]);
 
         Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
@@ -139,13 +138,13 @@ class DocumentPreparationTest extends TestCase
     {
         $startDate = '2024-07-15';
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => $startDate],
+            'settings'          => ['start_date' => $startDate],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Fast Runner', 
-                    'first_competition_datetime' => $startDate . ' 10:00:00',
-                    'last_competition_datetime' => $startDate . ' 11:00:00',
+                    'id'                         => 'p1',
+                    'name'                       => 'Fast Runner',
+                    'first_competition_datetime' => $startDate.' 10:00:00',
+                    'last_competition_datetime'  => $startDate.' 11:00:00',
                 ],
             ],
         ]);

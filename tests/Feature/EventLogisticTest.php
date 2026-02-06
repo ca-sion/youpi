@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
+use Carbon\Carbon;
+use Tests\TestCase;
+use Livewire\Livewire;
 use App\Models\EventLogistic;
-use App\Filament\Resources\EventLogisticResource\Pages\EditEventLogistic;
-use App\Filament\Resources\EventLogisticResource\Pages\ManageTransport;
 use App\Livewire\Logistics\Survey;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
-use Tests\TestCase;
-use Carbon\Carbon;
+use App\Filament\Resources\EventLogisticResource\Pages\ManageTransport;
+use App\Filament\Resources\EventLogisticResource\Pages\EditEventLogistic;
 
 class EventLogisticTest extends TestCase
 {
@@ -31,7 +31,7 @@ class EventLogisticTest extends TestCase
         $this->assertEquals('U Bolt', $logistic->inscriptions_data[0]['name']);
         $this->assertEquals('Pro', $logistic->inscriptions_data[0]['category']);
         $this->assertEquals(['100m'], $logistic->inscriptions_data[0]['disciplines']);
-        
+
         $this->assertEquals('M Phelps', $logistic->inscriptions_data[1]['name']);
         $this->assertNull($logistic->inscriptions_data[1]['category']);
     }
@@ -44,22 +44,22 @@ class EventLogisticTest extends TestCase
                 ['id' => 'p1', 'name' => 'P1'],
                 ['id' => 'p2', 'name' => 'P2'],
             ],
-            'settings' => ['bus_speed' => 100, 'distance_km' => 100, 'start_date' => '2024-01-01'],
+            'settings'       => ['bus_speed' => 100, 'distance_km' => 100, 'start_date' => '2024-01-01'],
             'transport_plan' => [
                 '2024-01-01' => [
                     [
-                        'type' => 'car',
-                        'name' => 'Small Car',
-                        'capacity' => 1,
-                        'passengers' => ['p1', 'p2'], // 2 passengers > 1
-                        'departure_datetime' => '2024-01-01 10:00:00'
-                    ]
-                ]
-            ]
+                        'type'               => 'car',
+                        'name'               => 'Small Car',
+                        'capacity'           => 1,
+                        'passengers'         => ['p1', 'p2'], // 2 passengers > 1
+                        'departure_datetime' => '2024-01-01 10:00:00',
+                    ],
+                ],
+            ],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         // Assert property $alerts contains entry for index 0
         $alerts = $component->get('alerts');
         $this->assertArrayHasKey(0, $alerts);
@@ -73,34 +73,34 @@ class EventLogisticTest extends TestCase
         // Setup: Event is at 10:00. Prep 60min. Travel 60min.
         // Must arrive by 09:00.
         // Must depart by 08:00.
-        
+
         // Case: Departure is 08:30 -> Should be LATE.
-        
+
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
                 ['id' => 'p1', 'name' => 'Late Runner', 'first_competition_datetime' => '2024-07-15 10:00:00'],
             ],
             'settings' => [
-                'start_date' => '2024-07-15',
-                'bus_speed' => 100, 
-                'distance_km' => 100, // 1h travel
-                'duration_prep_min' => 60 
+                'start_date'        => '2024-07-15',
+                'bus_speed'         => 100,
+                'distance_km'       => 100, // 1h travel
+                'duration_prep_min' => 60,
             ],
             'transport_plan' => [
                 '2024-07-15' => [
                     [
-                        'type' => 'bus',
-                        'name' => 'Late Bus',
-                        'capacity' => 50,
-                        'passengers' => ['p1'],
-                        'departure_datetime' => '2024-07-15 08:30:00' // 30 min late
-                    ]
-                ]
-            ]
+                        'type'               => 'bus',
+                        'name'               => 'Late Bus',
+                        'capacity'           => 50,
+                        'passengers'         => ['p1'],
+                        'departure_datetime' => '2024-07-15 08:30:00', // 30 min late
+                    ],
+                ],
+            ],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         $alerts = $component->get('alerts');
         $this->assertArrayHasKey(0, $alerts);
         $this->assertEquals('warning', $alerts[0][0]['type']);
@@ -117,11 +117,11 @@ class EventLogisticTest extends TestCase
         ];
 
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => $startDate->toDateString()],
-            'schedule_raw' => $schedule,
+            'settings'          => ['start_date' => $startDate->toDateString()],
+            'schedule_raw'      => $schedule,
             'inscriptions_data' => [
-                ['name' => 'Athlete One', 'disciplines' => ['100m', '200m'], 'category' => 'U18M']
-            ]
+                ['name' => 'Athlete One', 'disciplines' => ['100m', '200m'], 'category' => 'U18M'],
+            ],
         ]);
 
         Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
@@ -131,7 +131,7 @@ class EventLogisticTest extends TestCase
         $participants = $logistic->participants_data;
         $this->assertNotEmpty($participants);
         $p = $participants[0];
-        
+
         $this->assertEquals('Athlete One', $p['name']);
         // First event: Monday 10:00 -> 2024-07-15 10:00:00
         $this->assertEquals('2024-07-15 10:00:00', $p['first_competition_datetime']);
@@ -144,8 +144,8 @@ class EventLogisticTest extends TestCase
     {
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
-                ['id' => 'uuid-123', 'name' => 'Athlete Survey', 'first_competition_datetime' => '2024-07-15 10:00:00']
-            ]
+                ['id' => 'uuid-123', 'name' => 'Athlete Survey', 'first_competition_datetime' => '2024-07-15 10:00:00'],
+            ],
         ]);
 
         // Simulating the user filling the survey
@@ -166,33 +166,33 @@ class EventLogisticTest extends TestCase
         $startDate = Carbon::create(2024, 7, 15);
         $logistic = EventLogistic::factory()->create([
             'settings' => [
-                'start_date' => '2024-07-15',
-                'distance_km' => 100, 
-                'bus_speed' => 100, // 1h travel
-                'duration_prep_min' => 60 // 1h prep. Total offset = 2h.
+                'start_date'        => '2024-07-15',
+                'distance_km'       => 100,
+                'bus_speed'         => 100, // 1h travel
+                'duration_prep_min' => 60, // 1h prep. Total offset = 2h.
             ],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Bus Rider', 
+                    'id'                         => 'p1',
+                    'name'                       => 'Bus Rider',
                     'first_competition_datetime' => '2024-07-15 10:00:00',
-                    'survey_response' => [
+                    'survey_response'            => [
                         'responses' => [
-                            '2024-07-15' => ['aller' => ['mode' => 'bus']]
-                        ]
-                    ] 
+                            '2024-07-15' => ['aller' => ['mode' => 'bus']],
+                        ],
+                    ],
                 ],
                 [
-                    'id' => 'p2', 
-                    'name' => 'Car Driver', 
+                    'id'                         => 'p2',
+                    'name'                       => 'Car Driver',
                     'first_competition_datetime' => '2024-07-15 11:00:00',
-                    'survey_response' => [
+                    'survey_response'            => [
                         'responses' => [
-                            '2024-07-15' => ['aller' => ['mode' => 'car_seats', 'seats' => 2]]
-                        ]
-                    ]
-                ]
-            ]
+                            '2024-07-15' => ['aller' => ['mode' => 'car_seats', 'seats' => 2]],
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
@@ -201,7 +201,7 @@ class EventLogisticTest extends TestCase
 
         $logistic->refresh();
         $plan = $logistic->transport_plan['2024-07-15'] ?? [];
-        
+
         // Check Bus
         $bus = collect($plan)->firstWhere('type', 'bus');
         $this->assertNotEmpty($bus);
@@ -218,54 +218,55 @@ class EventLogisticTest extends TestCase
         // car speed default 120 -> 0.833h = 50min.
         // prep 60. Total 110min.
         // 11:00 - 1h50 = 09:10.
-        
+
         $this->assertEquals('2024-07-15 09:10:00', $car['departure_datetime']);
     }
 
     /** @test */
     public function it_detects_alerts_multi_day_hotel()
     {
-         // Logic for alerts is in the View or computed property (not yet implemented in backend strictly, usually view logic)
-         // But the User asked: "Et pouvoir détecter si la détection des alertes fonctionne".
-         // The prompt requirement 4 checks "Alerte si un athlète a besoin d'un hôtel (épreuve le lendemain) mais n'a pas de chambre".
-         // This logic was requested for the Dashboard. I haven't implemented explicit alerts in the backend transport plan, likely intended for the frontend view.
-         // Let's implement a check function in the test that simulates this alert logic to ensure data is sufficient.
-         
-         $schedule = [
+        // Logic for alerts is in the View or computed property (not yet implemented in backend strictly, usually view logic)
+        // But the User asked: "Et pouvoir détecter si la détection des alertes fonctionne".
+        // The prompt requirement 4 checks "Alerte si un athlète a besoin d'un hôtel (épreuve le lendemain) mais n'a pas de chambre".
+        // This logic was requested for the Dashboard. I haven't implemented explicit alerts in the backend transport plan, likely intended for the frontend view.
+        // Let's implement a check function in the test that simulates this alert logic to ensure data is sufficient.
+
+        $schedule = [
             ['day' => 'Samedi', 'time' => '18:00', 'discipline' => 'Final', 'cat' => 'Pro'], // Late
             ['day' => 'Dimanche', 'time' => '08:00', 'discipline' => 'Semi', 'cat' => 'Pro'], // Early next day
-         ];
-         // This implies hotel needed.
-         
-         // TODO: Implement actual Alert Logic in ManageTransport class if not present, or verify the conditions here.
-         $this->assertTrue(true);
+        ];
+        // This implies hotel needed.
+
+        // TODO: Implement actual Alert Logic in ManageTransport class if not present, or verify the conditions here.
+        $this->assertTrue(true);
     }
+
     /** @test */
     public function it_detects_alert_for_missing_hotel_on_multi_day_event()
     {
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Need Hotel', 
-                    'survey_response' => ['hotel_needed' => true] // Wants hotel
+                    'id'              => 'p1',
+                    'name'            => 'Need Hotel',
+                    'survey_response' => ['hotel_needed' => true], // Wants hotel
                 ],
                 [
-                    'id' => 'p2', 
-                    'name' => 'Has Hotel', 
-                    'survey_response' => ['hotel_needed' => true]
-                ]
+                    'id'              => 'p2',
+                    'name'            => 'Has Hotel',
+                    'survey_response' => ['hotel_needed' => true],
+                ],
             ],
             // P2 is in a room, P1 is not
-            'settings' => ['start_date' => '2024-07-15', 'days_count' => 2],
+            'settings'  => ['start_date' => '2024-07-15', 'days_count' => 2],
             'stay_plan' => [
-                '2024-07-15' => [['occupant_ids' => ['p2'], 'room_type' => 'Single']]
-            ], 
-            'transport_plan' => [] 
+                '2024-07-15' => [['occupant_ids' => ['p2'], 'room_type' => 'Single']],
+            ],
+            'transport_plan' => [],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         $alerts = $component->get('globalAlerts');
         $this->assertNotEmpty($alerts);
         $this->assertEquals('danger', $alerts[0]['type']);
@@ -277,13 +278,13 @@ class EventLogisticTest extends TestCase
     public function it_verifies_the_full_flow_from_parsing_to_survey()
     {
         $logistic = EventLogistic::factory()->create([
-            'inscriptions_raw' => "BOLT Usain (U18M) : 100m",
-            'schedule_raw' => [['day' => 'Samedi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M']],
-            'settings' => ['start_date' => now()->format('Y-m-d')]
+            'inscriptions_raw' => 'BOLT Usain (U18M) : 100m',
+            'schedule_raw'     => [['day' => 'Samedi', 'time' => '10:00', 'discipline' => '100m', 'cat' => 'U18M']],
+            'settings'         => ['start_date' => now()->format('Y-m-d')],
         ]);
 
         $logistic->update(['participants_data' => [['id' => 'u1', 'name' => 'BOLT Usain']]]);
-        
+
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->assertSee('BOLT Usain');
     }
@@ -294,22 +295,22 @@ class EventLogisticTest extends TestCase
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Athlete One', 
+                    'id'              => 'p1',
+                    'name'            => 'Athlete One',
                     'survey_response' => [
                         'transport_mode' => 'bus',
-                        'hotel_needed' => true,
-                        'responses' => [
+                        'hotel_needed'   => true,
+                        'responses'      => [
                             '2024-07-15' => [
-                                'aller' => ['mode' => 'bus'],
+                                'aller'  => ['mode' => 'bus'],
                                 'retour' => ['mode' => 'bus'],
-                            ]
+                            ],
                         ],
                         'presence_aller' => ['Samedi'],
-                        'remarks' => 'Hello'
-                    ]
-                ]
-            ]
+                        'remarks'        => 'Hello',
+                    ],
+                ],
+            ],
         ]);
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
@@ -324,16 +325,16 @@ class EventLogisticTest extends TestCase
     {
         $logistic = EventLogistic::factory()->create([
             'participants_data' => [
-                ['id' => 'p1', 'name' => 'Athlete 1']
+                ['id' => 'p1', 'name' => 'Athlete 1'],
             ],
             'transport_plan' => [
-                ['id' => 'v1', 'name' => 'Bus', 'type' => 'bus', 'capacity' => 50, 'passengers' => []]
+                ['id' => 'v1', 'name' => 'Bus', 'type' => 'bus', 'capacity' => 50, 'passengers' => []],
             ],
-            'stay_plan' => []
+            'stay_plan' => [],
         ]);
 
         $newPlan = [
-            ['id' => 'v1', 'name' => 'Bus', 'type' => 'bus', 'capacity' => 50, 'passengers' => ['p1']]
+            ['id' => 'v1', 'name' => 'Bus', 'type' => 'bus', 'capacity' => 50, 'passengers' => ['p1']],
         ];
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
@@ -348,7 +349,7 @@ class EventLogisticTest extends TestCase
     public function it_can_add_transport_manually()
     {
         $logistic = EventLogistic::factory()->create([
-            'transport_plan' => [['id' => 'v1', 'name' => 'Existing', 'type' => 'car', 'capacity' => 4, 'passengers' => []]]
+            'transport_plan' => [['id' => 'v1', 'name' => 'Existing', 'type' => 'car', 'capacity' => 4, 'passengers' => []]],
         ]);
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
@@ -359,7 +360,7 @@ class EventLogisticTest extends TestCase
         // The transport_plan is now nested by date
         $plan = $logistic->transport_plan;
         $day = array_key_first($plan);
-        $this->assertCount(2, $plan[$day]); 
+        $this->assertCount(2, $plan[$day]);
     }
 
     /** @test */
@@ -367,8 +368,8 @@ class EventLogisticTest extends TestCase
     {
         $logistic = EventLogistic::factory()->create([
             'transport_plan' => [
-                ['id' => 'v1', 'name' => 'Bus', 'type' => 'bus', 'capacity' => 50, 'passengers' => []]
-            ]
+                ['id' => 'v1', 'name' => 'Bus', 'type' => 'bus', 'capacity' => 50, 'passengers' => []],
+            ],
         ]);
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
@@ -385,23 +386,23 @@ class EventLogisticTest extends TestCase
     public function it_suggests_hotel_for_consecutive_days()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => '2024-07-15', 'days_count' => 2],
+            'settings'          => ['start_date' => '2024-07-15', 'days_count' => 2],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Consecutive Athlete', 
+                    'id'              => 'p1',
+                    'name'            => 'Consecutive Athlete',
                     'survey_response' => [
                         'responses' => [
                             '2024-07-15' => ['aller' => ['mode' => 'bus']],
                             '2024-07-16' => ['aller' => ['mode' => 'bus']],
-                        ]
-                    ]
-                ]
-            ]
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         $this->assertContains('p1', $component->get('autoHotelIds'));
         $this->assertContains('p1', $component->get('hotelNeededIds'));
     }
@@ -414,28 +415,28 @@ class EventLogisticTest extends TestCase
         // Comp at 09:00 -> Departure at 06:30 (< 07:00)
         $logistic = EventLogistic::factory()->create([
             'settings' => [
-                'start_date' => '2024-07-15', 
-                'distance_km' => 100, 
-                'car_speed' => 100,
-                'duration_prep_min' => 90,
-                'home_departure_threshold' => '07:00'
+                'start_date'               => '2024-07-15',
+                'distance_km'              => 100,
+                'car_speed'                => 100,
+                'duration_prep_min'        => 90,
+                'home_departure_threshold' => '07:00',
             ],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Early Athlete', 
+                    'id'                         => 'p1',
+                    'name'                       => 'Early Athlete',
                     'first_competition_datetime' => '2024-07-15 09:00:00',
-                    'survey_response' => [
+                    'survey_response'            => [
                         'responses' => [
-                            '2024-07-15' => ['aller' => ['mode' => 'bus']]
-                        ]
-                    ]
-                ]
-            ]
+                            '2024-07-15' => ['aller' => ['mode' => 'bus']],
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         $this->assertContains('p1', $component->get('autoHotelIds'));
     }
 
@@ -443,19 +444,19 @@ class EventLogisticTest extends TestCase
     public function it_respects_manual_hotel_override()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => '2024-07-15'],
+            'settings'          => ['start_date' => '2024-07-15'],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Manual Athlete', 
-                    'hotel_override' => true,
-                    'survey_response' => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]]
-                ]
-            ]
+                    'id'              => 'p1',
+                    'name'            => 'Manual Athlete',
+                    'hotel_override'  => true,
+                    'survey_response' => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'bus']]]],
+                ],
+            ],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         $this->assertContains('p1', $component->get('hotelOverrideIds'));
         $this->assertContains('p1', $component->get('hotelNeededIds'));
     }
@@ -464,18 +465,18 @@ class EventLogisticTest extends TestCase
     public function it_identifies_independent_participants()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => '2024-07-15'],
+            'settings'          => ['start_date' => '2024-07-15'],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Train Athlete', 
-                    'survey_response' => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'train'], 'retour' => ['mode' => 'car']]]]
-                ]
-            ]
+                    'id'              => 'p1',
+                    'name'            => 'Train Athlete',
+                    'survey_response' => ['responses' => ['2024-07-15' => ['aller' => ['mode' => 'train'], 'retour' => ['mode' => 'car']]]],
+                ],
+            ],
         ]);
 
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
-        
+
         $this->assertCount(1, $component->get('independentAller'));
         $this->assertEquals('p1', $component->get('independentAller')[0]['id']);
         $this->assertCount(1, $component->get('independentRetour'));

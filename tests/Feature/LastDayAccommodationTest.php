@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\EventLogistic;
-use App\Filament\Resources\EventLogisticResource\Pages\ManageTransport;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Tests\TestCase;
-use Carbon\Carbon;
+use Livewire\Livewire;
+use App\Models\EventLogistic;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Filament\Resources\EventLogisticResource\Pages\ManageTransport;
 
 class LastDayAccommodationTest extends TestCase
 {
@@ -23,29 +22,29 @@ class LastDayAccommodationTest extends TestCase
             ],
             'participants_data' => [
                 [
-                    'id' => 'p1', 
-                    'name' => 'Athlete needing hotel', 
+                    'id'              => 'p1',
+                    'name'            => 'Athlete needing hotel',
                     'survey_response' => [
                         'hotel_needed' => true,
-                        'responses' => [
+                        'responses'    => [
                             '2026-02-05' => ['aller' => ['mode' => 'bus']],
                             '2026-02-06' => ['aller' => ['mode' => 'bus']],
-                        ]
-                    ]
-                ]
-            ]
+                        ],
+                    ],
+                ],
+            ],
         ]);
 
         // Day 1 (2026-02-05) - Should have accommodation logic
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
             ->set('selectedDay', '2026-02-05');
-        
+
         $this->assertNotEmpty($component->get('unassignedStay'));
-        $this->assertContains(['type' => 'danger', 'msg' => "Nuit manquante: Athlete needing hotel"], $component->get('globalAlerts'));
+        $this->assertContains(['type' => 'danger', 'msg' => 'Nuit manquante: Athlete needing hotel'], $component->get('globalAlerts'));
 
         // Day 2 (2026-02-06, Last Day) - Should NOT have accommodation logic
         $component->set('selectedDay', '2026-02-06');
-        
+
         $this->assertEmpty($component->get('unassignedStay'));
         // Check that "Nuit manquante" is NOT in globalAlerts for the last day
         $globalAlerts = $component->get('globalAlerts');

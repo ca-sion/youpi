@@ -2,16 +2,14 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\EventLogisticResource\Pages;
-use App\Filament\Resources\EventLogisticResource\RelationManagers;
-use App\Models\EventLogistic;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use App\Models\EventLogistic;
+use Filament\Resources\Resource;
+use App\Filament\Resources\EventLogisticResource\Pages;
 
 class EventLogisticResource extends Resource
 {
@@ -153,7 +151,7 @@ class EventLogisticResource extends Resource
                         Forms\Components\Tabs\Tab::make('Participants (Planning)')
                             ->icon('heroicon-o-calendar-days')
                             ->schema([
-                                 Forms\Components\Repeater::make('participants_data')
+                                Forms\Components\Repeater::make('participants_data')
                                     ->label('Planning détaillé')
                                     ->schema([
                                         Forms\Components\Grid::make(4)
@@ -186,20 +184,20 @@ class EventLogisticResource extends Resource
                                                 Forms\Components\Select::make('aller_mode')
                                                     ->label('Aller')
                                                     ->options([
-                                                        'bus' => 'Bus',
-                                                        'car' => 'Voiture (Parents)',
-                                                        'train' => 'Train',
+                                                        'bus'     => 'Bus',
+                                                        'car'     => 'Voiture (Parents)',
+                                                        'train'   => 'Train',
                                                         'on_site' => 'Sur place',
-                                                        '' => 'Non défini',
+                                                        ''        => 'Non défini',
                                                     ]),
                                                 Forms\Components\Select::make('retour_mode')
                                                     ->label('Retour')
                                                     ->options([
-                                                        'bus' => 'Bus',
-                                                        'car' => 'Voiture (Parents)',
-                                                        'train' => 'Train',
+                                                        'bus'     => 'Bus',
+                                                        'car'     => 'Voiture (Parents)',
+                                                        'train'   => 'Train',
                                                         'on_site' => 'Sur place',
-                                                        '' => 'Non défini',
+                                                        ''        => 'Non défini',
                                                     ]),
                                             ])
                                             ->columns(3)
@@ -209,9 +207,11 @@ class EventLogisticResource extends Resource
                                                 $responses = $get('survey_response.responses') ?? [];
                                                 $settings = $get('../../settings');
                                                 $startDateStr = $settings['start_date'] ?? null;
-                                                $daysCount = (int)($settings['days_count'] ?? 2);
-                                                
-                                                if (!$startDateStr) return [];
+                                                $daysCount = (int) ($settings['days_count'] ?? 2);
+
+                                                if (! $startDateStr) {
+                                                    return [];
+                                                }
 
                                                 $startDate = \Carbon\Carbon::parse($startDateStr);
                                                 $data = [];
@@ -219,11 +219,12 @@ class EventLogisticResource extends Resource
                                                     $date = $startDate->copy()->addDays($i)->toDateString();
                                                     $resp = $responses[$date] ?? [];
                                                     $data[] = [
-                                                        'date' => $date,
-                                                        'aller_mode' => $resp['aller']['mode'] ?? '',
+                                                        'date'        => $date,
+                                                        'aller_mode'  => $resp['aller']['mode'] ?? '',
                                                         'retour_mode' => $resp['retour']['mode'] ?? '',
                                                     ];
                                                 }
+
                                                 return $data;
                                             })
                                             ->dehydrateStateUsing(function ($state) {
@@ -233,7 +234,9 @@ class EventLogisticResource extends Resource
                                                 $responses = $get('survey_response.responses') ?? [];
                                                 foreach ($state as $item) {
                                                     $date = $item['date'];
-                                                    if (!isset($responses[$date])) $responses[$date] = [];
+                                                    if (! isset($responses[$date])) {
+                                                        $responses[$date] = [];
+                                                    }
                                                     $responses[$date]['aller'] = ['mode' => $item['aller_mode'] ?? ''];
                                                     $responses[$date]['retour'] = ['mode' => $item['retour_mode'] ?? ''];
                                                 }
@@ -252,14 +255,14 @@ class EventLogisticResource extends Resource
                                     ->deletable()
                                     ->reorderable()
                                     ->columnSpanFull()
-                                    ->afterStateUpdated(function($state, $set, $get) {
+                                    ->afterStateUpdated(function ($state, $set, $get) {
                                         // Update global sync flag if any participant data changed
                                         $settings = $get('settings');
                                         $settings['survey_updated_at'] = now()->toDateTimeString();
                                         $set('settings', $settings);
                                     }),
                             ]),
-                    ])->columnSpanFull()
+                    ])->columnSpanFull(),
             ]);
     }
 
@@ -301,9 +304,9 @@ class EventLogisticResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEventLogistics::route('/'),
-            'create' => Pages\CreateEventLogistic::route('/create'),
-            'edit' => Pages\EditEventLogistic::route('/{record}/edit'),
+            'index'     => Pages\ListEventLogistics::route('/'),
+            'create'    => Pages\CreateEventLogistic::route('/create'),
+            'edit'      => Pages\EditEventLogistic::route('/{record}/edit'),
             'transport' => Pages\ManageTransport::route('/{record}/transport'),
         ];
     }

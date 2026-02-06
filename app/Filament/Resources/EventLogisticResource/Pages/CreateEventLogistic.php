@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\EventLogisticResource\Pages;
 
-use App\Filament\Resources\EventLogisticResource;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Resources\EventLogisticResource;
 
 class CreateEventLogistic extends CreateRecord
 {

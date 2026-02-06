@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use Tests\TestCase;
+use Livewire\Livewire;
 use App\Models\EventLogistic;
 use App\Livewire\Logistics\Survey;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
-use Tests\TestCase;
-use Carbon\Carbon;
 
 class LogisticsSurveyTest extends TestCase
 {
@@ -20,7 +19,7 @@ class LogisticsSurveyTest extends TestCase
             'settings' => [
                 'start_date' => '2026-02-05',
                 'days_count' => 2,
-            ]
+            ],
         ]);
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
@@ -57,7 +56,7 @@ class LogisticsSurveyTest extends TestCase
             'participants_data' => [
                 ['id' => 'p1', 'name' => 'Athlete', 'role' => 'athlete'],
                 ['id' => 'p2', 'name' => '[E] Coach', 'role' => 'coach'],
-            ]
+            ],
         ]);
 
         // Athlete should not be able to request hotel
@@ -99,18 +98,19 @@ class LogisticsSurveyTest extends TestCase
         $logistic->refresh();
         $p = $logistic->participants_data[0];
         $resp = $p['survey_response']['responses']['2026-02-05'];
-        
+
         $this->assertEquals('car_seats', $resp['aller']['mode']);
         $this->assertEquals(3, $resp['aller']['seats']);
         $this->assertEquals('absent', $resp['retour']['mode']);
     }
+
     /** @test */
     public function it_enforces_fixed_date_deadline()
     {
         $logistic = EventLogistic::factory()->create([
             'settings' => [
                 'survey_deadline_at' => now()->subDay()->toDateTimeString(),
-            ]
+            ],
         ]);
 
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
@@ -126,21 +126,21 @@ class LogisticsSurveyTest extends TestCase
     {
         $logistic = EventLogistic::factory()->create([
             'settings' => [
-                'start_date' => now()->addDays(2)->toDateString(),
+                'start_date'                  => now()->addDays(2)->toDateString(),
                 'survey_deadline_days_before' => 3,
-            ]
+            ],
         ]);
 
         // 2 days before event, deadline is 3 days before -> should be closed
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->assertSet('is_survey_closed', true);
-            
+
         // 4 days before event, deadline is 3 days before -> should be open
         $logistic->update(['settings' => [
-            'start_date' => now()->addDays(4)->toDateString(),
+            'start_date'                  => now()->addDays(4)->toDateString(),
             'survey_deadline_days_before' => 3,
         ]]);
-        
+
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->assertSet('is_survey_closed', false);
     }

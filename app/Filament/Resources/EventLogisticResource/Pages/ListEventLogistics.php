@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\EventLogisticResource\Pages;
 
-use App\Filament\Resources\EventLogisticResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\EventLogisticResource;
 
 class ListEventLogistics extends ListRecords
 {
