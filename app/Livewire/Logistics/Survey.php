@@ -99,8 +99,8 @@ class Survey extends Component
     {
         $participants = collect($this->event_logistic->participants_data ?? []);
 
-        $responded = $participants->filter(fn ($p) => isset($p['survey_response']))->sortBy('name');
-        $notResponded = $participants->filter(fn ($p) => ! isset($p['survey_response']))->sortBy('name');
+        $responded = $participants->filter(fn ($p) => isset($p['survey_response']['filled_at']))->sortBy('name');
+        $notResponded = $participants->filter(fn ($p) => ! isset($p['survey_response']['filled_at']))->sortBy('name');
 
         return [
             'total'               => $participants->count(),
@@ -122,7 +122,7 @@ class Survey extends Component
 
         $p = $this->selected_participant;
 
-        if ($p && isset($p['survey_response'])) {
+        if ($p && isset($p['survey_response']['filled_at'])) {
             $r = $p['survey_response'];
             $this->responses = (array) ($r['responses'] ?? []);
             $this->hotel_needed = $r['hotel_needed'] ?? false;

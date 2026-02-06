@@ -159,4 +159,40 @@ class LogisticsSurveyTest extends TestCase
         $logistic->refresh();
         $this->assertNotNull($logistic->settings['survey_updated_at']);
     }
+
+    /** @test */
+    public function it_correctly_identifies_responded_participants_only_if_filled_at_is_present()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'participants_data' => [
+                [
+                    'id' => 'p1',
+                    'name' => 'Filament Created',
+                    'survey_response' => [] // Empty response created by Filament
+                ],
+                [
+                    'id' => 'p2',
+                    'name' => 'Real Response',
+                    'survey_response' => [
+                        'filled_at' => now()->toDateTimeString(),
+                        'responses' => []
+                    ]
+                ],
+                [
+                    'id' => 'p3',
+                    'name' => 'No Response',
+                ]
+            ],
+        ]);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->assertSet('stats.responded_count', 1)
+            ->assertSet('stats.not_responded_count', 2)
+            ->assertSet('stats.responded', ['Real Response'])
+            // Simulate filling the empty one
+            ->set('participantId', 'p1')
+            ->call('submit')
+            ->assertSet('stats.responded_count', 2)
+            ->assertSet('stats.not_responded_count', 1);
+    }
 }

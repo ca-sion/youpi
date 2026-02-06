@@ -5,51 +5,19 @@
                 Sondage logistique : {{ $event_logistic->name }}
             </h1>
             <div class="mt-2 text-sm space-y-2">
-                <p>
-                    <strong>Pourquoi ce condage ?</strong> Il nous aide à organiser les transports (bus du club, covoiturage) de manière efficace pour tout le monde.
-                </p>
+                <p>Pourquoi ce condage ? Il nous aide à organiser les transports (bus du club, covoiturage) de manière efficace pour tout le monde.</p>
                 <div class="bg-white/60 rounded p-3 border text-xs sm:text-sm">
                     <ul class="list-disc list-inside space-y-1">
-                        <li><strong>Athlètes :</strong> Sélectionnez votre nom dans la liste.</li>
-                        <li><strong>Parents :</strong> Sélectionnez le nom de votre enfant dans la liste.</li>
-                        <li><strong>Entraîneurs :</strong> Sélectionnez votre nom dans la liste.</li>
-                        <li><strong>Pas dans la liste ?</strong> <span class="text-red-700 font-bold underline">Vérifiez bien toute la liste</span> avant d'ajouter une nouvelle personne via l'option en bas du menu déroulant.</li>
+                        <li>Athlètes : Sélectionnez votre nom dans la liste.</li>
+                        <li>Parents : Sélectionnez le nom de votre enfant dans la liste.</li>
+                        <li>Entraîneurs : Sélectionnez votre nom dans la liste.</li>
+                        <li><span class="underline">Pas dans la liste</span> ? <span class="text-red-700">Vérifiez bien toute la liste</span> avant d'ajouter une nouvelle personne via l'option ("Je ne suis pas dans la liste") en bas du menu déroulant.</li>
                     </ul>
                 </div>
             </div>
         </div>
 
         <div class="p-6 bg-indigo-50/20">
-            @if (session()->has('message'))
-                <div class="rounded-md bg-green-50 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-green-800">{{ session('message') }}</p>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @error('error')
-                <div class="rounded-md bg-red-50 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-red-800">{{ $message }}</p>
-                        </div>
-                    </div>
-                </div>
-            @enderror
-
             @if($this->is_survey_closed)
                 <div class="rounded-md bg-amber-50 border border-amber-200 p-4 mb-6">
                     <div class="flex">
@@ -177,7 +145,7 @@
                             </div>
                         @else
                             <div class="text-sm bg-gray-50 p-4 rounded-md border border-gray-200">
-                                <p class="text-gray-600 italic">Note : L'attribution des chambres d'hôtel pour les athlètes est gérée directement par l'administration du club selon les horaires de compétition.</p>
+                                <p class="text-gray-600 italic">Note : L'attribution des chambres d'hôtel pour les athlètes et entraîneurs est gérée directement par le club selon les horaires de compétition.</p>
                             </div>
                         @endif
 
@@ -202,6 +170,36 @@
                     </div>
                 @endif
             </div>
+
+            @if (session()->has('message'))
+                <div class="rounded-md bg-green-50 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-green-800">{{ session('message') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @error('error')
+                <div class="rounded-md bg-red-50 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">{{ $message }}</p>
+                        </div>
+                    </div>
+                </div>
+            @enderror
 
         </div>
 

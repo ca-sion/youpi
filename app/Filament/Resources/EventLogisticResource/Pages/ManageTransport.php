@@ -177,7 +177,7 @@ class ManageTransport extends Page
         if ($surveyUpdatedAt && (! $lastAutoDispatchAt || $surveyUpdatedAt > $lastAutoDispatchAt)) {
             $this->globalAlerts[] = [
                 'type' => 'warning',
-                'msg'  => 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul Auto" pour synchroniser.',
+                'msg'  => 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul auto" pour synchroniser.',
             ];
         }
 
@@ -612,7 +612,7 @@ class ManageTransport extends Page
     {
         return [
             Action::make('auto_dispatch')
-                ->label(fn () => 'Calcul Auto '.($this->selectedDay ? "($this->selectedDay)" : ''))
+                ->label(fn () => 'Calcul auto '.($this->selectedDay ? "($this->selectedDay)" : ''))
                 ->tooltip('Génère un plan pour le jour sélectionné (écrase le plan actuel de ce jour)')
                 ->requiresConfirmation()
                 ->modalHeading('Réinitialiser le plan pour ce jour ?')

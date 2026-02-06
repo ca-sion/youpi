@@ -90,7 +90,7 @@
                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">1. Transports Aller</h3>
                         </div>
                         <div class="flex gap-2">
-                             <x-filament::button wire:click="mountAction('auto_dispatch')" color="gray" size="sm" variant="outlined">Auto Distribute</x-filament::button>
+                             <x-filament::button wire:click="mountAction('auto_dispatch')" color="gray" size="sm" variant="outlined">Distribuer</x-filament::button>
                              <x-filament::button wire:click="addVehicle('car', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Aller</x-filament::button>
                              <x-filament::button wire:click="addVehicle('bus', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus Aller</x-filament::button>
                         </div>

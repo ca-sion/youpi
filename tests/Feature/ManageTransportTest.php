@@ -210,14 +210,14 @@ class ManageTransportTest extends TestCase
         $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()]);
 
         $component->assertSet('globalAlerts', function ($alerts) {
-            return collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul Auto" pour synchroniser.');
+            return collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul auto" pour synchroniser.');
         });
 
         // After autoDispatch, warning should be gone
         $component->call('autoDispatch');
 
         $component->assertSet('globalAlerts', function ($alerts) {
-            return ! collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul Auto" pour synchroniser.');
+            return ! collect($alerts)->contains('msg', 'Les données du sondage ont été modifiées depuis le dernier calcul. Les plans affichés peuvent être obsolètes. Relancez le "Calcul auto" pour synchroniser.');
         });
 
         $logistic->refresh();
