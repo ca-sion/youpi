@@ -136,8 +136,15 @@ class ManageTransport extends Page
             }
 
             // B. Early start
-            if (! $neededAuto && isset($p['first_competition_datetime'])) {
-                $firstComp = Carbon::parse($p['first_competition_datetime']);
+            $firstCompStr = null;
+            if (isset($p['competition_days'][$this->selectedDay]['first'])) {
+                $firstCompStr = $p['competition_days'][$this->selectedDay]['first'];
+            } elseif (isset($p['first_competition_datetime'])) {
+                $firstCompStr = $p['first_competition_datetime'];
+            }
+
+            if (! $neededAuto && $firstCompStr) {
+                $firstComp = Carbon::parse($firstCompStr);
                 if ($firstComp->toDateString() === $this->selectedDay) {
                     $prep = (int) ($settings['duration_prep_min'] ?? 90);
                     $dist = (float) ($settings['distance_km'] ?? 0);
@@ -219,20 +226,36 @@ class ManageTransport extends Page
                         }
 
                         if ($flow === 'retour') {
-                            if (isset($p['last_competition_datetime'])) {
-                                $lastEvent = Carbon::parse($p['last_competition_datetime']);
-                                if ($depTime->lt($lastEvent)) {
+                            $lastCompStr = null;
+                            if (isset($p['competition_days'][$this->selectedDay]['last'])) {
+                                $lastCompStr = $p['competition_days'][$this->selectedDay]['last'];
+                            } elseif (isset($p['last_competition_datetime'])) {
+                                $lastCompStr = $p['last_competition_datetime'];
+                            }
+
+                            if ($lastCompStr) {
+                                $lastEvent = Carbon::parse($lastCompStr);
+                                if ($lastEvent->toDateString() === $this->selectedDay && $depTime->lt($lastEvent)) {
                                     $this->alerts[$index][] = ['type' => 'danger', 'msg' => "Départ anticipé: {$p['name']} (Epreuve finit à {$lastEvent->format('H:i')})"];
                                 }
                             }
                         } else {
-                            if (isset($p['first_competition_datetime'])) {
-                                $firstEvent = Carbon::parse($p['first_competition_datetime']);
-                                $neededArrival = $firstEvent->copy()->subMinutes($prep);
+                            $firstCompStr = null;
+                            if (isset($p['competition_days'][$this->selectedDay]['first'])) {
+                                $firstCompStr = $p['competition_days'][$this->selectedDay]['first'];
+                            } elseif (isset($p['first_competition_datetime'])) {
+                                $firstCompStr = $p['first_competition_datetime'];
+                            }
 
-                                if ($arrivalEst->gt($neededArrival)) {
-                                    $lateMin = $arrivalEst->diffInMinutes($neededArrival);
-                                    $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Retard échauffement: {$p['name']} (+{$lateMin}m)"];
+                            if ($firstCompStr) {
+                                $firstEvent = Carbon::parse($firstCompStr);
+                                if ($firstEvent->toDateString() === $this->selectedDay) {
+                                    $neededArrival = $firstEvent->copy()->subMinutes($prep);
+
+                                    if ($arrivalEst->gt($neededArrival)) {
+                                        $lateMin = $arrivalEst->diffInMinutes($neededArrival);
+                                        $this->alerts[$index][] = ['type' => 'warning', 'msg' => "Retard échauffement: {$p['name']} (+{$lateMin}m)"];
+                                    }
                                 }
                             }
                         }
@@ -635,7 +658,13 @@ class ManageTransport extends Page
             return null;
         }
 
-        $start = $p['first_competition_datetime'] ?? null;
+        $start = null;
+        if (isset($p['competition_days'][$this->selectedDay]['first'])) {
+            $start = $p['competition_days'][$this->selectedDay]['first'];
+        } elseif (isset($p['first_competition_datetime'])) {
+            $start = $p['first_competition_datetime'];
+        }
+
         if (! $start) {
             return null;
         }
@@ -655,7 +684,13 @@ class ManageTransport extends Page
             return null;
         }
 
-        $end = $p['last_competition_datetime'] ?? null;
+        $end = null;
+        if (isset($p['competition_days'][$this->selectedDay]['last'])) {
+            $end = $p['competition_days'][$this->selectedDay]['last'];
+        } elseif (isset($p['last_competition_datetime'])) {
+            $end = $p['last_competition_datetime'];
+        }
+
         if (! $end) {
             return null;
         }

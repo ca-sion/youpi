@@ -389,19 +389,43 @@
                                 @foreach($days as $day)
                                     <td class="px-6 py-4 text-center">
                                         @php
-                                            $first = $p['first_competition_datetime'] ?? null;
-                                            $last = $p['last_competition_datetime'] ?? null;
-                                            $isOnDay = $first && str_starts_with($first, $day['date']);
+                                            $first = null;
+                                            $last = null;
+                                            $isOnDay = false;
+
+                                            // Check for specific day in competition_days (new format)
+                                            if (isset($p['competition_days'][$day['date']])) {
+                                                $first = $p['competition_days'][$day['date']]['first'];
+                                                $last = $p['competition_days'][$day['date']]['last'];
+                                                $isOnDay = true;
+                                            } else {
+                                                // Fallback to old format (first_competition_datetime)
+                                                $first = $p['first_competition_datetime'] ?? null;
+                                                $last = $p['last_competition_datetime'] ?? null;
+                                                $isOnDay = $first && str_starts_with($first, $day['date']);
+                                            }
                                         @endphp
                                         @if($isOnDay)
-                                            <div class="inline-flex items-center gap-1.5 bg-gray-50/50 px-2 py-1 rounded-lg border border-gray-100/50 shadow-sm">
-                                                <span class="text-[11px] font-black text-indigo-600 tabular-nums">
-                                                    {{ \Carbon\Carbon::parse($first)->format('H:i') }}
-                                                </span>
-                                                <span class="text-gray-300 font-black text-[10px]">/</span>
-                                                <span class="text-[11px] font-bold text-gray-400 tabular-nums">
-                                                    {{ $last ? \Carbon\Carbon::parse($last)->format('H:i') : '--:--' }}
-                                                </span>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <div class="inline-flex items-center gap-1.5 bg-gray-50/50 px-2 py-1 rounded-lg border border-gray-100/50 shadow-sm">
+                                                    <span class="text-[11px] font-black text-indigo-600 tabular-nums">
+                                                        {{ \Carbon\Carbon::parse($first)->format('H:i') }}
+                                                    </span>
+                                                    <span class="text-gray-300 font-black text-[10px]">/</span>
+                                                    <span class="text-[11px] font-bold text-gray-400 tabular-nums">
+                                                        {{ $last ? \Carbon\Carbon::parse($last)->format('H:i') : '--:--' }}
+                                                    </span>
+                                                </div>
+                                                @php $disciplines = $p['competition_days'][$day['date']]['disciplines'] ?? []; @endphp
+                                                @if(!empty($disciplines))
+                                                    <div data-tooltip-target="tooltip-sum-{{ $p['id'] ?? $loop->parent->index }}-{{ $day['date'] }}" class="text-[9px] cursor-help text-gray-400 font-medium truncate block max-w-[120px]">
+                                                        {{ implode(', ', $disciplines) }}
+                                                    </div>
+                                                    <div id="tooltip-sum-{{ $p['id'] ?? $loop->parent->index }}-{{ $day['date'] }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-[10px] font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                                        {{ implode(', ', $disciplines) }}
+                                                        <div class="tooltip-arrow" data-popper-arrow></div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         @else
                                             <span class="text-gray-100 font-bold text-xs">-</span>

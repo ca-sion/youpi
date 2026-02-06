@@ -1,4 +1,4 @@
-<div class="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
+<div class="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6 border-b">
             <h1 class="text-xl leading-6 font-bold">
@@ -236,12 +236,11 @@
                         </div>
                     </div>
                 </div>
-                </div>
 
                 <!-- Detailed Table -->
                 <div class="mt-8 overflow-hidden border border-gray-100 rounded-lg shadow-sm">
                     <div class="bg-gray-50 px-3 py-2 border-b border-gray-100 flex justify-between items-center">
-                        <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Détail des présences</h5>
+                        <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Détail des réponses</h5>
                         <div class="flex items-center space-x-2 text-[9px] text-gray-400 italic">
                             <span class="flex items-center">aller</span>
                             <span class="text-gray-300">|</span>
@@ -310,6 +309,87 @@
                         <div class="w-2 h-2 bg-red-400 rounded-full mr-1"></div>
                         <span>{{ $this->stats['not_responded_count'] }} en attente</span>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <!-- Athlete Schedule Table -->
+            <div class="overflow-hidden border border-gray-100 rounded-lg shadow-sm">
+                <div class="bg-gray-50 px-3 py-2 border-b border-gray-100 flex justify-between items-center">
+                    <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Planning des athlètes</h5>
+                    <div class="text-[9px] text-gray-400 font-medium italic">Horaires et disciplines</div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50/50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-500 uppercase">Athlète</th>
+                                @foreach($days as $day)
+                                    <th class="px-2 py-2 text-center text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 min-w-[100px]">
+                                        {{ \Carbon\Carbon::parse($day['date'])->translatedFormat('D d') }}
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            @foreach($participants as $p)
+                                @php
+                                    $hasAnySchedule = !empty($p['competition_days']) || !empty($p['first_competition_datetime']);
+                                    $isAthlete = ($p['role'] ?? '') === 'athlete' || !str_contains($p['name'] ?? '', '[E]');
+                                @endphp
+                                @if($isAthlete && $hasAnySchedule)
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                        <td class="px-3 py-1.5 whitespace-nowrap text-[11px] font-medium text-gray-700">
+                                            {{ $p['name'] }}
+                                        </td>
+                                        @foreach($days as $day)
+                                            @php
+                                                $dayData = $p['competition_days'][$day['date']] ?? null;
+                                                $first = null;
+                                                $last = null;
+                                                $disciplines = [];
+                                                
+                                                if ($dayData) {
+                                                    $first = $dayData['first'];
+                                                    $last = $dayData['last'];
+                                                    $disciplines = $dayData['disciplines'] ?? [];
+                                                } elseif (isset($p['first_competition_datetime']) && str_starts_with($p['first_competition_datetime'], $day['date'])) {
+                                                    $first = $p['first_competition_datetime'];
+                                                    $last = $p['last_competition_datetime'] ?? null;
+                                                }
+                                            @endphp
+                                            <td class="px-1 py-1.5 border-l border-gray-100 text-center">
+                                                @if($first)
+                                                    <div class="flex flex-col items-center">
+                                                        <div class="inline-flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 text-[9px] font-black text-indigo-600 tabular-nums shadow-sm">
+                                                            {{ \Carbon\Carbon::parse($first)->format('H:i') }}
+                                                            <span class="text-gray-300">/</span>
+                                                            <span class="text-gray-400 font-bold">
+                                                                {{ $last ? \Carbon\Carbon::parse($last)->format('H:i') : '--:--' }}
+                                                            </span>
+                                                        </div>
+                                                        @if(!empty($disciplines))
+                                                            <div data-tooltip-target="tooltip-disciplines-{{ $p['id'] ?? $loop->parent->index }}-{{ $day['date'] }}" class="text-[8px] cursor-help text-gray-400 mt-0.5 font-medium leading-tight truncate block max-w-[90px]">
+                                                                {{ implode(', ', $disciplines) }}
+                                                            </div>
+                                                            <div id="tooltip-disciplines-{{ $p['id'] ?? $loop->parent->index }}-{{ $day['date'] }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-[10px] font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                                                {{ implode(', ', $disciplines) }}
+                                                                <div class="tooltip-arrow" data-popper-arrow></div>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @else
+                                                    <span class="text-gray-200 text-[10px]">-</span>
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
