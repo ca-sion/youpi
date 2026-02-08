@@ -137,7 +137,7 @@ class EditEventLogistic extends EditRecord
                                 }
 
                                 // Rounds regex
-                                $roundsRegex = '/\b(vl|z|séries|df|f|finale|demi-finale)\b/i';
+                                $roundsRegex = '/\b(vl|z|el|séries|df|f|finale|demi-finale)\b/i';
 
                                 // Base discipline for matching (lowercase, no parentheses, no rounds)
                                 $cleanDiscipline = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $discipline)));
