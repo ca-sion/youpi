@@ -38,9 +38,9 @@ class EventLogisticResource extends Resource
                             ->required()
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($set, $state) => $set('slug', Str::slug($state))),
-                        Forms\Components\TextInput::make('slug')
-                            ->required()
-                            ->unique(ignoreRecord: true),
+                        // Forms\Components\TextInput::make('slug')
+                        //     ->required()
+                        //     ->unique(ignoreRecord: true),
                     ])->columns(2),
                 Forms\Components\Tabs::make('Logistique')
                     ->tabs([
@@ -58,7 +58,7 @@ class EventLogisticResource extends Resource
                                             ->default(2)
                                             ->required(),
                                         Forms\Components\Select::make('document_id')
-                                            ->label('Document Voyage')
+                                            ->label('Document')
                                             ->relationship('document', 'name')
                                             ->searchable()
                                             ->preload(),
@@ -253,7 +253,7 @@ class EventLogisticResource extends Resource
                                                     }
                                                     $responses[$date]['aller']['mode'] = $item['aller_mode'] ?? '';
                                                     $responses[$date]['retour']['mode'] = $item['retour_mode'] ?? '';
-                                                    
+
                                                     if (isset($item['aller_seats']) && $item['aller_seats'] !== '') {
                                                         $responses[$date]['aller']['seats'] = $item['aller_seats'];
                                                     } else {
@@ -302,6 +302,13 @@ class EventLogisticResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('settings.start_date')
+                    ->label('Date')
+                    ->date('d.m.Y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('document.name')
+                    ->label('Document')
+                    ->url(fn ($record) => route('documents.show', $record->document)),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -316,6 +323,16 @@ class EventLogisticResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('public_survey')
+                    ->label('Sondage public')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->url(fn ($record) => route('logistics.survey', $record))
+                    ->openUrlInNewTab(),
+                Tables\Actions\Action::make('public_view')
+                    ->label('Vue résumé')
+                    ->icon('heroicon-o-eye')
+                    ->url(fn ($record) => route('logistics.show', $record))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

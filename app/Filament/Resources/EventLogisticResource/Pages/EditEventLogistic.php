@@ -16,26 +16,21 @@ class EditEventLogistic extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('manage_transport')
-                ->label('Gérer le Transport')
-                ->icon('heroicon-o-truck')
-                ->url(fn ($record) => EventLogisticResource::getUrl('transport', ['record' => $record])),
-
             Actions\ActionGroup::make([
                 Actions\Action::make('public_survey')
-                    ->label('Sondage Public')
+                    ->label('Sondage public')
                     ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn ($record) => route('logistics.survey', $record))
                     ->openUrlInNewTab(),
                 Actions\Action::make('public_view')
-                    ->label('Vue Résumé')
+                    ->label('Vue résumé')
                     ->icon('heroicon-o-eye')
                     ->url(fn ($record) => route('logistics.show', $record))
                     ->openUrlInNewTab(),
             ])
                 ->label('Liens Publics')
                 ->icon('heroicon-m-link')
-                ->color('info'),
+                ->color('gray'),
 
             Actions\ActionGroup::make([
                 Actions\Action::make('parse_inscriptions')
@@ -396,10 +391,15 @@ class EditEventLogistic extends EditRecord
             ])
                 ->label('Outils & Actions')
                 ->icon('heroicon-o-wrench-screwdriver')
-                ->color('gray'),
+                ->color('warning'),
+
+            Actions\Action::make('manage_transport')
+                ->label('Gérer les transports')
+                ->icon('heroicon-o-truck')
+                ->url(fn ($record) => EventLogisticResource::getUrl('transport', ['record' => $record])),
 
             Actions\Action::make('prepare_document')
-                ->label('Préparer Document Voyage')
+                ->label('Reporter (document)')
                 ->icon('heroicon-o-document-text')
                 ->requiresConfirmation()
                 ->action(function () {
@@ -408,7 +408,7 @@ class EditEventLogistic extends EditRecord
 
                     if (! $document) {
                         $document = \App\Models\Document::create([
-                            'name'         => 'Document Voyage - '.$record->name,
+                            'name'         => 'Document - '.$record->name,
                             'type'         => \App\Enums\DocumentType::TRAVEL,
                             'status'       => \App\Enums\DocumentStatus::VALIDATED,
                             'published_on' => now(),
