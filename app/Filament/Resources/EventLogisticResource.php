@@ -154,7 +154,7 @@ class EventLogisticResource extends Resource
                                 Forms\Components\Repeater::make('participants_data')
                                     ->label('Planning détaillé')
                                     ->schema([
-                                        Forms\Components\Grid::make(4)
+                                        Forms\Components\Grid::make(5)
                                             ->schema([
                                                 Forms\Components\TextInput::make('name')
                                                     ->label('Nom')
@@ -166,14 +166,15 @@ class EventLogisticResource extends Resource
                                                 Forms\Components\Checkbox::make('hotel_override')
                                                     ->label('Hôtel requis (Manuel)')
                                                     ->inline(false),
+                                                Forms\Components\Checkbox::make('survey_response.hotel_needed')
+                                                    ->label('Hôtel (Sondage)'),
                                             ]),
                                         Forms\Components\Grid::make(3)
                                             ->schema([
-                                                Forms\Components\Checkbox::make('survey_response.hotel_needed')
-                                                    ->label('Hôtel (Sondage)'),
                                                 Forms\Components\TextInput::make('survey_response.filled_at')
                                                     ->label('Rempli le')
-                                                    ->disabled(),
+                                                    ->disabled()
+                                                    ->dehydrated(),
                                                 Forms\Components\TextInput::make('survey_response.remarks')
                                                     ->label('Remarques (Sondage)'),
                                             ]),
@@ -199,8 +200,14 @@ class EventLogisticResource extends Resource
                                                         'on_site' => 'Sur place',
                                                         ''        => 'Non défini',
                                                     ]),
+                                                Forms\Components\TextInput::make('aller_seats')
+                                                    ->label('Places (Aller)')
+                                                    ->numeric(),
+                                                Forms\Components\TextInput::make('retour_seats')
+                                                    ->label('Places (Retour)')
+                                                    ->numeric(),
                                             ])
-                                            ->columns(3)
+                                            ->columns(5)
                                             ->addable(false)
                                             ->deletable(false)
                                             ->formatStateUsing(function ($state, $get) {
@@ -219,26 +226,41 @@ class EventLogisticResource extends Resource
                                                     $date = $startDate->copy()->addDays($i)->toDateString();
                                                     $resp = $responses[$date] ?? [];
                                                     $data[] = [
-                                                        'date'        => $date,
-                                                        'aller_mode'  => $resp['aller']['mode'] ?? '',
-                                                        'retour_mode' => $resp['retour']['mode'] ?? '',
+                                                        'date'         => $date,
+                                                        'aller_mode'   => $resp['aller']['mode'] ?? '',
+                                                        'retour_mode'  => $resp['retour']['mode'] ?? '',
+                                                        'aller_seats'  => $resp['aller']['seats'] ?? null,
+                                                        'retour_seats' => $resp['retour']['seats'] ?? null,
                                                     ];
                                                 }
 
                                                 return $data;
                                             })
-                                            ->dehydrateStateUsing(function ($state) {
-                                                return null; // We'll handle sync in the parent dehydrate or separate field
-                                            })
+                                            ->dehydrated(false)
                                             ->afterStateUpdated(function ($state, $set, $get) {
                                                 $responses = $get('survey_response.responses') ?? [];
                                                 foreach ($state as $item) {
                                                     $date = $item['date'];
                                                     if (! isset($responses[$date])) {
-                                                        $responses[$date] = [];
+                                                        $responses[$date] = [
+                                                            'aller'  => ['mode' => ''],
+                                                            'retour' => ['mode' => ''],
+                                                        ];
                                                     }
-                                                    $responses[$date]['aller'] = ['mode' => $item['aller_mode'] ?? ''];
-                                                    $responses[$date]['retour'] = ['mode' => $item['retour_mode'] ?? ''];
+                                                    $responses[$date]['aller']['mode'] = $item['aller_mode'] ?? '';
+                                                    $responses[$date]['retour']['mode'] = $item['retour_mode'] ?? '';
+                                                    
+                                                    if (isset($item['aller_seats']) && $item['aller_seats'] !== '') {
+                                                        $responses[$date]['aller']['seats'] = $item['aller_seats'];
+                                                    } else {
+                                                        unset($responses[$date]['aller']['seats']);
+                                                    }
+
+                                                    if (isset($item['retour_seats']) && $item['retour_seats'] !== '') {
+                                                        $responses[$date]['retour']['seats'] = $item['retour_seats'];
+                                                    } else {
+                                                        unset($responses[$date]['retour']['seats']);
+                                                    }
                                                 }
                                                 $set('survey_response.responses', $responses);
                                                 // Mark as updated for sync logic
@@ -247,6 +269,10 @@ class EventLogisticResource extends Resource
                                                 $set('../../settings', $settings);
                                             }),
                                         Forms\Components\Hidden::make('survey_response.responses'),
+                                        Forms\Components\Hidden::make('id'),
+                                        Forms\Components\Hidden::make('role'),
+                                        Forms\Components\Hidden::make('competition_days'),
+                                        Forms\Components\Hidden::make('note'),
                                     ])
                                     ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                                     ->collapsible()
