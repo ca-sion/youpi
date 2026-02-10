@@ -185,20 +185,24 @@ class EventLogisticResource extends Resource
                                                 Forms\Components\Select::make('aller_mode')
                                                     ->label('Aller')
                                                     ->options([
-                                                        'bus'     => 'Bus',
-                                                        'car'     => 'Voiture (Parents)',
-                                                        'train'   => 'Train',
-                                                        'on_site' => 'Sur place',
-                                                        ''        => 'Non défini',
+                                                        'bus'       => 'Bus',
+                                                        'train'     => 'Train',
+                                                        'car'       => 'Voiture',
+                                                        'car_seats' => 'Voiture + places',
+                                                        'on_site'   => 'Sur place/Pas besoin',
+                                                        'absent'    => 'Absent',
+                                                        ''          => '--',
                                                     ]),
                                                 Forms\Components\Select::make('retour_mode')
                                                     ->label('Retour')
                                                     ->options([
-                                                        'bus'     => 'Bus',
-                                                        'car'     => 'Voiture (Parents)',
-                                                        'train'   => 'Train',
-                                                        'on_site' => 'Sur place',
-                                                        ''        => 'Non défini',
+                                                        'bus'       => 'Bus',
+                                                        'train'     => 'Train',
+                                                        'car'       => 'Voiture',
+                                                        'car_seats' => 'Voiture + places',
+                                                        'on_site'   => 'Sur place/Pas besoin',
+                                                        'absent'    => 'Absent',
+                                                        ''          => '--',
                                                     ]),
                                                 Forms\Components\TextInput::make('aller_seats')
                                                     ->label('Places (Aller)')
