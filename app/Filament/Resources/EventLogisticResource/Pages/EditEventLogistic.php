@@ -408,7 +408,7 @@ class EditEventLogistic extends EditRecord
 
                     if (! $document) {
                         $document = \App\Models\Document::create([
-                            'name'         => 'Document - '.$record->name,
+                            'name'         => $record->name,
                             'type'         => \App\Enums\DocumentType::TRAVEL,
                             'status'       => \App\Enums\DocumentStatus::VALIDATED,
                             'published_on' => now(),
@@ -427,20 +427,22 @@ class EditEventLogistic extends EditRecord
                     $daysCount = (int) ($settings['days_count'] ?? 2);
                     $participants = collect($record->participants_data ?? []);
 
+                    $existingData = $document->travel_data['data'] ?? [];
+
                     $travelData = [
                         'data' => [
-                            'modification_deadline'              => null,
-                            'modification_deadline_phone'        => null,
-                            'location'                           => $record->name,
-                            'date'                               => $startDateStr,
+                            'modification_deadline'              => $existingData['modification_deadline'] ?? null,
+                            'modification_deadline_phone'        => $existingData['modification_deadline_phone'] ?? null,
+                            'location'                           => $existingData['location'] ?? null,
+                            'date'                               => $existingData['date'] ?? $startDateStr,
                             'departures'                         => [],
                             'arrivals'                           => [],
                             'nights'                             => [],
-                            'accomodation'                       => '',
-                            'competition'                        => $record->name,
-                            'competition_informations_important' => '',
-                            'competition_informations'           => '',
-                            'competition_schedules'              => '',
+                            'accomodation'                       => $existingData['accomodation'] ?? '',
+                            'competition'                        => $existingData['competition'] ?? $record->name,
+                            'competition_informations_important' => $existingData['competition_informations_important'] ?? '',
+                            'competition_informations'           => $existingData['competition_informations'] ?? '',
+                            'competition_schedules'              => $existingData['competition_schedules'] ?? '',
                         ],
                     ];
 
@@ -451,7 +453,7 @@ class EditEventLogistic extends EditRecord
                     foreach ($transportPlan as $day => $vehicles) {
                         foreach ($vehicles as $v) {
                             $entry = [
-                                'day_hour'         => Carbon::parse($v['departure_datetime'] ?? $day)->translatedFormat('D d.m H:i'),
+                                'day_hour'         => Carbon::parse($v['departure_datetime'] ?? $day)->translatedFormat('l H:i'),
                                 'location'         => $v['departure_location'] ?? '',
                                 'means'            => ($v['type'] === 'bus' ? 'Bus' : 'Voiture'),
                                 'driver'           => $v['driver'] ?? '',
@@ -470,7 +472,6 @@ class EditEventLogistic extends EditRecord
                     // 2. Map Independents
                     for ($i = 0; $i < $daysCount; $i++) {
                         $date = $startDate->copy()->addDays($i)->toDateString();
-                        $dateLabel = $startDate->copy()->addDays($i)->translatedFormat('D d.m');
 
                         $assignedAllerIds = [];
                         $assignedRetourIds = [];
@@ -494,10 +495,10 @@ class EditEventLogistic extends EditRecord
 
                         if ($indepAller->count() > 0) {
                             $travelData['data']['departures'][] = [
-                                'day_hour'         => $dateLabel,
-                                'location'         => 'Individuel',
-                                'means'            => 'Par ses propres moyens',
-                                'driver'           => '-',
+                                'day_hour'         => 'Par ses propres moyens',
+                                'location'         => null,
+                                'means'            => null,
+                                'driver'           => null,
                                 'travelers'        => $indepAller->pluck('name')->implode(', '),
                                 'travelers_number' => $indepAller->count(),
                             ];
@@ -511,40 +512,54 @@ class EditEventLogistic extends EditRecord
 
                         if ($indepRetour->count() > 0) {
                             $travelData['data']['arrivals'][] = [
-                                'day_hour'         => $dateLabel,
-                                'location'         => 'Individuel',
-                                'means'            => 'Par ses propres moyens',
-                                'driver'           => '-',
+                                'day_hour'         => 'Par ses propres moyens',
+                                'location'         => null,
+                                'means'            => null,
+                                'driver'           => null,
                                 'travelers'        => $indepRetour->pluck('name')->implode(', '),
                                 'travelers_number' => $indepRetour->count(),
                             ];
                         }
                     }
 
-                    // 3. Map Stay Plan (Nights)
+                    // 3. Map Stay Plan (Nights grouped by day)
                     foreach ($stayPlan as $day => $rooms) {
+                        $roomGroups = [];
                         foreach ($rooms as $r) {
+                            $roomParticipants = $participants->whereIn('id', $r['occupant_ids'] ?? [])->pluck('name')->implode(', ');
+                            if (! empty($roomParticipants)) {
+                                $roomGroups[] = $roomParticipants;
+                            }
+                        }
+
+                        if (! empty($roomGroups)) {
                             $travelData['data']['nights'][] = [
-                                'day'       => Carbon::parse($day)->translatedFormat('D d.m'),
-                                'travelers' => $participants->whereIn('id', $r['occupant_ids'] ?? [])->pluck('name')->implode(', '),
+                                'day'       => Carbon::parse($day)->translatedFormat('l'),
+                                'travelers' => implode(' | ', $roomGroups),
                             ];
                         }
                     }
 
                     // 4. Map Schedules
                     $schedules = $participants->map(function ($p) {
-                        if (! isset($p['first_competition_datetime'])) {
+                        $compDays = $p['competition_days'] ?? [];
+                        if (empty($compDays)) {
                             return null;
                         }
-                        $first = Carbon::parse($p['first_competition_datetime']);
-                        $last = isset($p['last_competition_datetime']) ? Carbon::parse($p['last_competition_datetime']) : null;
 
-                        $label = $p['name'].' : ('.$first->translatedFormat('D').') '.$first->format('H:i');
-                        if ($last) {
-                            $label .= ' - '.$last->format('H:i');
+                        $daySchedules = [];
+                        foreach ($compDays as $date => $info) {
+                            $first = Carbon::parse($info['first']);
+                            $last = Carbon::parse($info['last']);
+                            
+                            $label = '(' . $first->translatedFormat('D') . ') ' . $first->format('H:i');
+                            if ($info['first'] !== $info['last']) {
+                                $label .= ' - ' . $last->format('H:i');
+                            }
+                            $daySchedules[] = $label;
                         }
 
-                        return $label;
+                        return $p['name'] . ' : ' . implode(', ', $daySchedules);
                     })->filter()->implode("\n");
 
                     $travelData['data']['competition_schedules'] = $schedules;

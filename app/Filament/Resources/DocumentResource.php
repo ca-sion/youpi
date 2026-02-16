@@ -109,14 +109,14 @@ class DocumentResource extends Resource
                             ]),
                         Forms\Components\Repeater::make('travel_data.data.arrivals')
                             ->label('Retours')
-                            ->columns(2)
+                            ->columns(4)
                             ->addActionLabel('Ajouter un retour')
                             ->schema([
                                 Forms\Components\TextInput::make('day_hour')->label('Jour et heure'),
                                 Forms\Components\TextInput::make('location')->label('Lieu'),
                                 Forms\Components\TextInput::make('means')->label('Moyen de transport'),
                                 Forms\Components\TextInput::make('driver')->label('Chauffeur'),
-                                Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs'),
+                                Forms\Components\TextInput::make('travelers')->label('Nom des voyageurs')->columnSpan(3),
                                 Forms\Components\TextInput::make('travelers_number')->label('Nombre de voyageur')->numeric(),
                             ]),
                         Forms\Components\Section::make('Hébergement')
