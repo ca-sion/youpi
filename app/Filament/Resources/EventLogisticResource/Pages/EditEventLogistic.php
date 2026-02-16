@@ -551,15 +551,15 @@ class EditEventLogistic extends EditRecord
                         foreach ($compDays as $date => $info) {
                             $first = Carbon::parse($info['first']);
                             $last = Carbon::parse($info['last']);
-                            
-                            $label = '(' . $first->translatedFormat('D') . ') ' . $first->format('H:i');
+
+                            $label = '('.$first->translatedFormat('D').') '.$first->format('H:i');
                             if ($info['first'] !== $info['last']) {
-                                $label .= ' - ' . $last->format('H:i');
+                                $label .= ' - '.$last->format('H:i');
                             }
                             $daySchedules[] = $label;
                         }
 
-                        return $p['name'] . ' : ' . implode(', ', $daySchedules);
+                        return $p['name'].' : '.implode(', ', $daySchedules);
                     })->filter()->implode("\n");
 
                     $travelData['data']['competition_schedules'] = $schedules;

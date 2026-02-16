@@ -6,7 +6,6 @@ use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use App\Models\EventLogistic;
 use Filament\Resources\Resource;
@@ -61,7 +60,7 @@ class EventLogisticResource extends Resource
                                         Forms\Components\Select::make('document_id')
                                             ->label('Document')
                                             ->relationship('document', 'name', fn ($query) => $query->orderBy('travel_data->data->date', 'desc'))
-                                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->name . ' · ' . data_get($record,'travel_data.data.date'))
+                                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->name.' · '.data_get($record, 'travel_data.data.date'))
                                             ->searchable()
                                             ->preload(),
                                     ]),

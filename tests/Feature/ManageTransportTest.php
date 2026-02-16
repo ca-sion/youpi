@@ -243,7 +243,7 @@ class ManageTransportTest extends TestCase
     public function it_orders_vehicles_by_departure_time()
     {
         $logistic = EventLogistic::factory()->create([
-            'settings' => ['start_date' => '2024-07-15'],
+            'settings'       => ['start_date' => '2024-07-15'],
             'transport_plan' => [
                 '2024-07-15' => [
                     ['id' => 'v2', 'name' => 'Late Bus', 'departure_datetime' => '2024-07-15 10:00:00', 'passengers' => []],
@@ -266,18 +266,18 @@ class ManageTransportTest extends TestCase
     {
         $logistic = EventLogistic::factory()->create([
             'settings' => [
-                'start_date' => '2024-07-15',
+                'start_date'       => '2024-07-15',
                 'independent_stay' => [
-                    '2024-07-15' => ['p1']
-                ]
+                    '2024-07-15' => ['p1'],
+                ],
             ],
             'participants_data' => [
                 [
-                    'id' => 'p1', 'name' => 'Independent Athlete',
+                    'id'             => 'p1', 'name' => 'Independent Athlete',
                     'hotel_override' => true,
                 ],
                 [
-                    'id' => 'p2', 'name' => 'Unassigned Athlete',
+                    'id'             => 'p2', 'name' => 'Unassigned Athlete',
                     'hotel_override' => true,
                 ],
             ],
@@ -288,14 +288,14 @@ class ManageTransportTest extends TestCase
 
         $this->assertCount(1, $component->get('independentStay'));
         $this->assertEquals('p1', $component->get('independentStay')[0]['id']);
-        
+
         $this->assertCount(1, $component->get('unassignedStay'));
         $this->assertEquals('p2', $component->get('unassignedStay')[0]['id']);
 
         // Check alerts: p2 should trigger an alert, p1 should NOT
         $globalAlerts = $component->get('globalAlerts');
         $alertMsgs = collect($globalAlerts)->pluck('msg')->implode(' ');
-        
+
         $this->assertStringContainsString('Nuit manquante: Unassigned Athlete', $alertMsgs);
         $this->assertStringNotContainsString('Nuit manquante: Independent Athlete', $alertMsgs);
     }

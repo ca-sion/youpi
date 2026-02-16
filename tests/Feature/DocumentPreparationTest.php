@@ -45,27 +45,27 @@ class DocumentPreparationTest extends TestCase
             'status'      => DocumentStatus::VALIDATED,
             'travel_data' => [
                 'data' => [
-                    'old_key' => 'old_value',
-                    'accomodation' => 'Hotel Plaza',
-                    'competition_schedules' => 'Old Schedule'
-                ]
+                    'old_key'               => 'old_value',
+                    'accomodation'          => 'Hotel Plaza',
+                    'competition_schedules' => 'Old Schedule',
+                ],
             ],
         ]);
 
         $logistic = EventLogistic::factory()->create([
-            'name'        => 'Event Updated',
-            'document_id' => $document->id,
-            'settings'    => ['start_date' => '2024-07-15'],
+            'name'              => 'Event Updated',
+            'document_id'       => $document->id,
+            'settings'          => ['start_date' => '2024-07-15'],
             'participants_data' => [
                 [
-                    'id' => 'p1',
-                    'name' => 'Fast Runner',
+                    'id'               => 'p1',
+                    'name'             => 'Fast Runner',
                     'competition_days' => [
-                        '2024-07-15' => ['first' => '2024-07-15 10:00:00', 'last' => '2024-07-15 11:00:00']
+                        '2024-07-15' => ['first' => '2024-07-15 10:00:00', 'last' => '2024-07-15 11:00:00'],
                     ],
-                    'first_competition_datetime' => '2024-07-15 10:00:00'
-                ]
-            ]
+                    'first_competition_datetime' => '2024-07-15 10:00:00',
+                ],
+            ],
         ]);
 
         Livewire::test(EditEventLogistic::class, ['record' => $logistic->getRouteKey()])
@@ -111,8 +111,8 @@ class DocumentPreparationTest extends TestCase
         $travelData = $document->travel_data['data'];
 
         // Check departures (1 Bus + 1 Independent)
-        $this->assertCount(2, $travelData['departures']); 
-        
+        $this->assertCount(2, $travelData['departures']);
+
         $busEntry = collect($travelData['departures'])->firstWhere('means', 'Bus');
         $this->assertEquals('Bus Athlete', $busEntry['travelers']);
         $this->assertEquals('Jean', $busEntry['driver']);
@@ -164,9 +164,9 @@ class DocumentPreparationTest extends TestCase
             'settings'          => ['start_date' => $startDate],
             'participants_data' => [
                 [
-                    'id'                         => 'p1',
-                    'name'                       => 'Fast Runner',
-                    'competition_days'           => [
+                    'id'               => 'p1',
+                    'name'             => 'Fast Runner',
+                    'competition_days' => [
                         '2024-07-15' => [
                             'first' => $startDate.' 10:00:00',
                             'last'  => $startDate.' 11:00:00',
