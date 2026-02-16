@@ -453,7 +453,7 @@ class EditEventLogistic extends EditRecord
                     foreach ($transportPlan as $day => $vehicles) {
                         foreach ($vehicles as $v) {
                             $entry = [
-                                'day_hour'         => Carbon::parse($v['departure_datetime'] ?? $day)->translatedFormat('l H:i'),
+                                'day_hour'         => Carbon::parse($v['departure_datetime'] ?? $day)->translatedFormat('l G\hi'),
                                 'location'         => $v['departure_location'] ?? '',
                                 'means'            => ($v['type'] === 'bus' ? 'Bus' : 'Voiture'),
                                 'driver'           => $v['driver'] ?? '',

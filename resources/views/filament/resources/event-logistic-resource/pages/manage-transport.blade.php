@@ -22,6 +22,7 @@
             unassignedTransportRetour: @entangle('unassignedTransportRetour'),
             independentAller: @entangle('independentAller'),
             independentRetour: @entangle('independentRetour'),
+            independentStay: @entangle('independentStay'),
             unassignedStay: @entangle('unassignedStay'),
             participantsMap: @entangle('participantsMap'),
             hotelNeededIds: @entangle('hotelNeededIds'),
@@ -623,6 +624,44 @@
                                     </div>
                                 </template>
                             </div>
+
+                            <!-- INDEPENDENT STAY -->
+                            <div class="px-3 py-2 bg-indigo-50/10">
+                                <h4 class="text-9px font-black text-indigo-300 uppercase tracking-widest mb-1.5">Propres moyens</h4>
+                                <div wire:ignore id="stay-independent" class="space-y-1" data-group="stay">
+                                    <template x-for="p in independentStay" :key="p.id">
+                                        <div class="bg-white/50 border border-indigo-50 p-1.5 rounded-lg shadow-sm opacity-80 hover:opacity-100 cursor-grab active:cursor-grabbing hover:border-indigo-400 transition-all group" :data-id="p.id">
+                                            <div class="flex justify-between items-center gap-2 overflow-hidden">
+                                                <div class="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden">
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        <div class="text-[8px] font-black px-1 rounded border leading-none shrink-0" :class="getParticipantSourceColor(p.id)" x-text="getParticipantSource(p.id)"></div>
+                                                    </div>
+                                                    <span class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></span>
+                                                </div>
+                                                <!-- HOTEL TOGGLE -->
+                                                <div class="flex items-center gap-1 px-1 py-0.5 rounded border transition-colors cursor-pointer hover:bg-gray-100 shrink-0"
+                                                    :class="{
+                                                        'bg-indigo-50 border-indigo-100': hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id),
+                                                        'bg-gray-50 border-gray-100 opacity-50': hotelBlockedIds.includes(p.id),
+                                                        'border-transparent': !hotelNeededIds.includes(p.id) && !hotelBlockedIds.includes(p.id)
+                                                    }"
+                                                    @click.stop="$wire.toggleHotel(p.id)"
+                                                >
+                                                    <template x-if="hotelOverrideIds.includes(p.id)"><span class="text-[7px] font-black text-indigo-600 uppercase">F</span></template>
+                                                    <template x-if="hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-gray-400 uppercase">B</span></template>
+                                                    <template x-if="autoHotelIds.includes(p.id) && !hotelOverrideIds.includes(p.id) && !hotelBlockedIds.includes(p.id)"><span class="text-[7px] font-black text-amber-600 uppercase">A</span></template>
+                                                    <div class="relative">
+                                                        <div :class="hotelBlockedIds.includes(p.id) ? 'text-gray-300' : (hotelNeededIds.includes(p.id) ? 'text-indigo-500' : 'text-gray-200')">
+                                                            <x-heroicon-s-home class="w-2.5 h-2.5 shrink-0" />
+                                                        </div>
+                                                        <template x-if="hotelBlockedIds.includes(p.id)"><div class="absolute inset-0 flex items-center justify-center"><div class="w-full h-0.5 bg-red-400 rotate-45 transform"></div></div></template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- ROOMS GRID -->
@@ -746,11 +785,13 @@
                 unassignedTransportRetour: config.unassignedTransportRetour,
                 independentAller: config.independentAller,
                 independentRetour: config.independentRetour,
+                independentStay: config.independentStay,
                 unassignedStay: config.unassignedStay,
                 participantsMap: config.participantsMap,
                 hotelNeededIds: config.hotelNeededIds,
                 autoHotelIds: config.autoHotelIds,
                 hotelOverrideIds: config.hotelOverrideIds,
+                hotelBlockedIds: config.hotelBlockedIds,
                 globalAlerts: config.globalAlerts || [],
                 alerts: config.alerts || {},
                 planningMode: config.planningMode,
@@ -763,6 +804,7 @@
                     // Sync unassigned when they change via entangle
                     this.$watch('unassignedTransport', () => this.$nextTick(() => this.setupSortables()));
                     this.$watch('unassignedStay', () => this.$nextTick(() => this.setupSortables()));
+                    this.$watch('independentStay', () => this.$nextTick(() => this.setupSortables()));
                 },
 
                 setupSortables() {
@@ -850,7 +892,11 @@
                         if (fromIdx !== null) {
                             this.stayPlans[this.selectedDay][fromIdx].occupant_ids = this.stayPlans[this.selectedDay][fromIdx].occupant_ids.filter(id => id != pId);
                         } else {
-                            this.unassignedStay = this.unassignedStay.filter(p => p.id != pId);
+                            if (evt.from.id === 'stay-independent') {
+                                this.independentStay = this.independentStay.filter(p => p.id != pId);
+                            } else {
+                                this.unassignedStay = this.unassignedStay.filter(p => p.id != pId);
+                            }
                         }
 
                         if (toIdx !== null) {
@@ -858,8 +904,12 @@
                              this.stayPlans[this.selectedDay][toIdx].occupant_ids = newOrder;
                         } else {
                             const pObj = this.participantsMap[pId];
-                            if (pObj && !this.unassignedStay.find(p => p.id == pId)) {
-                                this.unassignedStay.push(pObj);
+                            if (pObj) {
+                                if (evt.to.id === 'stay-independent') {
+                                    if (!this.independentStay.find(p => p.id == pId)) this.independentStay.push(pObj);
+                                } else {
+                                    if (!this.unassignedStay.find(p => p.id == pId)) this.unassignedStay.push(pObj);
+                                }
                             }
                         }
                     }
@@ -881,8 +931,8 @@
                 },
 
                 saveAll() {
-                    // All plans are already entangled, but we call save to persist to DB
-                    this.$wire.saveAllPlans(this.transportPlans, this.stayPlans);
+                    const independentStayIds = this.independentStay.map(p => p.id);
+                    this.$wire.saveAllPlans(this.transportPlans, this.stayPlans, independentStayIds);
                 },
 
                 getTimeFromDatetime(dt) {

@@ -238,4 +238,65 @@ class ManageTransportTest extends TestCase
         // 10:00 - 2h = 08:00
         $this->assertEquals('2024-07-15 08:00:00', $bus['departure_datetime']);
     }
+
+    /** @test */
+    public function it_orders_vehicles_by_departure_time()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => ['start_date' => '2024-07-15'],
+            'transport_plan' => [
+                '2024-07-15' => [
+                    ['id' => 'v2', 'name' => 'Late Bus', 'departure_datetime' => '2024-07-15 10:00:00', 'passengers' => []],
+                    ['id' => 'v1', 'name' => 'Early Bus', 'departure_datetime' => '2024-07-15 08:00:00', 'passengers' => []],
+                ],
+            ],
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15');
+
+        $plans = $component->get('transportPlans')['2024-07-15'];
+
+        $this->assertEquals('v1', $plans[0]['id']);
+        $this->assertEquals('v2', $plans[1]['id']);
+    }
+
+    /** @test */
+    public function it_handles_independent_stay()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'start_date' => '2024-07-15',
+                'independent_stay' => [
+                    '2024-07-15' => ['p1']
+                ]
+            ],
+            'participants_data' => [
+                [
+                    'id' => 'p1', 'name' => 'Independent Athlete',
+                    'hotel_override' => true,
+                ],
+                [
+                    'id' => 'p2', 'name' => 'Unassigned Athlete',
+                    'hotel_override' => true,
+                ],
+            ],
+        ]);
+
+        $component = Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
+            ->set('selectedDay', '2024-07-15');
+
+        $this->assertCount(1, $component->get('independentStay'));
+        $this->assertEquals('p1', $component->get('independentStay')[0]['id']);
+        
+        $this->assertCount(1, $component->get('unassignedStay'));
+        $this->assertEquals('p2', $component->get('unassignedStay')[0]['id']);
+
+        // Check alerts: p2 should trigger an alert, p1 should NOT
+        $globalAlerts = $component->get('globalAlerts');
+        $alertMsgs = collect($globalAlerts)->pluck('msg')->implode(' ');
+        
+        $this->assertStringContainsString('Nuit manquante: Unassigned Athlete', $alertMsgs);
+        $this->assertStringNotContainsString('Nuit manquante: Independent Athlete', $alertMsgs);
+    }
 }

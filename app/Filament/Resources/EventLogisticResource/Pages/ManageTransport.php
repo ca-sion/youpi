@@ -52,6 +52,8 @@ class ManageTransport extends Page
 
     public $independentRetour = [];
 
+    public $independentStay = [];
+
     public $planningMode = 'survey'; // survey, schedule, all
 
     public function getTitle(): string
@@ -110,6 +112,19 @@ class ManageTransport extends Page
                 $rawTransport = $newTransport;
             }
             $this->transportPlans = $rawTransport;
+        }
+
+        // Sort transport plans by departure_datetime for each day
+        foreach ($this->transportPlans as $day => &$vehicles) {
+            usort($vehicles, function ($a, $b) {
+                $timeA = $a['departure_datetime'] ?? '';
+                $timeB = $b['departure_datetime'] ?? '';
+                if ($timeA === $timeB) {
+                    return ($a['name'] ?? '') <=> ($b['name'] ?? '');
+                }
+
+                return $timeA <=> $timeB;
+            });
         }
 
         // Load and Normalize Stay Plans (only if forced)
@@ -391,6 +406,7 @@ class ManageTransport extends Page
 
         if ($isLastDay) {
             $this->unassignedStay = [];
+            $this->independentStay = [];
         } else {
             $assignedStayIds = [];
             foreach ($this->stayPlans as $day => $rList) {
@@ -401,9 +417,17 @@ class ManageTransport extends Page
                 }
             }
 
+            $independentStayIds = $settings['independent_stay'][$this->selectedDay] ?? [];
+
+            $this->independentStay = collect($participants)
+                ->filter(fn ($p) => in_array($p['id'], $independentStayIds))
+                ->values()
+                ->toArray();
+
             $this->unassignedStay = collect($participants)
                 ->filter(fn ($p) => in_array($p['id'], $this->hotelNeededIds))
                 ->reject(fn ($p) => in_array($p['id'], $assignedStayIds))
+                ->reject(fn ($p) => in_array($p['id'], $independentStayIds))
                 ->values()
                 ->toArray();
 
@@ -411,8 +435,9 @@ class ManageTransport extends Page
                 // 3. Hotel Alert
                 $needsHotel = in_array($p['id'], $this->hotelNeededIds);
                 $inHotel = in_array($p['id'], $assignedStayIds);
+                $isIndependent = in_array($p['id'], $independentStayIds);
 
-                if ($needsHotel && ! $inHotel) {
+                if ($needsHotel && ! $inHotel && ! $isIndependent) {
                     $this->globalAlerts[] = ['type' => 'danger', 'msg' => "Nuit manquante: {$p['name']}"];
                 }
             }
@@ -445,14 +470,18 @@ class ManageTransport extends Page
         $this->loadData();
     }
 
-    public function saveAllPlans($transportPlans, $stayPlans)
+    public function saveAllPlans($transportPlans, $stayPlans, $independentStayIds = [])
     {
         $this->transportPlans = $transportPlans;
         $this->stayPlans = $stayPlans;
 
+        $settings = $this->record->settings ?? [];
+        $settings['independent_stay'][$this->selectedDay] = $independentStayIds;
+
         $this->record->update([
             'transport_plan' => $this->transportPlans,
             'stay_plan'      => $this->stayPlans,
+            'settings'       => $settings,
         ]);
 
         Notification::make()->title('Logistique enregistrée avec succès')->success()->send();
