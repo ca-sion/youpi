@@ -13,6 +13,10 @@
             border-bottom-right-radius: 120px 24px;
             box-shadow: 5px 10px 8px rgba(0, 0, 0, .15);
             padding: 40px 80px;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
         }
 
         .ca-identifier {
@@ -127,7 +131,8 @@
 
         @media screen and (max-width: 600px) {
             .ca-document {
-                padding: 20px 20px;
+                padding: 20px 10px;
+                font-size: 75%;
             }
 
             .ca-ball-title {
@@ -137,14 +142,13 @@
 
             .ca-table-row-definition-heading,
             .ca-table-heading {
-                word-break: break-word;
                 width: 100%;
             }
 
             .ca-table-row-definition,
             .ca-table-row-description {
                 display: grid;
-                grid-template-columns: minmax(60px, 1fr) 3fr;
+                grid-template-columns: minmax(85px, 1fr) 3fr;
                 gap: 2px;
             }
         }
@@ -186,14 +190,14 @@
 
                 <table style="margin-top: 2rem;" width="100%">
                     <tr>
-                        <td style="width: 70%;" align="left">
-                            <div style="font-size: 11px;">
+                        <td style="width: 99%;" align="left">
+                            <div style="font-size: x-small;">
                                 {{ $document->published_on->isoFormat('LL') }}
                                 @if ($document->expires_on)
                                     – {{ $document->expires_on->isoFormat('LL') }}
                                 @endif
                             </div>
-                            <div style="font-size: 24px;font-weight: bold;">{{ $document->name }}</div>
+                            <div style="font-size: x-large;font-weight: bold;margin-bottom: 2rem;">{{ $document->name }}</div>
 
                             @if ($document->status->value != 'validated')
                                 <span class="ca-status" style="background-color: {{ $document->status->getBackgroundColor() }};">{{ $document->status->getLabel() }}</span>
@@ -203,7 +207,7 @@
                                 <div style="margin-top: 2rem;">{!! nl2br($document->salutation) !!}</div>
                             @endif
                         </td>
-                        <td style="width: 30%;" align="left">
+                        <td style="width: 10%;" align="left">
 
                         </td>
                     </tr>
@@ -215,7 +219,7 @@
 
                             <tr class="ca-table-row ca-table-row-description">
                                 <td class="ca-table-heading" align="left">
-                                    
+
                                 </td>
                                 <td class="ca-table-content ca-table-content-block-warning" align="left">
                                     Si tu te déplaces par tes propres moyens, merci d’aviser le CT ou le secrétariat avant le {{ Carbon\Carbon::parse(data_get($document, 'travel_data.data.modification_deadline'))->isoFormat('dddd D.MM.Y') }} 21h. Tél : {{ data_get($document, 'travel_data.data.modification_deadline_phone') }}
