@@ -291,7 +291,7 @@ class EditEventLogistic extends EditRecord
 
                                     try {
                                         $dayValue = $event['jour'] ?? $event['day'] ?? null;
-                                        if (! $dayValue || ! isset($event['time'])) {
+                                        if (! isset($event['time'])) {
                                             continue;
                                         }
 
