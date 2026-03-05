@@ -309,7 +309,7 @@ class EventLogisticResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('document.name')
                     ->label('Document')
-                    ->url(fn ($record) => route('documents.show', $record->document)),
+                    ->url(fn ($record) => $record->document ? route('documents.show', $record->document) : null),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
