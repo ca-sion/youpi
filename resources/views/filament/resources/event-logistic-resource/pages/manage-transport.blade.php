@@ -66,7 +66,7 @@
             <div class="flex items-center gap-3">
                 <x-filament::button 
                     x-on:click="copyFullDayText()" 
-                    color="emerald" 
+                    color="gray" 
                     size="sm"
                     icon="heroicon-m-clipboard-document-list"
                 >
@@ -84,7 +84,7 @@
 
                 <x-filament::button 
                     x-on:click="saveAll()" 
-                    :color="hasUnsavedChanges ? 'warning' : 'primary'" 
+                    color="primary" 
                     size="sm"
                     icon="heroicon-m-check"
                 >
@@ -102,11 +102,11 @@
                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">1. Transports Aller</h3>
                         </div>
                         <div class="flex gap-2">
-                             <x-filament::button x-on:click="copyCompactText('aller')" color="emerald" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
+                             <x-filament::button x-on:click="copyCompactText('aller')" color="gray" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
                              <x-filament::button wire:click="mountAction('auto_dispatch')" color="gray" size="sm" variant="outlined">Distribuer</x-filament::button>
                              <x-filament::button wire:click="addVehicle('car', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Aller</x-filament::button>
                              <x-filament::button wire:click="addVehicle('bus', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus Aller</x-filament::button>
-                             <x-filament::button wire:click="addTrain('aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Train Aller 🚆</x-filament::button>
+                             <x-filament::button wire:click="addTrain('aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Train Aller</x-filament::button>
                         </div>
                     </div>
 
@@ -382,7 +382,7 @@
                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">2. Transports Retour</h3>
                         </div>
                         <div class="flex gap-2">
-                             <x-filament::button x-on:click="copyCompactText('retour')" color="emerald" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
+                             <x-filament::button x-on:click="copyCompactText('retour')" color="gray" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
                              <x-filament::button wire:click="addVehicle('car', 'retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Retour</x-filament::button>
                              <x-filament::button wire:click="addVehicle('bus', 'retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus Retour</x-filament::button>
                              <x-filament::button wire:click="addTrain('retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Train Retour 🚆</x-filament::button>
@@ -510,9 +510,6 @@
                                         </div>
                                         
                                         <div class="flex items-center gap-1.5 shrink-0">
-                                            <button x-on:click="copyVehicleText(v)" class="text-gray-300 hover:text-emerald-600 p-1 hover:bg-emerald-50 rounded-lg transition-colors" title="Copier le texte de ce véhicule">
-                                                <x-heroicon-m-clipboard-document class="w-4 h-4" />
-                                            </button>
                                             <button x-on:click="$wire.toggleLock('vehicle', index)" class="p-1 rounded-lg transition-colors" :class="v.locked ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:bg-gray-100'">
                                                 <template x-if="v.locked">
                                                     <x-heroicon-s-lock-closed class="w-4 h-4" />
@@ -643,7 +640,7 @@
                              <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">3. Hébergement & Chambres</h3>
                          </div>
                          <div class="flex gap-2">
-                             <x-filament::button x-on:click="copyStayText()" color="emerald" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
+                             <x-filament::button x-on:click="copyStayText()" color="gray" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
                              <x-filament::button wire:click="addRoom" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Ajouter Chambre</x-filament::button>
                          </div>
                      </div>
@@ -845,13 +842,13 @@
                  x-transition:leave="transition ease-in duration-200 transform"
                  x-transition:leave-start="translate-y-0 opacity-100"
                  x-transition:leave-end="translate-y-full opacity-0"
-                 class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-amber-400 ring-4 ring-amber-500/20">
+                 class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-amber-500 ring-4 ring-amber-500/20">
                 <div class="flex items-center gap-2">
                     <x-heroicon-s-exclamation-triangle class="w-5 h-5 shrink-0 text-amber-200 animate-pulse" />
                     <span class="text-xs font-black uppercase tracking-wider">Modifications non enregistrées</span>
                 </div>
-                <button x-on:click="saveAll()" class="bg-white text-amber-900 font-black text-xs px-4 py-2 rounded-xl shadow hover:bg-amber-50 transition-colors uppercase tracking-tight flex items-center gap-1.5 cursor-pointer">
-                    <x-heroicon-m-check class="w-4 h-4 text-amber-700" />
+                <button x-on:click="saveAll()" style="color: #111827 !important; background-color: #ffffff !important;" class="font-bold text-xs px-4 py-2 rounded-xl shadow hover:bg-gray-100 transition-colors uppercase tracking-tight flex items-center gap-1.5 cursor-pointer border border-gray-200">
+                    <x-heroicon-m-check class="w-4 h-4 text-emerald-600" />
                     Enregistrer maintenant
                 </button>
             </div>

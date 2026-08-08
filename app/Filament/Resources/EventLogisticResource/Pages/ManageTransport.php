@@ -580,7 +580,7 @@ class ManageTransport extends Page
             'flow'               => $flow,
             'name'               => "Train $flowLabel",
             'ticket_type'        => '1x Carte friends',
-            'capacity'           => 20,
+            'capacity'           => 4,
             'passengers'         => [],
             'driver'             => 'CFF / SBB',
             'departure_datetime' => $this->selectedDay.($flow === 'retour' ? ' 17:15:00' : ' 07:15:00'),
