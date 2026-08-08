@@ -64,6 +64,15 @@
             </div>
 
             <div class="flex items-center gap-3">
+                <x-filament::button 
+                    x-on:click="copyFullDayText()" 
+                    color="emerald" 
+                    size="sm"
+                    icon="heroicon-m-clipboard-document-list"
+                >
+                    Copier journée complète
+                </x-filament::button>
+
                 <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg">
                     <span class="text-xs font-bold text-gray-400 uppercase">Jour</span>
                     <select x-model="selectedDay" class="bg-transparent border-none p-0 text-sm font-bold text-gray-700 focus:ring-0 cursor-pointer w-32">
@@ -75,11 +84,11 @@
 
                 <x-filament::button 
                     x-on:click="saveAll()" 
-                    color="primary" 
+                    :color="hasUnsavedChanges ? 'warning' : 'primary'" 
                     size="sm"
                     icon="heroicon-m-check"
                 >
-                    Enregistrer
+                    <span x-text="hasUnsavedChanges ? 'Enregistrer !' : 'Enregistrer'"></span>
                 </x-filament::button>
             </div>
         </div>
@@ -93,9 +102,11 @@
                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">1. Transports Aller</h3>
                         </div>
                         <div class="flex gap-2">
+                             <x-filament::button x-on:click="copyCompactText('aller')" color="emerald" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
                              <x-filament::button wire:click="mountAction('auto_dispatch')" color="gray" size="sm" variant="outlined">Distribuer</x-filament::button>
                              <x-filament::button wire:click="addVehicle('car', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Aller</x-filament::button>
                              <x-filament::button wire:click="addVehicle('bus', 'aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus Aller</x-filament::button>
+                             <x-filament::button wire:click="addTrain('aller')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Train Aller 🚆</x-filament::button>
                         </div>
                     </div>
 
@@ -217,7 +228,12 @@
                                                     <x-heroicon-s-truck class="w-3.5 h-3.5" />
                                                 </div>
                                             </template>
-                                            <template x-if="v.type !== 'bus'">
+                                            <template x-if="v.type === 'train'">
+                                                <div class="p-1 bg-purple-600 text-white rounded-md shadow-sm flex items-center justify-center">
+                                                    <span class="text-[10px] leading-none">🚆</span>
+                                                </div>
+                                            </template>
+                                            <template x-if="v.type !== 'bus' && v.type !== 'train'">
                                                 <div class="p-1 bg-slate-600 text-white rounded-md shadow-sm">
                                                     <x-heroicon-s-users class="w-3.5 h-3.5" />
                                                 </div>
@@ -258,6 +274,25 @@
                                             <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-11px font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Lieu...">
                                         </div>
                                     </div>
+
+                                    <template x-if="v.type === 'train'">
+                                        <div class="px-2.5 py-1.5 bg-purple-50/50 border-b border-purple-100 space-y-1">
+                                            <div class="grid grid-cols-2 gap-1.5">
+                                                <div class="bg-white/90 rounded px-1.5 py-0.5 border border-purple-100 focus-within:border-purple-300 shadow-sm">
+                                                    <label class="text-[7px] font-black text-purple-600 uppercase leading-none block">Gare Arrivée</label>
+                                                    <input type="text" x-model="v.arrival_location" class="w-full p-0 border-none bg-transparent text-10px font-bold text-purple-900 focus:ring-0 placeholder-purple-300 h-4" placeholder="Gare destination...">
+                                                </div>
+                                                <div class="bg-white/90 rounded px-1.5 py-0.5 border border-purple-100 focus-within:border-purple-300 shadow-sm">
+                                                    <label class="text-[7px] font-black text-purple-600 uppercase leading-none block">Heure Arrivée Gare</label>
+                                                    <input type="time" :value="getTimeFromDatetime(v.arrival_datetime)" x-on:change="v.arrival_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-10px font-bold text-purple-900 focus:ring-0 h-4">
+                                                </div>
+                                            </div>
+                                            <div class="bg-white/90 rounded px-1.5 py-0.5 border border-purple-100 focus-within:border-purple-300 shadow-sm">
+                                                <label class="text-[7px] font-black text-purple-600 uppercase leading-none block">Billets / Titres de transport</label>
+                                                <input type="text" x-model="v.ticket_type" class="w-full p-0 border-none bg-transparent text-10px font-bold text-purple-900 focus:ring-0 placeholder-purple-300 h-4" placeholder="Ex: 1x Billet groupe (4 pers.), 1x Billet individuel">
+                                            </div>
+                                        </div>
+                                    </template>
 
                                     <template x-if="getArrivalTime(v)">
                                         <div class="px-3 py-1 bg-indigo-50/40 text-9px font-black text-indigo-600 flex items-center justify-center gap-1.5 border-b border-indigo-50/50">
@@ -347,8 +382,10 @@
                             <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">2. Transports Retour</h3>
                         </div>
                         <div class="flex gap-2">
+                             <x-filament::button x-on:click="copyCompactText('retour')" color="emerald" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
                              <x-filament::button wire:click="addVehicle('car', 'retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Voiture Retour</x-filament::button>
                              <x-filament::button wire:click="addVehicle('bus', 'retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Bus Retour</x-filament::button>
+                             <x-filament::button wire:click="addTrain('retour')" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Train Retour 🚆</x-filament::button>
                         </div>
                     </div>
 
@@ -456,7 +493,12 @@
                                                     <x-heroicon-s-truck class="w-3.5 h-3.5" />
                                                 </div>
                                             </template>
-                                            <template x-if="v.type !== 'bus'">
+                                            <template x-if="v.type === 'train'">
+                                                <div class="p-1 bg-purple-600 text-white rounded-md shadow-sm flex items-center justify-center">
+                                                    <span class="text-[10px] leading-none">🚆</span>
+                                                </div>
+                                            </template>
+                                            <template x-if="v.type !== 'bus' && v.type !== 'train'">
                                                 <div class="p-1 bg-slate-600 text-white rounded-md shadow-sm">
                                                     <x-heroicon-s-users class="w-3.5 h-3.5" />
                                                 </div>
@@ -468,6 +510,9 @@
                                         </div>
                                         
                                         <div class="flex items-center gap-1.5 shrink-0">
+                                            <button x-on:click="copyVehicleText(v)" class="text-gray-300 hover:text-emerald-600 p-1 hover:bg-emerald-50 rounded-lg transition-colors" title="Copier le texte de ce véhicule">
+                                                <x-heroicon-m-clipboard-document class="w-4 h-4" />
+                                            </button>
                                             <button x-on:click="$wire.toggleLock('vehicle', index)" class="p-1 rounded-lg transition-colors" :class="v.locked ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:bg-gray-100'">
                                                 <template x-if="v.locked">
                                                     <x-heroicon-s-lock-closed class="w-4 h-4" />
@@ -497,6 +542,25 @@
                                             <input type="text" x-model="v.departure_location" class="w-full p-0 border-none bg-transparent text-11px font-bold text-gray-700 focus:ring-0 h-4 placeholder-gray-300" placeholder="Lieu...">
                                         </div>
                                     </div>
+
+                                    <template x-if="v.type === 'train'">
+                                        <div class="px-2.5 py-1.5 bg-purple-50/50 border-b border-purple-100 space-y-1">
+                                            <div class="grid grid-cols-2 gap-1.5">
+                                                <div class="bg-white/90 rounded px-1.5 py-0.5 border border-purple-100 focus-within:border-purple-300 shadow-sm">
+                                                    <label class="text-[7px] font-black text-purple-600 uppercase leading-none block">Gare Arrivée</label>
+                                                    <input type="text" x-model="v.arrival_location" class="w-full p-0 border-none bg-transparent text-10px font-bold text-purple-900 focus:ring-0 placeholder-purple-300 h-4" placeholder="Gare destination...">
+                                                </div>
+                                                <div class="bg-white/90 rounded px-1.5 py-0.5 border border-purple-100 focus-within:border-purple-300 shadow-sm">
+                                                    <label class="text-[7px] font-black text-purple-600 uppercase leading-none block">Heure Arrivée Gare</label>
+                                                    <input type="time" :value="getTimeFromDatetime(v.arrival_datetime)" x-on:change="v.arrival_datetime = selectedDay + ' ' + $event.target.value + ':00'" class="w-full p-0 border-none bg-transparent text-10px font-bold text-purple-900 focus:ring-0 h-4">
+                                                </div>
+                                            </div>
+                                            <div class="bg-white/90 rounded px-1.5 py-0.5 border border-purple-100 focus-within:border-purple-300 shadow-sm">
+                                                <label class="text-[7px] font-black text-purple-600 uppercase leading-none block">Billets / Titres de transport</label>
+                                                <input type="text" x-model="v.ticket_type" class="w-full p-0 border-none bg-transparent text-10px font-bold text-purple-900 focus:ring-0 placeholder-purple-300 h-4" placeholder="Ex: 1x Billet groupe (4 pers.), 1x Billet individuel">
+                                            </div>
+                                        </div>
+                                    </template>
 
                                     <div class="flex flex-col px-2 pt-1 gap-1">
                                         <template x-for="alert in (alerts[index] || [])">
@@ -578,7 +642,10 @@
                              <span class="w-1.5 h-5 bg-indigo-500 rounded-full"></span>
                              <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">3. Hébergement & Chambres</h3>
                          </div>
-                         <x-filament::button wire:click="addRoom" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Ajouter Chambre</x-filament::button>
+                         <div class="flex gap-2">
+                             <x-filament::button x-on:click="copyStayText()" color="emerald" size="sm" icon="heroicon-m-clipboard-document">Copier message</x-filament::button>
+                             <x-filament::button wire:click="addRoom" color="gray" size="sm" variant="outlined" icon="heroicon-m-plus">Ajouter Chambre</x-filament::button>
+                         </div>
                      </div>
 
                      <div class="grid grid-cols-1 lg:grid-cols-6 gap-6 p-4">
@@ -770,6 +837,25 @@
                 </template>
             </div>
         </template>
+        <!-- Unsaved Changes Floating Banner -->
+        <template x-if="hasUnsavedChanges">
+            <div x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="translate-y-full opacity-0"
+                 x-transition:enter-end="translate-y-0 opacity-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="translate-y-0 opacity-100"
+                 x-transition:leave-end="translate-y-full opacity-0"
+                 class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-amber-400 ring-4 ring-amber-500/20">
+                <div class="flex items-center gap-2">
+                    <x-heroicon-s-exclamation-triangle class="w-5 h-5 shrink-0 text-amber-200 animate-pulse" />
+                    <span class="text-xs font-black uppercase tracking-wider">Modifications non enregistrées</span>
+                </div>
+                <button x-on:click="saveAll()" class="bg-white text-amber-900 font-black text-xs px-4 py-2 rounded-xl shadow hover:bg-amber-50 transition-colors uppercase tracking-tight flex items-center gap-1.5 cursor-pointer">
+                    <x-heroicon-m-check class="w-4 h-4 text-amber-700" />
+                    Enregistrer maintenant
+                </button>
+            </div>
+        </template>
     </div>
 
     <x-filament-actions::modals />
@@ -779,6 +865,8 @@
     <script>
         function transportBoard(config) {
             return {
+                hasUnsavedChanges: false,
+                isReady: false,
                 transportPlans: config.transportPlans,
                 stayPlans: config.stayPlans,
                 unassignedTransport: config.unassignedTransport,
@@ -805,6 +893,19 @@
                     this.$watch('unassignedTransport', () => this.$nextTick(() => this.setupSortables()));
                     this.$watch('unassignedStay', () => this.$nextTick(() => this.setupSortables()));
                     this.$watch('independentStay', () => this.$nextTick(() => this.setupSortables()));
+
+                    window.addEventListener('beforeunload', (e) => {
+                        if (this.hasUnsavedChanges) {
+                            e.preventDefault();
+                            e.returnValue = '';
+                        }
+                    });
+
+                    this.$nextTick(() => {
+                        this.$watch('transportPlans', () => { if (this.isReady) this.hasUnsavedChanges = true; }, { deep: true });
+                        this.$watch('stayPlans', () => { if (this.isReady) this.hasUnsavedChanges = true; }, { deep: true });
+                        this.isReady = true;
+                    });
                 },
 
                 setupSortables() {
@@ -914,6 +1015,7 @@
                         }
                     }
 
+                    this.hasUnsavedChanges = true;
                     // Force Alpine to re-render the lists if Sortable moved the DOM
                     this.$nextTick(() => this.setupSortables());
                 },
@@ -931,6 +1033,7 @@
                 },
 
                 saveAll() {
+                    this.hasUnsavedChanges = false;
                     const independentStayIds = this.independentStay.map(p => p.id);
                     this.$wire.saveAllPlans(this.transportPlans, this.stayPlans, independentStayIds);
                 },
@@ -966,6 +1069,9 @@
                 },
 
                 getArrivalTime(v) {
+                    if (v.type === 'train' && v.arrival_datetime) {
+                        return this.getTimeFromDatetime(v.arrival_datetime);
+                    }
                     if (!v.departure_datetime || !this.settings.distance_km) return null;
                     const speed = v.type === 'bus' ? (this.settings.bus_speed || 100) : (this.settings.car_speed || 120);
                     const travelMin = (this.settings.distance_km / speed) * 60;
@@ -1029,6 +1135,196 @@
                 isCoach(pId) {
                     const p = this.participantsMap[pId];
                     return p && p.role === 'coach';
+                },
+
+                copyCompactText(flow = 'aller') {
+                    let lines = [];
+                    const vehicles = (this.transportPlans[this.selectedDay] || []).filter(v => (v.flow || 'aller') === flow);
+
+                    vehicles.forEach(v => {
+                        const depTime = (this.getTimeFromDatetime(v.departure_datetime) || '--:--').replace(':', 'h');
+                        const arrTimeRaw = this.getArrivalTime(v);
+                        const arrTime = arrTimeRaw ? arrTimeRaw.replace(':', 'h') : null;
+                        const arrStr = arrTime ? ` (arrivée ${arrTime})` : '';
+                        const driverStr = (v.driver && v.driver !== 'À définir') ? ` (${v.driver})` : '';
+                        
+                        let locStr = '';
+                        if (v.departure_location) {
+                            locStr = ` ${v.departure_location}`;
+                        }
+                        if (v.type === 'train' && v.arrival_location) {
+                            locStr += ` ➔ Gare ${v.arrival_location}`;
+                        }
+                        const noteStr = (v.note && v.note.trim()) ? ` [${v.note.trim()}]` : '';
+
+                        let passengerList = [];
+                        (v.passengers || []).forEach(pId => {
+                            const p = this.participantsMap[pId];
+                            if (p) {
+                                const rawTime = flow === 'aller' ? this.getParticipantFirstTime(pId) : this.getParticipantLastTime(pId);
+                                const timeStr = rawTime ? ` (${rawTime.replace(':', 'h')})` : '';
+                                passengerList.push(`${p.name}${timeStr}`);
+                            }
+                        });
+
+                        const pStr = passengerList.length > 0 ? passengerList.join(', ') : 'Aucun passager';
+                        lines.push(`- ${v.name}${driverStr} - *${depTime}*${arrStr}${locStr}${noteStr} : ${pStr}`);
+                    });
+
+                    const indepList = flow === 'aller' ? this.independentAller : this.independentRetour;
+                    if (indepList && indepList.length > 0) {
+                        const indepNames = indepList.map(p => p.name).join(', ');
+                        lines.push(`- Par ses propres moyens : ${indepNames}`);
+                    }
+
+                    if (lines.length === 0) {
+                        alert("Aucun transport configuré pour ce trajet.");
+                        return;
+                    }
+
+                    const textToCopy = lines.join('\n');
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        alert("Message copié dans le presse-papier !\n\n" + textToCopy);
+                    });
+                },
+
+                copyStayText() {
+                    let lines = [];
+                    const rooms = this.stayPlans[this.selectedDay] || [];
+
+                    rooms.forEach(r => {
+                        let occupantList = [];
+                        (r.occupant_ids || []).forEach(pId => {
+                            const p = this.participantsMap[pId];
+                            if (p) occupantList.push(p.name);
+                        });
+
+                        const occStr = occupantList.length > 0 ? occupantList.join(', ') : 'Aucun occupant';
+                        const noteStr = (r.note && r.note.trim()) ? ` [${r.note.trim()}]` : '';
+                        lines.push(`- ${r.name}${noteStr} : ${occStr}`);
+                    });
+
+                    if (this.independentStay && this.independentStay.length > 0) {
+                        const indepNames = this.independentStay.map(p => p.name).join(', ');
+                        lines.push(`- Logement indépendant / Propres moyens : ${indepNames}`);
+                    }
+
+                    if (lines.length === 0) {
+                        alert("Aucune chambre configurée pour cette nuit.");
+                        return;
+                    }
+
+                    const textToCopy = lines.join('\n');
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        alert("Message des chambres copié dans le presse-papier !\n\n" + textToCopy);
+                    });
+                },
+
+                copyFullDayText() {
+                    let lines = [];
+                    const dayLabel = this.formatDate(this.selectedDay);
+                    lines.push(`📅 *PROGRAMME LOGISTIQUE - ${dayLabel.toUpperCase()}*`);
+                    lines.push('');
+
+                    // 1. ALLER
+                    const allerVehicles = (this.transportPlans[this.selectedDay] || []).filter(v => (v.flow || 'aller') === 'aller');
+                    if (allerVehicles.length > 0 || (this.independentAller && this.independentAller.length > 0)) {
+                        lines.push(`*1. TRANSPORTS ALLER*`);
+                        allerVehicles.forEach(v => {
+                            const depTime = (this.getTimeFromDatetime(v.departure_datetime) || '--:--').replace(':', 'h');
+                            const arrTimeRaw = this.getArrivalTime(v);
+                            const arrTime = arrTimeRaw ? arrTimeRaw.replace(':', 'h') : null;
+                            const arrStr = arrTime ? ` (arrivée ${arrTime})` : '';
+                            const driverStr = (v.driver && v.driver !== 'À définir') ? ` (${v.driver})` : '';
+                            let locStr = v.departure_location ? ` ${v.departure_location}` : '';
+                            if (v.type === 'train' && v.arrival_location) locStr += ` ➔ Gare ${v.arrival_location}`;
+                            const noteStr = (v.note && v.note.trim()) ? ` [${v.note.trim()}]` : '';
+
+                            let passengerList = [];
+                            (v.passengers || []).forEach(pId => {
+                                const p = this.participantsMap[pId];
+                                if (p) {
+                                    const rawTime = this.getParticipantFirstTime(pId);
+                                    const timeStr = rawTime ? ` (${rawTime.replace(':', 'h')})` : '';
+                                    passengerList.push(`${p.name}${timeStr}`);
+                                }
+                            });
+                            const pStr = passengerList.length > 0 ? passengerList.join(', ') : 'Aucun passager';
+                            lines.push(`- ${v.name}${driverStr} - *${depTime}*${arrStr}${locStr}${noteStr} : ${pStr}`);
+                        });
+
+                        if (this.independentAller && this.independentAller.length > 0) {
+                            const indepNames = this.independentAller.map(p => p.name).join(', ');
+                            lines.push(`- Par ses propres moyens : ${indepNames}`);
+                        }
+                        lines.push('');
+                    }
+
+                    // 2. RETOUR
+                    const retourVehicles = (this.transportPlans[this.selectedDay] || []).filter(v => v.flow === 'retour');
+                    if (retourVehicles.length > 0 || (this.independentRetour && this.independentRetour.length > 0)) {
+                        lines.push(`*2. TRANSPORTS RETOUR*`);
+                        retourVehicles.forEach(v => {
+                            const depTime = (this.getTimeFromDatetime(v.departure_datetime) || '--:--').replace(':', 'h');
+                            const arrTimeRaw = this.getArrivalTime(v);
+                            const arrTime = arrTimeRaw ? arrTimeRaw.replace(':', 'h') : null;
+                            const arrStr = arrTime ? ` (arrivée ${arrTime})` : '';
+                            const driverStr = (v.driver && v.driver !== 'À définir') ? ` (${v.driver})` : '';
+                            let locStr = v.departure_location ? ` ${v.departure_location}` : '';
+                            const noteStr = (v.note && v.note.trim()) ? ` [${v.note.trim()}]` : '';
+
+                            let passengerList = [];
+                            (v.passengers || []).forEach(pId => {
+                                const p = this.participantsMap[pId];
+                                if (p) {
+                                    const rawTime = this.getParticipantLastTime(pId);
+                                    const timeStr = rawTime ? ` (${rawTime.replace(':', 'h')})` : '';
+                                    passengerList.push(`${p.name}${timeStr}`);
+                                }
+                            });
+                            const pStr = passengerList.length > 0 ? passengerList.join(', ') : 'Aucun passager';
+                            lines.push(`- ${v.name}${driverStr} - *${depTime}*${arrStr}${locStr}${noteStr} : ${pStr}`);
+                        });
+
+                        if (this.independentRetour && this.independentRetour.length > 0) {
+                            const indepNames = this.independentRetour.map(p => p.name).join(', ');
+                            lines.push(`- Par ses propres moyens : ${indepNames}`);
+                        }
+                        lines.push('');
+                    }
+
+                    // 3. HÉBERGEMENT
+                    if (!this.isLastDay()) {
+                        const rooms = this.stayPlans[this.selectedDay] || [];
+                        if (rooms.length > 0 || (this.independentStay && this.independentStay.length > 0)) {
+                            lines.push(`*3. HÉBERGEMENT & CHAMBRES*`);
+                            rooms.forEach(r => {
+                                let occupantList = [];
+                                (r.occupant_ids || []).forEach(pId => {
+                                    const p = this.participantsMap[pId];
+                                    if (p) occupantList.push(p.name);
+                                });
+                                const occStr = occupantList.length > 0 ? occupantList.join(', ') : 'Aucun occupant';
+                                const noteStr = (r.note && r.note.trim()) ? ` [${r.note.trim()}]` : '';
+                                lines.push(`- ${r.name}${noteStr} : ${occStr}`);
+                            });
+
+                            if (this.independentStay && this.independentStay.length > 0) {
+                                const indepNames = this.independentStay.map(p => p.name).join(', ');
+                                lines.push(`- Logement indépendant / Propres moyens : ${indepNames}`);
+                            }
+                        }
+                    }
+
+                    const textToCopy = lines.join('\n').trim();
+                    if (!textToCopy) {
+                        alert("Aucun élément configuré pour cette journée.");
+                        return;
+                    }
+
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        alert("Message de la journée complète copié dans le presse-papier !\n\n" + textToCopy);
+                    });
                 }
             }
         }

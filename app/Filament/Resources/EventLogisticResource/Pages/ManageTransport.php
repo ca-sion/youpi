@@ -87,17 +87,27 @@ class ManageTransport extends Page
 
         if ($startDateStr) {
             $startDate = Carbon::parse($startDateStr);
+            // Pre-night (Veille) option
+            $preNight = $startDate->copy()->subDay();
+            $this->days[] = [
+                'date'      => $preNight->toDateString(),
+                'label'     => 'Veille ('.$preNight->translatedFormat('D d M').')',
+                'is_veille' => true,
+            ];
+
             for ($i = 0; $i < $daysCount; $i++) {
                 $date = $startDate->copy()->addDays($i);
                 $this->days[] = [
-                    'date'  => $date->toDateString(),
-                    'label' => $date->translatedFormat('D d M'),
+                    'date'      => $date->toDateString(),
+                    'label'     => $date->translatedFormat('D d M'),
+                    'is_veille' => false,
                 ];
             }
         }
 
         if (! $this->selectedDay && ! empty($this->days)) {
-            $this->selectedDay = $this->days[0]['date'];
+            $firstCompDay = collect($this->days)->firstWhere('is_veille', false);
+            $this->selectedDay = $firstCompDay ? $firstCompDay['date'] : $this->days[0]['date'];
         }
 
         // Load and Normalize Transport Plans (only if forced)
@@ -138,12 +148,14 @@ class ManageTransport extends Page
         $this->alerts = [];
         $this->globalAlerts = [];
 
-        $this->hotelOverrideIds = $participants->filter(fn ($p) => ($p['hotel_override'] ?? false) || ($p['role'] ?? '') === 'manual')->pluck('id')->map(fn ($id) => (string) $id)->toArray();
-        $this->autoHotelIds = [];
-
         $this->hotelOverrideIds = []; // Forcé manuellement (true)
         $this->hotelBlockedIds = [];  // Bloqué manuellement (false)
         $this->autoHotelIds = [];     // Suggéré par l'algorithme
+
+        $currentDayIdx = array_search($this->selectedDay, array_column($this->days, 'date'));
+        $nextDayDate = ($currentDayIdx !== false && $currentDayIdx < count($this->days) - 1)
+            ? $this->days[$currentDayIdx + 1]['date']
+            : null;
 
         foreach ($participants as $p) {
             $pId = (string) $p['id'];
@@ -157,7 +169,7 @@ class ManageTransport extends Page
                 // Logique de suggestion automatique
                 $neededAuto = false;
 
-                // A. Jours consécutifs
+                // A. Jours consécutifs de présence pour la nuitée sélectionnée
                 $pDays = [];
                 foreach ($this->days as $d) {
                     if (isset($p['survey_response']['responses'][$d['date']])) {
@@ -165,34 +177,33 @@ class ManageTransport extends Page
                     }
                 }
 
-                $currentDayIdx = array_search($this->selectedDay, array_column($this->days, 'date'));
-                if ($currentDayIdx !== false && $currentDayIdx < count($this->days) - 1) {
-                    $nextDay = $this->days[$currentDayIdx + 1]['date'];
-                    if (in_array($this->selectedDay, $pDays) && in_array($nextDay, $pDays)) {
+                if ($nextDayDate) {
+                    if (in_array($this->selectedDay, $pDays) && in_array($nextDayDate, $pDays)) {
                         $neededAuto = true;
                     }
                 }
 
-                // B. Départ matinal
+                // B. Départ matinal pour la journée qui suit cette nuitée
+                $targetCompDay = $nextDayDate ?? $this->selectedDay;
                 $firstCompStr = null;
-                if (isset($p['competition_days'][$this->selectedDay]['first'])) {
-                    $firstCompStr = $p['competition_days'][$this->selectedDay]['first'];
+                if (isset($p['competition_days'][$targetCompDay]['first'])) {
+                    $firstCompStr = $p['competition_days'][$targetCompDay]['first'];
                 } elseif (isset($p['first_competition_datetime'])) {
-                    $firstCompStr = $p['first_competition_datetime'];
+                    if (str_starts_with($p['first_competition_datetime'], $targetCompDay)) {
+                        $firstCompStr = $p['first_competition_datetime'];
+                    }
                 }
 
                 if (! $neededAuto && $firstCompStr) {
                     $firstComp = Carbon::parse($firstCompStr);
-                    if ($firstComp->toDateString() === $this->selectedDay) {
-                        $prep = (int) ($settings['duration_prep_min'] ?? 90);
-                        $dist = (float) ($settings['distance_km'] ?? 0);
-                        $carSpeed = (float) ($settings['car_speed'] ?? 100);
-                        $travelTime = ($carSpeed > 0) ? ($dist / $carSpeed * 60) : 0;
+                    $prep = (int) ($settings['duration_prep_min'] ?? 90);
+                    $dist = (float) ($settings['distance_km'] ?? 0);
+                    $carSpeed = (float) ($settings['car_speed'] ?? 100);
+                    $travelTime = ($carSpeed > 0) ? ($dist / $carSpeed * 60) : 0;
 
-                        $departureFromHome = $firstComp->copy()->subMinutes($prep)->subMinutes($travelTime);
-                        if ($departureFromHome->format('H:i') < $threshold) {
-                            $neededAuto = true;
-                        }
+                    $departureFromHome = $firstComp->copy()->subMinutes($prep)->subMinutes($travelTime);
+                    if ($departureFromHome->format('H:i') < $threshold) {
+                        $neededAuto = true;
                     }
                 }
 
@@ -212,7 +223,7 @@ class ManageTransport extends Page
             $this->autoHotelIds
         )));
 
-        // On retire ceux qui sont explicitement bloqués (sécurite supplémentaire)
+        // On retire ceux qui sont explicitement bloqués (sécurité supplémentaire)
         $this->hotelNeededIds = array_values(array_diff($this->hotelNeededIds, $this->hotelBlockedIds));
 
         // Ensure default settings
@@ -255,13 +266,17 @@ class ManageTransport extends Page
             if (! empty($vehicle['departure_datetime'])) {
                 try {
                     $depTime = Carbon::parse($vehicle['departure_datetime']);
-                    $dist = (float) ($settings['distance_km'] ?? 0);
-                    $speed = (float) (($vehicle['type'] === 'bus') ? ($settings['bus_speed'] ?? 80) : ($settings['car_speed'] ?? 100));
-                    $travelMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
-
-                    $arrivalEst = $depTime->copy()->addMinutes($travelMin);
                     $flow = $vehicle['flow'] ?? 'aller';
-                    $prep = $settings['duration_prep_min'] ?? 90;
+                    $prep = (int) ($settings['duration_prep_min'] ?? 90);
+
+                    if (($vehicle['type'] ?? '') === 'train' && ! empty($vehicle['arrival_datetime'])) {
+                        $arrivalEst = Carbon::parse($vehicle['arrival_datetime']);
+                    } else {
+                        $dist = (float) ($settings['distance_km'] ?? 0);
+                        $speed = (float) (($vehicle['type'] === 'bus') ? ($settings['bus_speed'] ?? 80) : ($settings['car_speed'] ?? 100));
+                        $travelMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
+                        $arrivalEst = $depTime->copy()->addMinutes($travelMin);
+                    }
 
                     foreach ($vPassengers as $pid) {
                         $p = $this->participantsMap[$pid] ?? null;
@@ -300,7 +315,6 @@ class ManageTransport extends Page
 
                             if ($firstCompStr) {
                                 $firstEvent = Carbon::parse($firstCompStr);
-                                $prep = (int) ($settings['duration_prep_min'] ?? 90);
                                 if ($arrivalEst->gt($firstEvent)) {
                                     $this->alerts[$index][] = ['type' => 'danger', 'msg' => "RETARD: {$p['name']} arrive à {$arrivalEst->format('H:i')} alors que l'épreuve commence à {$firstEvent->format('H:i')}"];
                                 } elseif ($arrivalEst->copy()->addMinutes($prep)->gt($firstEvent)) {
@@ -550,6 +564,34 @@ class ManageTransport extends Page
         $this->record->update(['transport_plan' => $this->transportPlans]);
         $this->loadData();
         Notification::make()->title('Véhicule ajouté')->success()->send();
+    }
+
+    public function addTrain($flow = 'aller')
+    {
+        if (! isset($this->transportPlans[$this->selectedDay])) {
+            $this->transportPlans[$this->selectedDay] = [];
+        }
+
+        $flowLabel = ($flow === 'retour' ? 'Retour' : 'Aller');
+
+        $this->transportPlans[$this->selectedDay][] = [
+            'id'                 => 'train_'.uniqid(),
+            'type'               => 'train',
+            'flow'               => $flow,
+            'name'               => "Train $flowLabel",
+            'ticket_type'        => '1x Carte friends',
+            'capacity'           => 20,
+            'passengers'         => [],
+            'driver'             => 'CFF / SBB',
+            'departure_datetime' => $this->selectedDay.($flow === 'retour' ? ' 17:15:00' : ' 07:15:00'),
+            'departure_location' => ($flow === 'retour' ? 'Gare destination' : 'Gare de Sion'),
+            'arrival_datetime'   => $this->selectedDay.($flow === 'retour' ? ' 18:30:00' : ' 08:30:00'),
+            'arrival_location'   => ($flow === 'retour' ? 'Gare de Sion' : 'Gare destination'),
+            'note'               => '',
+        ];
+        $this->record->update(['transport_plan' => $this->transportPlans]);
+        $this->loadData();
+        Notification::make()->title('Transport en train ajouté')->success()->send();
     }
 
     public function toggleLock($type, $index)

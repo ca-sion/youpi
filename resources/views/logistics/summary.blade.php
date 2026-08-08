@@ -109,7 +109,9 @@
                                     <div class="space-y-3">
                                         @forelse($groupedTransport->get($flow, []) as $vehicle)
                                             @php 
-                                                $arrival = $getArrivalTime($vehicle['departure_datetime'], $vehicle['type']);
+                                                $arrival = ($vehicle['type'] === 'train' && !empty($vehicle['arrival_datetime']))
+                                                    ? \Carbon\Carbon::parse($vehicle['arrival_datetime'])
+                                                    : $getArrivalTime($vehicle['departure_datetime'], $vehicle['type']);
                                                 $isFull = count($vehicle['passengers']) >= ($vehicle['capacity'] ?? 99);
                                             @endphp
                                             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden ring-1 ring-gray-100/50 hover:shadow-md transition-shadow">
@@ -117,6 +119,8 @@
                                                     <div class="flex items-center gap-2.5 min-w-0">
                                                         @if($vehicle['type'] === 'bus')
                                                             <x-heroicon-s-truck class="w-3.5 h-3.5 text-blue-500" />
+                                                        @elseif($vehicle['type'] === 'train')
+                                                            <span class="text-[12px] leading-none">🚆</span>
                                                         @else
                                                             <x-heroicon-s-users class="w-3.5 h-3.5 text-slate-400" />
                                                         @endif
@@ -150,10 +154,16 @@
                                                         </div>
 
                                                         <div class="flex flex-col text-right">
-                                                            <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">Arrivée est.</span>
+                                                            <span class="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">{{ $vehicle['type'] === 'train' ? 'Arrivée gare' : 'Arrivée est.' }}</span>
                                                             <span class="text-lg text-gray-500 font-black tabular-nums leading-none">{{ $arrival ? $arrival->format('H:i') : '--:--' }}</span>
                                                         </div>
                                                     </div>
+
+                                                    @if($vehicle['type'] === 'train' && !empty($vehicle['ticket_type']))
+                                                        <div class="mb-3 text-[10px] text-purple-700 bg-purple-50/70 px-2.5 py-1.5 rounded-xl border border-purple-100 flex flex-wrap gap-x-3 gap-y-0.5">
+                                                            <span><strong>Billets:</strong> {{ $vehicle['ticket_type'] }}</span>
+                                                        </div>
+                                                    @endif
 
                                                     <div class="flex flex-wrap gap-1.5">
                                                         @foreach($vehicle['passengers'] as $pid)
