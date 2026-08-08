@@ -834,25 +834,7 @@
                 </template>
             </div>
         </template>
-        <!-- Unsaved Changes Floating Banner -->
-        <template x-if="hasUnsavedChanges">
-            <div x-transition:enter="transition ease-out duration-300 transform"
-                 x-transition:enter-start="translate-y-full opacity-0"
-                 x-transition:enter-end="translate-y-0 opacity-100"
-                 x-transition:leave="transition ease-in duration-200 transform"
-                 x-transition:leave-start="translate-y-0 opacity-100"
-                 x-transition:leave-end="translate-y-full opacity-0"
-                 class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-amber-500 ring-4 ring-amber-500/20">
-                <div class="flex items-center gap-2">
-                    <x-heroicon-s-exclamation-triangle class="w-5 h-5 shrink-0 text-amber-200 animate-pulse" />
-                    <span class="text-xs font-black uppercase tracking-wider">Modifications non enregistrées</span>
-                </div>
-                <button x-on:click="saveAll()" style="color: #111827 !important; background-color: #ffffff !important;" class="font-bold text-xs px-4 py-2 rounded-xl shadow hover:bg-gray-100 transition-colors uppercase tracking-tight flex items-center gap-1.5 cursor-pointer border border-gray-200">
-                    <x-heroicon-m-check class="w-4 h-4 text-emerald-600" />
-                    Enregistrer maintenant
-                </button>
-            </div>
-        </template>
+
     </div>
 
     <x-filament-actions::modals />
