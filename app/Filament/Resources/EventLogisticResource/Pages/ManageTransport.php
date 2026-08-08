@@ -660,28 +660,39 @@ class ManageTransport extends Page
         $this->loadData();
     }
 
-    public function autoDispatch()
+    public function autoDispatch(array $options = [])
     {
+        $trainAccessible = filter_var($options['train_accessible'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $preferTrainSmallGroups = filter_var($options['prefer_train_small_groups'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $availableBuses = array_key_exists('available_buses', $options) ? (int) $options['available_buses'] : 1;
+        $busCapacity = (int) ($options['bus_capacity'] ?? ($this->record->settings['bus_capacity'] ?? 50));
+        $threshold = $options['home_departure_threshold'] ?? ($this->record->settings['home_departure_threshold'] ?? '07:00');
+
+        // Update settings threshold if provided
+        $settings = $this->record->settings ?? [];
+        $settings['home_departure_threshold'] = $threshold;
+        $settings['bus_capacity'] = $busCapacity;
+        $this->record->update(['settings' => $settings]);
+
         // 1. Get all candidates for the selected day
         $participants = $this->record->participants_data ?? [];
         $candidatesAller = [];
         $candidatesRetour = [];
 
         foreach ($participants as $p) {
-            $role = $p['role'] ?? 'athlete';
             $dayResp = $p['survey_response']['responses'][$this->selectedDay] ?? null;
             $hasSchedule = isset($p['competition_days'][$this->selectedDay]);
 
-            $isIncluded = false;
+            $isIncludedAller = false;
             if ($this->planningMode === 'survey') {
-                $isIncluded = ($dayResp['aller']['mode'] ?? '') === 'bus' || ($p['is_manual'] ?? false);
+                $isIncludedAller = ($dayResp['aller']['mode'] ?? '') === 'bus' || ($p['is_manual'] ?? false);
             } elseif ($this->planningMode === 'schedule') {
-                $isIncluded = ($dayResp['aller']['mode'] ?? '') === 'bus' || $hasSchedule || ($p['is_manual'] ?? false);
+                $isIncludedAller = ($dayResp['aller']['mode'] ?? '') === 'bus' || $hasSchedule || ($p['is_manual'] ?? false);
             } else {
-                $isIncluded = true;
+                $isIncludedAller = true;
             }
 
-            if ($isIncluded && ($dayResp['aller']['mode'] ?? 'bus') === 'bus') {
+            if ($isIncludedAller && ($dayResp['aller']['mode'] ?? 'bus') === 'bus') {
                 $candidatesAller[] = $p;
             }
 
@@ -699,7 +710,7 @@ class ManageTransport extends Page
             }
         }
 
-        // 2. Identify Locked vs New Vehicles
+        // 2. Keep Locked Vehicles
         $transportPlan = $this->transportPlans[$this->selectedDay] ?? [];
         $vehicles = [];
         $assignedIds = [];
@@ -711,11 +722,11 @@ class ManageTransport extends Page
             }
         }
 
-        // Filter candidates who are already assigned in locked vehicles
-        $candidatesAller = array_filter($candidatesAller, fn ($c) => ! in_array($c['id'], $assignedIds));
-        $candidatesRetour = array_filter($candidatesRetour, fn ($c) => ! in_array($c['id'], $assignedIds));
+        // Filter candidates already assigned in locked vehicles
+        $candidatesAller = array_values(array_filter($candidatesAller, fn ($c) => ! in_array($c['id'], $assignedIds)));
+        $candidatesRetour = array_values(array_filter($candidatesRetour, fn ($c) => ! in_array($c['id'], $assignedIds)));
 
-        // 3. Identification of Parent Cars from Survey (only if not already in locked vehicles)
+        // 3. Parent Cars from Survey
         foreach ($participants as $p) {
             if (in_array($p['id'], $assignedIds)) {
                 continue;
@@ -741,7 +752,7 @@ class ManageTransport extends Page
                     'departure_datetime' => $this->selectedDay.' 07:30:00',
                     'departure_location' => 'Sion, piscine',
                 ];
-                $candidatesAller = array_filter($candidatesAller, fn ($c) => $c['id'] !== $p['id']);
+                $candidatesAller = array_values(array_filter($candidatesAller, fn ($c) => $c['id'] !== $p['id']));
             }
 
             if ($retourSeats > 0) {
@@ -756,82 +767,175 @@ class ManageTransport extends Page
                     'departure_datetime' => $this->selectedDay.' 17:30:00',
                     'departure_location' => 'Lieu compétition',
                 ];
-                $candidatesRetour = array_filter($candidatesRetour, fn ($c) => $c['id'] !== $p['id']);
+                $candidatesRetour = array_values(array_filter($candidatesRetour, fn ($c) => $c['id'] !== $p['id']));
             }
         }
 
-        // 4. Add Buses if needed for remaining candidates
-        $settings = $this->record->settings ?? [];
-        $defaultBusCapacity = $settings['bus_capacity'] ?? 50;
+        // 4. TRAIN DECISION LOGIC
+        $totalAller = count($candidatesAller);
+        $coachesAller = count(array_filter($candidatesAller, fn ($c) => ($c['role'] ?? '') === 'coach'));
+        
+        $shouldUseTrainAller = $trainAccessible && ($availableBuses === 0 || ($preferTrainSmallGroups && $totalAller > 0 && $totalAller <= 6 && $coachesAller <= 2));
 
-        if (! empty($candidatesAller)) {
+        if ($shouldUseTrainAller && $totalAller > 0) {
+            $trainPassengersAller = array_map(fn ($c) => $c['id'], $candidatesAller);
+            $ticketType = $this->buildTrainTicketDescription($candidatesAller, 'aller');
             $vehicles[] = [
-                'id'                 => 'bus_aller_'.$this->selectedDay.'_'.uniqid(),
-                'type'               => 'bus',
+                'id'                 => 'train_aller_'.$this->selectedDay.'_'.uniqid(),
+                'type'               => 'train',
                 'flow'               => 'aller',
-                'name'               => Carbon::parse($this->selectedDay)->translatedFormat('D').' - Bus Aller',
-                'capacity'           => $defaultBusCapacity,
-                'passengers'         => [],
-                'driver'             => 'Chauffeur Bus',
-                'departure_datetime' => $this->selectedDay.' 07:30:00',
-                'departure_location' => 'Sion, piscine',
+                'name'               => 'Train Aller',
+                'ticket_type'        => $ticketType,
+                'capacity'           => max($totalAller, 4),
+                'passengers'         => $trainPassengersAller,
+                'driver'             => 'CFF / SBB',
+                'departure_datetime' => $this->selectedDay.' 07:15:00',
+                'departure_location' => 'Gare de Sion',
+                'arrival_datetime'   => $this->selectedDay.' 08:30:00',
+                'arrival_location'   => 'Gare destination',
+                'note'               => $availableBuses === 0 ? 'Aucun bus disponible' : 'Suggéré (Petit groupe)',
             ];
+            $candidatesAller = [];
         }
-        if (! empty($candidatesRetour)) {
+
+        $totalRetour = count($candidatesRetour);
+        $shouldUseTrainRetour = $trainAccessible && ($availableBuses === 0 || ($preferTrainSmallGroups && $totalRetour > 0 && $totalRetour <= 6));
+        if ($shouldUseTrainRetour && $totalRetour > 0) {
+            $trainPassengersRetour = array_map(fn ($c) => $c['id'], $candidatesRetour);
+            $ticketType = $this->buildTrainTicketDescription($candidatesRetour, 'retour');
             $vehicles[] = [
-                'id'                 => 'bus_retour_'.$this->selectedDay.'_'.uniqid(),
-                'type'               => 'bus',
+                'id'                 => 'train_retour_'.$this->selectedDay.'_'.uniqid(),
+                'type'               => 'train',
                 'flow'               => 'retour',
-                'name'               => Carbon::parse($this->selectedDay)->translatedFormat('D').' - Bus Retour',
-                'capacity'           => $defaultBusCapacity,
-                'passengers'         => [],
-                'driver'             => 'Chauffeur Bus',
-                'departure_datetime' => $this->selectedDay.' 17:30:00',
-                'departure_location' => 'Lieu compétition',
+                'name'               => 'Train Retour',
+                'ticket_type'        => $ticketType,
+                'capacity'           => max($totalRetour, 4),
+                'passengers'         => $trainPassengersRetour,
+                'driver'             => 'CFF / SBB',
+                'departure_datetime' => $this->selectedDay.' 17:15:00',
+                'departure_location' => 'Gare destination',
+                'arrival_datetime'   => $this->selectedDay.' 18:30:00',
+                'arrival_location'   => 'Gare de Sion',
+                'note'               => $availableBuses === 0 ? 'Aucun bus disponible' : 'Suggéré (Petit groupe)',
             ];
+            $candidatesRetour = [];
         }
 
-        // 5. Fill Vehicles
-        foreach ($vehicles as &$v) {
-            if ($v['locked'] ?? false) {
-                continue;
+        // 5. BUS DECISION LOGIC
+        if ($availableBuses > 0) {
+            if (! empty($candidatesAller)) {
+                $neededBusesAller = min($availableBuses, ceil(count($candidatesAller) / max($busCapacity, 1)));
+                for ($b = 1; $b <= $neededBusesAller; $b++) {
+                    $vehicles[] = [
+                        'id'                 => 'bus_aller_'.$this->selectedDay.'_'.uniqid(),
+                        'type'               => 'bus',
+                        'flow'               => 'aller',
+                        'name'               => Carbon::parse($this->selectedDay)->translatedFormat('D').' - Bus Aller '.($neededBusesAller > 1 ? "#$b" : ''),
+                        'capacity'           => $busCapacity,
+                        'passengers'         => [],
+                        'driver'             => 'Chauffeur Bus',
+                        'departure_datetime' => $this->selectedDay.' 07:30:00',
+                        'departure_location' => 'Sion, piscine',
+                    ];
+                }
             }
 
-            $isRetour = ($v['flow'] === 'retour');
-            $targetCandidates = $isRetour ? $candidatesRetour : $candidatesAller;
-            if (empty($targetCandidates)) {
-                continue;
+            if (! empty($candidatesRetour)) {
+                $neededBusesRetour = min($availableBuses, ceil(count($candidatesRetour) / max($busCapacity, 1)));
+                for ($b = 1; $b <= $neededBusesRetour; $b++) {
+                    $vehicles[] = [
+                        'id'                 => 'bus_retour_'.$this->selectedDay.'_'.uniqid(),
+                        'type'               => 'bus',
+                        'flow'               => 'retour',
+                        'name'               => Carbon::parse($this->selectedDay)->translatedFormat('D').' - Bus Retour '.($neededBusesRetour > 1 ? "#$b" : ''),
+                        'capacity'           => $busCapacity,
+                        'passengers'         => [],
+                        'driver'             => 'Chauffeur Bus',
+                        'departure_datetime' => $this->selectedDay.' 17:30:00',
+                        'departure_location' => 'Lieu compétition',
+                    ];
+                }
             }
 
-            $slots = $v['capacity'] - count($v['passengers']);
-            while ($slots > 0 && ! empty($targetCandidates)) {
-                $p = array_shift($targetCandidates);
-                $v['passengers'][] = $p['id'];
-                $slots--;
+            foreach ($vehicles as &$v) {
+                if (($v['type'] ?? '') !== 'bus' || ($v['locked'] ?? false)) {
+                    continue;
+                }
+
+                $isRetour = ($v['flow'] === 'retour');
+                $targetCandidates = $isRetour ? $candidatesRetour : $candidatesAller;
+                if (empty($targetCandidates)) {
+                    continue;
+                }
+
+                $slots = $v['capacity'] - count($v['passengers']);
+                while ($slots > 0 && ! empty($targetCandidates)) {
+                    $p = array_shift($targetCandidates);
+                    $v['passengers'][] = $p['id'];
+                    $slots--;
+                }
+
+                if ($isRetour) {
+                    $candidatesRetour = $targetCandidates;
+                } else {
+                    $candidatesAller = $targetCandidates;
+                }
+            }
+            unset($v);
+
+            if ($trainAccessible && ! empty($candidatesAller)) {
+                $ticketType = $this->buildTrainTicketDescription($candidatesAller, 'aller');
+                $overflowAller = array_map(fn ($c) => $c['id'], $candidatesAller);
+                $vehicles[] = [
+                    'id'                 => 'train_aller_overflow_'.$this->selectedDay.'_'.uniqid(),
+                    'type'               => 'train',
+                    'flow'               => 'aller',
+                    'name'               => 'Train Aller (Surnombre)',
+                    'ticket_type'        => $ticketType,
+                    'capacity'           => count($overflowAller),
+                    'passengers'         => $overflowAller,
+                    'driver'             => 'CFF / SBB',
+                    'departure_datetime' => $this->selectedDay.' 07:15:00',
+                    'departure_location' => 'Gare de Sion',
+                    'arrival_datetime'   => $this->selectedDay.' 08:30:00',
+                    'arrival_location'   => 'Gare destination',
+                    'note'               => 'Train recommandé pour le complément de groupe',
+                ];
             }
 
-            // Sync back the candidates lists
-            if ($isRetour) {
-                $candidatesRetour = $targetCandidates;
-            } else {
-                $candidatesAller = $targetCandidates;
+            if ($trainAccessible && ! empty($candidatesRetour)) {
+                $ticketType = $this->buildTrainTicketDescription($candidatesRetour, 'retour');
+                $overflowRetour = array_map(fn ($c) => $c['id'], $candidatesRetour);
+                $vehicles[] = [
+                    'id'                 => 'train_retour_overflow_'.$this->selectedDay.'_'.uniqid(),
+                    'type'               => 'train',
+                    'flow'               => 'retour',
+                    'name'               => 'Train Retour (Surnombre)',
+                    'ticket_type'        => $ticketType,
+                    'capacity'           => count($overflowRetour),
+                    'passengers'         => $overflowRetour,
+                    'driver'             => 'CFF / SBB',
+                    'departure_datetime' => $this->selectedDay.' 17:15:00',
+                    'departure_location' => 'Gare destination',
+                    'arrival_datetime'   => $this->selectedDay.' 18:30:00',
+                    'arrival_location'   => 'Gare de Sion',
+                    'note'               => 'Train recommandé pour le complément de groupe',
+                ];
             }
         }
-        unset($v);
 
-        // 6. Calculate Departure Times (only for non-locked)
+        // 6. Calculate Departure Times for non-locked road vehicles
         $dist = (float) ($settings['distance_km'] ?? 0);
         $prep = (int) ($settings['duration_prep_min'] ?? 90);
         $recup = (int) ($settings['duration_recup_min'] ?? 60);
 
         foreach ($vehicles as &$v) {
-            if ($v['locked'] ?? false) {
+            if ($v['locked'] ?? false || $v['type'] === 'train') {
                 continue;
             }
             $isRetour = ($v['flow'] === 'retour');
 
             if ($isRetour) {
-                // Return: Departure = Last competition + buffer (recup)
                 $lastTime = null;
                 foreach ($v['passengers'] as $pid) {
                     $p = $this->participantsMap[$pid] ?? null;
@@ -840,7 +944,6 @@ class ManageTransport extends Page
                         if (isset($p['competition_days'][$this->selectedDay]['last'])) {
                             $pLastStr = $p['competition_days'][$this->selectedDay]['last'];
                         } elseif (isset($p['last_competition_datetime'])) {
-                            // Fallback if day-specific not found but global matches today
                             if (str_starts_with($p['last_competition_datetime'], $this->selectedDay)) {
                                 $pLastStr = $p['last_competition_datetime'];
                             }
@@ -858,7 +961,6 @@ class ManageTransport extends Page
                     $v['departure_datetime'] = $lastTime->copy()->addMinutes($recup)->toDateTimeString();
                 }
             } else {
-                // Aller: Departure = First competition - (dist/speed + prep)
                 $speed = (float) (($v['type'] === 'bus') ? ($settings['bus_speed'] ?? 80) : ($settings['car_speed'] ?? 100));
                 $travelTimeMin = ($speed > 0) ? ($dist / $speed * 60) : 0;
                 $totalOffset = $prep + $travelTimeMin;
@@ -893,7 +995,6 @@ class ManageTransport extends Page
 
         $this->transportPlans[$this->selectedDay] = $vehicles;
 
-        $settings = $this->record->settings ?? [];
         $settings['last_auto_dispatch_at'] = now()->toDateTimeString();
         $this->record->update([
             'transport_plan' => $this->transportPlans,
@@ -902,6 +1003,44 @@ class ManageTransport extends Page
 
         $this->loadData();
         Notification::make()->title('Calcul automatique terminé (Jour : '.$this->selectedDay.')')->success()->send();
+    }
+
+    private function buildTrainTicketDescription(array $candidates, string $flow): string
+    {
+        $athletes = array_filter($candidates, fn ($c) => ($c['role'] ?? '') !== 'coach');
+        $coaches = array_filter($candidates, fn ($c) => ($c['role'] ?? '') === 'coach');
+
+        $numAthletes = count($athletes);
+        $numCoaches = count($coaches);
+        $parts = [];
+
+        if ($numAthletes > 0) {
+            $cards = (int) ceil($numAthletes / 4);
+            $parts[] = ($cards > 1 ? "{$cards}x Cartes Friends" : '1x Carte Friends')." ({$numAthletes} athlète".($numAthletes > 1 ? 's' : '').')';
+        }
+
+        if ($numCoaches > 0) {
+            $overnightCoaches = 0;
+            $sameDayCoaches = 0;
+
+            foreach ($coaches as $c) {
+                $cId = (string) ($c['id'] ?? '');
+                if (in_array($cId, $this->hotelNeededIds)) {
+                    $overnightCoaches++;
+                } else {
+                    $sameDayCoaches++;
+                }
+            }
+
+            if ($sameDayCoaches > 0) {
+                $parts[] = "{$sameDayCoaches}x Carte".($sameDayCoaches > 1 ? 's' : '').' journalière'.($sameDayCoaches > 1 ? 's' : '');
+            }
+            if ($overnightCoaches > 0) {
+                $parts[] = "{$overnightCoaches}x Billet".($overnightCoaches > 1 ? 's' : '').' simple'.($overnightCoaches > 1 ? 's' : '');
+            }
+        }
+
+        return ! empty($parts) ? implode(' + ', $parts) : 'Billet CFF';
     }
 
     protected function getHeaderActions(): array
@@ -948,11 +1087,40 @@ class ManageTransport extends Page
                 ->action(fn (array $data) => $this->addManualParticipant($data['name'], $data['role'])),
             Action::make('auto_dispatch')
                 ->label(fn () => 'Calcul auto '.($this->selectedDay ? "($this->selectedDay)" : ''))
-                ->tooltip('Génère un plan pour le jour sélectionné (écrase le plan actuel non verrouillé de ce jour)')
-                ->requiresConfirmation()
-                ->modalHeading('Réinitialiser le plan pour ce jour ?')
-                ->modalDescription('Cela va supprimer les attributions actuelles des véhicules (SAUF ceux qui sont verrouillés) pour générer un nouveau plan basé sur le mode : '.($this->planningMode === 'survey' ? 'Sondage' : ($this->planningMode === 'schedule' ? 'Horaire' : 'Complet')).'.')
-                ->action(fn () => $this->autoDispatch())
+                ->tooltip('Génère un plan de transport intelligent pour le jour sélectionné')
+                ->modalHeading('Calculer la distribution automatique')
+                ->modalDescription('Ajustez les contraintes pour cette journée. Les véhicules et chambres verrouillés ne seront pas modifiés.')
+                ->form([
+                    \Filament\Forms\Components\Section::make('Contraintes Train & Option Groupe')
+                        ->schema([
+                            \Filament\Forms\Components\Checkbox::make('train_accessible')
+                                ->label('Gare de destination à proximité (Lieu accessible en train)')
+                                ->default(true),
+                            \Filament\Forms\Components\Checkbox::make('prefer_train_small_groups')
+                                ->label('Privilégier le Train (Carte Friends) si petit groupe (≤ 6 pers. & ≤ 2 entraîneurs)')
+                                ->default(true),
+                        ]),
+                    \Filament\Forms\Components\Section::make('Véhicules du club & Horaires')
+                        ->schema([
+                            \Filament\Forms\Components\TextInput::make('available_buses')
+                                ->label('Nombre de Minibus du club')
+                                ->numeric()
+                                ->default(1)
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('bus_capacity')
+                                ->label('Capacité du Minibus')
+                                ->numeric()
+                                ->default(fn () => $this->record->settings['bus_capacity'] ?? 50)
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('home_departure_threshold')
+                                ->label('Heure limite de départ le matin (Club)')
+                                ->type('time')
+                                ->default(fn () => $this->record->settings['home_departure_threshold'] ?? '07:00')
+                                ->helperText('Si le départ du club doit se faire avant cette heure, les athlètes seront suggérés pour la nuitée la veille.')
+                                ->required(),
+                        ])->columns(3),
+                ])
+                ->action(fn (array $data) => $this->autoDispatch($data))
                 ->color('danger')
                 ->icon('heroicon-o-arrow-path'),
             Action::make('edit')
