@@ -9,6 +9,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\EventLogisticResource;
 
+use App\Filament\Actions\GenerateMessageAction;
+
 class EditEventLogistic extends EditRecord
 {
     protected static string $resource = EventLogisticResource::class;
@@ -16,6 +18,8 @@ class EditEventLogistic extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            GenerateMessageAction::make(),
+
             Actions\ActionGroup::make([
                 Actions\Action::make('public_survey')
                     ->label('Sondage public')

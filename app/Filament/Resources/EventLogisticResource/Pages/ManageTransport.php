@@ -1046,6 +1046,7 @@ class ManageTransport extends Page
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Actions\GenerateMessageAction::make(),
             Action::make('planning_mode')
                 ->label(fn () => match ($this->planningMode) {
                     'survey'   => 'Mode : Sondage',

@@ -1,0 +1,214 @@
+<?php
+
+namespace App\Filament\Actions;
+
+use Filament\Forms;
+use Filament\Actions\Action;
+use App\Models\EventLogistic;
+use Filament\Notifications\Notification;
+use App\Services\LogisticsMessageGenerator;
+
+class GenerateMessageAction extends Action
+{
+    public static function getDefaultName(): ?string
+    {
+        return 'generate_message';
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this
+            ->label('Générer Message')
+            ->icon('heroicon-o-chat-bubble-left-right')
+            ->color('success')
+            ->modalHeading('Générer un message modèle prêt à l\'emploi')
+            ->modalDescription('Sélectionnez le type de message souhaité pour générer le modèle exact conforme au club avec vos données.')
+            ->modalSubmitActionLabel('Copier le message')
+            ->modalIcon('heroicon-o-chat-bubble-bottom-center-text')
+            ->form([
+                Forms\Components\Select::make('template')
+                    ->label('Modèle de message')
+                    ->options([
+                        'comp_info_long'    => '📢 Compétition - Info Générale (Long)',
+                        'comp_info_short'   => '⚡ Compétition - Briefing Jour J / WhatsApp (Court)',
+                        'travel_preliminary'=> '📋 Déplacement - Infos Préliminaires (Hébergement & Transports)',
+                        'travel_survey'     => '✍️ Déplacement - Inscription & Sondage',
+                        'travel_plan'       => '🚘 Déplacement - Plan de Transport Définitif',
+                        'travel_expenses'   => '💰 Déplacement - Note de Frais & Remboursement (Art. 20)',
+                    ])
+                    ->default('comp_info_long')
+                    ->live()
+                    ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\Select::make('registration_type')
+                            ->label('Type d\'inscription')
+                            ->options([
+                                'tiiva'        => 'Tiiva / Sondage (Standard)',
+                                'convocation'  => 'Convocations (CSI / Équipe)',
+                                'qualification'=> 'Qualifications (Invitations)',
+                            ])
+                            ->default('tiiva')
+                            ->visible(fn ($get) => $get('template') === 'comp_info_long')
+                            ->live()
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                        Forms\Components\TextInput::make('location')
+                            ->label('Lieu de la compétition')
+                            ->placeholder('Ex: Lausanne, Bern, Sion...')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+                    ]),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('trainers_XXX')
+                            ->label('Destinataires Entraîneurs (ex: U14/U16)')
+                            ->placeholder('Ex: U14/U16 ou Sprint')
+                            ->visible(fn ($get) => $get('template') === 'comp_info_long')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                        Forms\Components\TextInput::make('hotel_link')
+                            ->label('Lien de l\'hôtel (pour parents/accompagnants)')
+                            ->placeholder('https://...')
+                            ->visible(fn ($get) => in_array($get('template'), ['travel_preliminary', 'travel_survey']))
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+                    ]),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('qualification_url')
+                            ->label('Lien des qualifiés (URL)')
+                            ->placeholder('https://...')
+                            ->visible(fn ($get) => $get('template') === 'comp_info_long' && $get('registration_type') === 'qualification')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                        Forms\Components\TextInput::make('qualified_athletes')
+                            ->label('Athlètes qualifiés')
+                            ->placeholder('Ex: Jean Dupont (2008), Marie Tudor (2010)...')
+                            ->visible(fn ($get) => $get('template') === 'comp_info_long' && $get('registration_type') === 'qualification')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+                    ]),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('meeting_time')
+                            ->label('Heure de rendez-vous (Rdv)')
+                            ->placeholder('Ex: 07h30')
+                            ->default('xxhxx')
+                            ->visible(fn ($get) => $get('template') === 'comp_info_short')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                        Forms\Components\TextInput::make('spikes_info')
+                            ->label('Pointes')
+                            ->default('en céramique de 5mm. Vous pouvez en acheter sur place (6 CHF).')
+                            ->visible(fn ($get) => $get('template') === 'comp_info_short')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+                    ]),
+
+                Forms\Components\Section::make('Accompagnement / Présence entraîneurs')
+                    ->visible(fn ($get) => $get('template') === 'comp_info_long')
+                    ->schema([
+                        Forms\Components\Grid::make(5)
+                            ->schema([
+                                Forms\Components\TextInput::make('coaches_by_cat.u10')->label('U10')->placeholder('1 ➝ Marc'),
+                                Forms\Components\TextInput::make('coaches_by_cat.u12')->label('U12')->placeholder('2 ➝ Sophie'),
+                                Forms\Components\TextInput::make('coaches_by_cat.u14')->label('U14')->placeholder('2 ➝ Jean'),
+                                Forms\Components\TextInput::make('coaches_by_cat.u16')->label('U16')->placeholder('1 ➝ Thomas'),
+                                Forms\Components\TextInput::make('coaches_by_cat.u18')->label('U18+')->placeholder('1 ➝ Paul'),
+                            ]),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
+
+                Forms\Components\CheckboxList::make('weather')
+                    ->label('Conditions météo (Jour J)')
+                    ->options([
+                        'hot'  => '🥵 Canicule / Extrêmement chaud',
+                        'cold' => '🥶 Froid / Bonnet & Coupe-vent',
+                        'rain' => '☔️ Pluie / Imperméables',
+                    ])
+                    ->columns(3)
+                    ->visible(fn ($get) => $get('template') === 'comp_info_short')
+                    ->live()
+                    ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                Forms\Components\Toggle::make('include_checklist')
+                    ->label('Inclure la checklist du sac de compétition')
+                    ->default(true)
+                    ->visible(fn ($get) => $get('template') === 'comp_info_short')
+                    ->live()
+                    ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                Forms\Components\Textarea::make('custom_note')
+                    ->label('Remarque / Note spécifique (optionnel)')
+                    ->placeholder('Ex: Pensez à vérifier vos maillots du club...')
+                    ->rows(2)
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                Forms\Components\Textarea::make('message_output')
+                    ->label('Message généré (prêt à être copié)')
+                    ->rows(14)
+                    ->dehydrated(false),
+            ])
+            ->mountUsing(function (Forms\Form $form, ?EventLogistic $record) {
+                if (! $record) {
+                    return;
+                }
+                $data = [
+                    'template'          => 'comp_info_long',
+                    'registration_type' => 'tiiva',
+                    'location'          => $record->settings['location'] ?? '',
+                    'meeting_time'      => 'xxhxx',
+                    'spikes_info'       => 'en céramique de 5mm. Vous pouvez en acheter sur place (6 CHF).',
+                    'include_checklist' => true,
+                ];
+                $data['message_output'] = LogisticsMessageGenerator::generate($record, $data);
+                $form->fill($data);
+            })
+            ->action(function (array $data, ?EventLogistic $record, $livewire) {
+                if (! $record) {
+                    return;
+                }
+                $text = LogisticsMessageGenerator::generate($record, $data);
+                $livewire->js("navigator.clipboard.writeText(" . json_encode($text) . ");");
+                Notification::make()
+                    ->title('Message copié dans le presse-papier !')
+                    ->success()
+                    ->send();
+            });
+    }
+
+    protected static function updateMessageOutput($set, $get, ?EventLogistic $record): void
+    {
+        if (! $record) {
+            return;
+        }
+        $options = [
+            'template'           => $get('template'),
+            'registration_type'  => $get('registration_type'),
+            'location'           => $get('location'),
+            'trainers_XXX'       => $get('trainers_XXX'),
+            'hotel_link'         => $get('hotel_link'),
+            'qualification_url'  => $get('qualification_url'),
+            'qualified_athletes' => $get('qualified_athletes'),
+            'meeting_time'       => $get('meeting_time'),
+            'spikes_info'        => $get('spikes_info'),
+            'coaches_by_cat'     => $get('coaches_by_cat'),
+            'weather'            => $get('weather'),
+            'include_checklist'  => $get('include_checklist'),
+            'custom_note'        => $get('custom_note'),
+        ];
+        $set('message_output', LogisticsMessageGenerator::generate($record, $options));
+    }
+}

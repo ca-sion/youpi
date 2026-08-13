@@ -238,6 +238,7 @@ class EventLogisticTest extends TestCase
                     'name'                       => 'Bus Rider',
                     'first_competition_datetime' => '2024-07-15 10:00:00',
                     'survey_response'            => [
+                        'filled_at' => '2024-07-10 10:00:00',
                         'responses' => [
                             '2024-07-15' => ['aller' => ['mode' => 'bus']],
                         ],
@@ -248,6 +249,7 @@ class EventLogisticTest extends TestCase
                     'name'                       => 'Car Driver',
                     'first_competition_datetime' => '2024-07-15 11:00:00',
                     'survey_response'            => [
+                        'filled_at' => '2024-07-10 10:00:00',
                         'responses' => [
                             '2024-07-15' => ['aller' => ['mode' => 'car_seats', 'seats' => 2]],
                         ],
@@ -257,7 +259,7 @@ class EventLogisticTest extends TestCase
         ]);
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
-            ->call('autoDispatch')
+            ->call('autoDispatch', ['available_buses' => 0])
             ->assertNotified();
 
         $logistic->refresh();
@@ -550,6 +552,7 @@ class EventLogisticTest extends TestCase
                     'name'                       => 'Early Athlete',
                     'first_competition_datetime' => '2024-07-15 09:00:00',
                     'survey_response'            => [
+                        'filled_at' => '2024-07-10 10:00:00',
                         'responses' => [
                             '2024-07-15' => ['aller' => ['mode' => 'bus']],
                         ],

@@ -229,7 +229,7 @@ class ManageTransportTest extends TestCase
 
         Livewire::test(ManageTransport::class, ['record' => $logistic->getRouteKey()])
             ->set('selectedDay', '2024-07-15')
-            ->call('autoDispatch');
+            ->call('autoDispatch', ['prefer_train_small_groups' => false, 'train_accessible' => false]);
 
         $logistic->refresh();
         $plan = $logistic->transport_plan['2024-07-15'];
