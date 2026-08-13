@@ -75,7 +75,7 @@ class Survey extends Component
         return $p && (($p['role'] ?? '') === 'coach' || str_contains($p['name'] ?? '', '[E]'));
     }
 
-    public function getIsSurveyClosedProperty()
+    public function getSurveyDeadlineProperty()
     {
         $settings = $this->event_logistic->settings ?? [];
         $deadlineAt = $settings['survey_deadline_at'] ?? null;
@@ -83,16 +83,25 @@ class Survey extends Component
         $startDateStr = $settings['start_date'] ?? null;
 
         if ($deadlineAt) {
-            return now()->isAfter(\Carbon\Carbon::parse($deadlineAt));
+            return \Carbon\Carbon::parse($deadlineAt);
         }
 
         if ($deadlineDaysBefore !== null && $startDateStr) {
-            $deadline = \Carbon\Carbon::parse($startDateStr)->subDays((int) $deadlineDaysBefore)->startOfDay();
-
-            return now()->isAfter($deadline);
+            return \Carbon\Carbon::parse($startDateStr)->subDays((int) $deadlineDaysBefore)->startOfDay();
         }
 
-        return false;
+        return null;
+    }
+
+    public function getIsSurveyClosedProperty()
+    {
+        $deadline = $this->survey_deadline;
+
+        if (! $deadline) {
+            return false;
+        }
+
+        return now()->isAfter($deadline);
     }
 
     public function getStatsProperty()

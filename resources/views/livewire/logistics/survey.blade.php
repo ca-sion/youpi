@@ -1,11 +1,23 @@
 <div class="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6 border-b">
-            <h1 class="text-xl leading-6 font-bold">
-                Sondage logistique : {{ $event_logistic->name }}
-            </h1>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h1 class="text-xl leading-6 font-bold text-gray-900">
+                    Sondage logistique : {{ $event_logistic->name }}
+                </h1>
+                @if($this->survey_deadline)
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md text-xs sm:text-sm text-blue-900 font-medium self-start sm:self-auto shadow-sm">
+                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>
+                            Date limite : <strong class="font-bold">{{ ucfirst($this->survey_deadline->translatedFormat('l d F Y')) }}</strong>@if($this->survey_deadline->format('H:i') !== '00:00') à {{ $this->survey_deadline->format('H\hi') }}@endif
+                        </span>
+                    </div>
+                @endif
+            </div>
             <div class="mt-2 text-sm space-y-2">
-                <p>Pourquoi ce condage ? Il nous aide à organiser les transports (bus du club, covoiturage) de manière efficace pour tout le monde.</p>
+                <p>Pourquoi ce sondage ? Il nous aide à organiser les transports (bus du club, covoiturage) de manière efficace pour tout le monde.</p>
                 <div class="bg-white/60 rounded p-3 border text-xs sm:text-sm">
                     <ul class="list-disc list-inside space-y-1">
                         <li>Athlètes : Sélectionnez votre nom dans la liste.</li>

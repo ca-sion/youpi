@@ -275,4 +275,20 @@ class LogisticsSurveyTest extends TestCase
             ->assertSee('Athlete 1')
             ->assertSee('Athlete 2');
     }
+
+    /** @test */
+    public function it_displays_survey_deadline_box_in_view()
+    {
+        $logistic = EventLogistic::factory()->create([
+            'settings' => [
+                'survey_deadline_at' => '2026-09-15 18:00:00',
+            ],
+        ]);
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->assertSet('survey_deadline', \Carbon\Carbon::parse('2026-09-15 18:00:00'))
+            ->assertSee('Date limite :')
+            ->assertSee('Mardi 15 septembre 2026')
+            ->assertSee('à 18h00');
+    }
 }
