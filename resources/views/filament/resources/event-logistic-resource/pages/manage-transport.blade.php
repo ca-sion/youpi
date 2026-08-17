@@ -130,6 +130,9 @@
                                                     <template x-if="isCoach(p.id)">
                                                         <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
                                                     </template>
+                                                    <template x-if="getCffSubscription(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded uppercase leading-tight shrink-0" :class="getCffSubscription(p.id) === 'ag' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-sky-100 text-sky-800 border border-sky-300'" x-text="getCffSubscription(p.id) === 'ag' ? 'AG' : '1/2'"></span>
+                                                    </template>
                                                     <div class="flex items-center gap-1 shrink-0" x-show="getParticipantFirstTime(p.id)">
                                                          <span class="text-[10px] font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(p.id)"></span>
                                                     </div>
@@ -185,6 +188,9 @@
                                                     <span class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></span>
                                                     <template x-if="isCoach(p.id)">
                                                         <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                    </template>
+                                                    <template x-if="getCffSubscription(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded uppercase leading-tight shrink-0" :class="getCffSubscription(p.id) === 'ag' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-sky-100 text-sky-800 border border-sky-300'" x-text="getCffSubscription(p.id) === 'ag' ? 'AG' : '1/2'"></span>
                                                     </template>
                                                     <div class="flex items-center gap-1 shrink-0" x-show="getParticipantFirstTime(p.id)">
                                                         <span class="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(p.id)"></span>
@@ -335,6 +341,9 @@
                                                             <template x-if="isCoach(pId)">
                                                                 <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
                                                             </template>
+                                                            <template x-if="v.type === 'train' && getCffSubscription(pId)">
+                                                                <span class="text-[8px] font-black px-1 rounded uppercase leading-tight shrink-0" :class="getCffSubscription(pId) === 'ag' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-600 border border-slate-200'" x-text="getCffSubscription(pId) === 'ag' ? 'AG' : '1/2'"></span>
+                                                            </template>
                                                             <div class="flex items-center gap-1 shrink-0" x-show="getParticipantFirstTime(pId)">
                                                                  <span class="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded tabular-nums" x-text="getParticipantFirstTime(pId)"></span>
                                                             </div>
@@ -409,6 +418,9 @@
                                                     <template x-if="isCoach(p.id)">
                                                         <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
                                                     </template>
+                                                    <template x-if="getCffSubscription(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded uppercase leading-tight shrink-0" :class="getCffSubscription(p.id) === 'ag' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-sky-100 text-sky-800 border border-sky-300'" x-text="getCffSubscription(p.id) === 'ag' ? 'AG' : '1/2'"></span>
+                                                    </template>
                                                     <div class="flex items-center gap-1 shrink-0" x-show="getParticipantLastTime(p.id)">
                                                          <span class="text-[10px] font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(p.id)"></span>
                                                     </div>
@@ -451,6 +463,12 @@
                                                         <div class="text-[8px] font-black px-1 rounded border leading-none shrink-0" :class="getParticipantSourceColor(p.id)" x-text="getParticipantSource(p.id)"></div>
                                                     </div>
                                                     <span class="text-xs font-bold text-gray-800 truncate" x-text="p.name"></span>
+                                                    <template x-if="isCoach(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                    </template>
+                                                    <template x-if="getCffSubscription(p.id)">
+                                                        <span class="text-[8px] font-black px-1 rounded uppercase leading-tight shrink-0" :class="getCffSubscription(p.id) === 'ag' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-sky-100 text-sky-800 border border-sky-300'" x-text="getCffSubscription(p.id) === 'ag' ? 'AG' : '1/2'"></span>
+                                                    </template>
                                                     <div class="flex items-center gap-1 shrink-0" x-show="getParticipantLastTime(p.id)">
                                                         <span class="text-[9px] font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(p.id)"></span>
                                                    </div>
@@ -592,6 +610,9 @@
                                                             <div class="text-xs font-bold text-gray-800 truncate" x-text="participantsMap[pId] ? participantsMap[pId].name : '?'"></div>
                                                             <template x-if="isCoach(pId)">
                                                                 <span class="text-[8px] font-black px-1 rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase leading-tight">C</span>
+                                                            </template>
+                                                            <template x-if="v.type === 'train' && getCffSubscription(pId)">
+                                                                <span class="text-[8px] font-black px-1 rounded uppercase leading-tight shrink-0" :class="getCffSubscription(pId) === 'ag' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-600 border border-slate-200'" x-text="getCffSubscription(pId) === 'ag' ? 'AG' : '1/2'"></span>
                                                             </template>
                                                             <div class="flex items-center gap-1 shrink-0" x-show="getParticipantLastTime(pId)">
                                                                  <span class="text-[9px] font-mono font-bold text-orange-600 bg-orange-50 px-1 rounded tabular-nums" x-text="getParticipantLastTime(pId)"></span>
@@ -1114,6 +1135,13 @@
                 isCoach(pId) {
                     const p = this.participantsMap[pId];
                     return p && p.role === 'coach';
+                },
+
+                getCffSubscription(pId) {
+                    const p = this.participantsMap[pId];
+                    if (!p) return null;
+                    const sub = p.survey_response?.cff_subscription || p.cff_subscription || 'none';
+                    return (sub === 'ag' || sub === 'half_fare') ? sub : null;
                 },
 
                 copyCompactText(flow = 'aller') {

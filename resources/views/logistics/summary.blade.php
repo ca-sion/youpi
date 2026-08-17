@@ -200,9 +200,18 @@
                                                                     }
                                                                 }
                                                             @endphp
-                                                            <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] shadow-sm 
-                                                                {{ $isImpossible ? 'text-red-600 border-red-200 bg-red-50 ring-1 ring-red-100' : ($isTight ? 'text-orange-600 border-orange-200 bg-orange-50 ring-1 ring-orange-100' : 'text-gray-700 bg-white border-gray-100') }}">
+                                                            <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] shadow-sm {{ $isImpossible ? 'text-red-600 border-red-200 bg-red-50 ring-1 ring-red-100' : ($isTight ? 'text-orange-600 border-orange-200 bg-orange-50 ring-1 ring-orange-100' : 'text-gray-700 bg-white border-gray-100') }}">
                                                                 <span class="font-bold">{{ $p['name'] ?? '?' }}</span>
+                                                                @if(($vehicle['type'] ?? '') === 'train')
+                                                                    @php
+                                                                        $sub = $p['survey_response']['cff_subscription'] ?? $p['cff_subscription'] ?? null;
+                                                                    @endphp
+                                                                    @if($sub === 'ag')
+                                                                        <span class="px-1 text-[8px] font-black rounded bg-indigo-50 text-indigo-700 border border-indigo-200">AG</span>
+                                                                    @elseif($sub === 'half_fare')
+                                                                        <span class="px-1 text-[8px] font-black rounded bg-slate-100 text-slate-600 border border-slate-200">1/2</span>
+                                                                    @endif
+                                                                @endif
                                                                 @if($compTime && $compTime->toDateString() === $day['date'])
                                                                     <span class="text-[9px] opacity-60 font-mono font-bold">({{ $compTime->format('H:i') }})</span>
                                                                 @endif
@@ -252,11 +261,11 @@
                                         <span class="text-[10px] font-black text-indigo-400 bg-white px-2 py-0.5 rounded-lg border border-indigo-100 shadow-sm">{{ count($room['occupant_ids']) }} pers.</span>
                                     </div>
                                     <div class="flex flex-wrap gap-1.5 relative">
-                                        @foreach($room['occupant_ids'] as $pid)
-                                            <span class="px-2 py-1 bg-white text-indigo-700 text-[10px] font-bold rounded-lg border border-indigo-50 shadow-sm">
-                                                {{ $participants[$pid]['name'] ?? '?' }}
-                                            </span>
-                                        @endforeach
+                                         @foreach($room['occupant_ids'] as $pid)
+                                             <span class="px-2 py-1 bg-white text-indigo-700 text-[10px] font-bold rounded-lg border border-indigo-50 shadow-sm">
+                                                 {{ $participants[$pid]['name'] ?? '?' }}
+                                             </span>
+                                         @endforeach
                                     </div>
                                     @if(!empty($room['note']))
                                         <div class="mt-3 text-[10px] text-indigo-500/70 italic font-medium leading-tight relative flex gap-2 items-start bg-white/40 p-2 rounded-lg">
@@ -418,7 +427,17 @@
                         @foreach($participants as $p)
                             <tr class="hover:bg-gray-50/30 transition-colors">
                                 <td class="px-6 py-4">
-                                    <div class="text-xs font-semibold text-gray-800">{{ $p['name'] }}</div>
+                                     @php
+                                         $sub = $p['survey_response']['cff_subscription'] ?? $p['cff_subscription'] ?? null;
+                                     @endphp
+                                     <div class="text-xs font-semibold text-gray-800 inline-flex items-center gap-1.5">
+                                         <span>{{ $p['name'] }}</span>
+                                          @if($sub === 'ag')
+                                              <span class="px-1 text-[8px] font-black rounded bg-indigo-50 text-indigo-700 border border-indigo-200">AG</span>
+                                          @elseif($sub === 'half_fare')
+                                              <span class="px-1 text-[8px] font-black rounded bg-slate-100 text-slate-600 border border-slate-200">1/2</span>
+                                          @endif
+                                     </div>
                                 </td>
                                 @foreach($days as $day)
                                     <td class="px-6 py-4 text-center">

@@ -183,14 +183,16 @@ class ManageTransport extends Page
                     }
                 }
 
-                // B. Départ matinal pour la journée qui suit cette nuitée
-                $targetCompDay = $nextDayDate ?? $this->selectedDay;
+                // B. Départ matinal pour la journée qui suit cette nuitée ou pour la journée sélectionnée
                 $firstCompStr = null;
-                if (isset($p['competition_days'][$targetCompDay]['first'])) {
-                    $firstCompStr = $p['competition_days'][$targetCompDay]['first'];
-                } elseif (isset($p['first_competition_datetime'])) {
-                    if (str_starts_with($p['first_competition_datetime'], $targetCompDay)) {
+                $daysToCheck = array_filter([$nextDayDate, $this->selectedDay]);
+                foreach ($daysToCheck as $checkDay) {
+                    if (isset($p['competition_days'][$checkDay]['first'])) {
+                        $firstCompStr = $p['competition_days'][$checkDay]['first'];
+                        break;
+                    } elseif (isset($p['first_competition_datetime']) && str_starts_with($p['first_competition_datetime'], $checkDay)) {
                         $firstCompStr = $p['first_competition_datetime'];
+                        break;
                     }
                 }
 
@@ -771,6 +773,32 @@ class ManageTransport extends Page
             }
         }
 
+        // 3.5. Fill candidates into available seats in parent cars first
+        foreach ($vehicles as &$v) {
+            if (($v['type'] ?? '') !== 'car' || ($v['locked'] ?? false)) {
+                continue;
+            }
+            $isRetour = (($v['flow'] ?? 'aller') === 'retour');
+            $targetCandidates = $isRetour ? $candidatesRetour : $candidatesAller;
+            if (empty($targetCandidates)) {
+                continue;
+            }
+
+            $slots = ($v['capacity'] ?? 0) - count($v['passengers'] ?? []);
+            while ($slots > 0 && ! empty($targetCandidates)) {
+                $p = array_shift($targetCandidates);
+                $v['passengers'][] = $p['id'];
+                $slots--;
+            }
+
+            if ($isRetour) {
+                $candidatesRetour = $targetCandidates;
+            } else {
+                $candidatesAller = $targetCandidates;
+            }
+        }
+        unset($v);
+
         // 4. TRAIN DECISION LOGIC
         $totalAller = count($candidatesAller);
         $coachesAller = count(array_filter($candidatesAller, fn ($c) => ($c['role'] ?? '') === 'coach'));
@@ -1007,12 +1035,39 @@ class ManageTransport extends Page
 
     private function buildTrainTicketDescription(array $candidates, string $flow): string
     {
-        $athletes = array_filter($candidates, fn ($c) => ($c['role'] ?? '') !== 'coach');
-        $coaches = array_filter($candidates, fn ($c) => ($c['role'] ?? '') === 'coach');
+        $agCount = 0;
+        $halfFareCount = 0;
+        $fullFareCount = 0;
+
+        foreach ($candidates as $c) {
+            $sub = $c['survey_response']['cff_subscription'] ?? $c['cff_subscription'] ?? 'none';
+            if ($sub === 'ag') {
+                $agCount++;
+            } elseif ($sub === 'half_fare') {
+                $halfFareCount++;
+            } else {
+                $fullFareCount++;
+            }
+        }
+
+        $parts = [];
+        if ($agCount > 0) {
+            $parts[] = "{$agCount}x AG (gratuit)";
+        }
+        if ($halfFareCount > 0) {
+            $parts[] = "{$halfFareCount}x Demi-tarif";
+        }
+
+        $nonAgCandidates = array_filter($candidates, function ($c) {
+            $sub = $c['survey_response']['cff_subscription'] ?? $c['cff_subscription'] ?? 'none';
+            return $sub !== 'ag';
+        });
+
+        $athletes = array_filter($nonAgCandidates, fn ($c) => ($c['role'] ?? '') !== 'coach');
+        $coaches = array_filter($nonAgCandidates, fn ($c) => ($c['role'] ?? '') === 'coach');
 
         $numAthletes = count($athletes);
         $numCoaches = count($coaches);
-        $parts = [];
 
         if ($numAthletes > 0) {
             $cards = (int) ceil($numAthletes / 4);

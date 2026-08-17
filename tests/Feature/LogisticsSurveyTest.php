@@ -38,6 +38,7 @@ class LogisticsSurveyTest extends TestCase
             ->set('participantId', 'new')
             ->set('newName', 'Jean Dupont')
             ->set('isCoach', true)
+            ->set('cff_subscription', 'none')
             ->set('responses.2026-02-05.aller.mode', 'bus')
             ->call('submit')
             ->assertHasNoErrors();
@@ -64,6 +65,7 @@ class LogisticsSurveyTest extends TestCase
             ->set('participantId', 'p1')
             ->assertSet('can_request_hotel', false)
             ->set('hotel_needed', true)
+            ->set('cff_subscription', 'none')
             ->call('submit');
 
         $logistic->refresh();
@@ -75,6 +77,7 @@ class LogisticsSurveyTest extends TestCase
             ->set('participantId', 'p2')
             ->assertSet('can_request_hotel', true)
             ->set('hotel_needed', true)
+            ->set('cff_subscription', 'none')
             ->call('submit');
 
         $logistic->refresh();
@@ -90,6 +93,7 @@ class LogisticsSurveyTest extends TestCase
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->set('participantId', 'new')
             ->set('newName', 'Parent Transport')
+            ->set('cff_subscription', 'none')
             ->set('responses.2026-02-05.aller.mode', 'car_seats')
             ->set('responses.2026-02-05.aller.seats', 3)
             ->set('responses.2026-02-05.retour.mode', 'absent')
@@ -154,6 +158,7 @@ class LogisticsSurveyTest extends TestCase
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->set('participantId', 'new')
             ->set('newName', 'Jean Dupont')
+            ->set('cff_subscription', 'none')
             ->call('submit');
 
         $logistic->refresh();
@@ -191,6 +196,7 @@ class LogisticsSurveyTest extends TestCase
             ->assertSet('stats.responded', ['Real Response'])
             // Simulate filling the empty one
             ->set('participantId', 'p1')
+            ->set('cff_subscription', 'none')
             ->call('submit')
             ->assertSet('stats.responded_count', 2)
             ->assertSet('stats.not_responded_count', 1);
@@ -205,7 +211,7 @@ class LogisticsSurveyTest extends TestCase
             ->set('participantId', 'new')
             ->set('newName', '') // Invalid
             ->call('submit')
-            ->assertHasErrors(['newName' => 'required_if']);
+            ->assertHasErrors(['newName' => 'required_if', 'cff_subscription' => 'required']);
     }
 
     /** @test */
@@ -243,6 +249,7 @@ class LogisticsSurveyTest extends TestCase
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->set('participantId', 'p1')
             ->set('remarks', 'Initial')
+            ->set('cff_subscription', 'none')
             ->call('submit');
 
         $logistic->refresh();
@@ -252,6 +259,7 @@ class LogisticsSurveyTest extends TestCase
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->set('participantId', 'p1')
             ->set('remarks', 'Updated')
+            ->set('cff_subscription', 'none')
             ->call('submit');
 
         $logistic->refresh();
@@ -290,5 +298,23 @@ class LogisticsSurveyTest extends TestCase
             ->assertSee('Date limite :')
             ->assertSee('Mardi 15 septembre 2026')
             ->assertSee('à 18h00');
+    }
+
+    /** @test */
+    public function it_saves_and_loads_cff_subscription()
+    {
+        $logistic = EventLogistic::factory()->create();
+
+        Livewire::test(Survey::class, ['event_logistic' => $logistic])
+            ->set('participantId', 'new')
+            ->set('newName', 'Athlète CFF')
+            ->set('cff_subscription', 'half_fare')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $logistic->refresh();
+        $p = $logistic->participants_data[0];
+        $this->assertEquals('half_fare', $p['survey_response']['cff_subscription']);
+        $this->assertEquals('half_fare', $p['cff_subscription']);
     }
 }

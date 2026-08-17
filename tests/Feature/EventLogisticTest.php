@@ -212,6 +212,7 @@ class EventLogisticTest extends TestCase
         // Simulating the user filling the survey
         Livewire::test(Survey::class, ['event_logistic' => $logistic])
             ->set('participantId', 'uuid-123')
+            ->set('cff_subscription', 'none')
             ->set('responses.2024-07-15.aller.mode', 'bus')
             ->call('submit')
             ->assertHasNoErrors();

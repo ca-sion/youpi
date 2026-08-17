@@ -176,6 +176,14 @@ class EventLogisticResource extends Resource
                                                     ->label('Rempli le')
                                                     ->disabled()
                                                     ->dehydrated(),
+                                                Forms\Components\Select::make('survey_response.cff_subscription')
+                                                    ->label('Abonnement CFF')
+                                                    ->options([
+                                                        'none'      => 'Plein tarif',
+                                                        'half_fare' => 'Demi-tarif (1/2)',
+                                                        'ag'        => 'AG (Abonnement Général)',
+                                                    ])
+                                                    ->default('none'),
                                                 Forms\Components\TextInput::make('survey_response.remarks')
                                                     ->label('Remarques (Sondage)'),
                                             ]),

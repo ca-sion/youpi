@@ -25,6 +25,8 @@ class Survey extends Component
 
     public $remarks;
 
+    public $cff_subscription = '';
+
     public function mount(EventLogistic $event_logistic)
     {
         $this->event_logistic = $event_logistic;
@@ -75,6 +77,27 @@ class Survey extends Component
         return $p && (($p['role'] ?? '') === 'coach' || str_contains($p['name'] ?? '', '[E]'));
     }
 
+    public function getHasHotelProperty()
+    {
+        $settings = $this->event_logistic->settings ?? [];
+        $daysCount = (int) ($settings['days_count'] ?? 1);
+
+        if ($daysCount > 1) {
+            return true;
+        }
+
+        $stayPlan = $this->event_logistic->stay_plan ?? [];
+        if (! empty($stayPlan)) {
+            return true;
+        }
+
+        $participants = collect($this->event_logistic->participants_data ?? []);
+
+        return $participants->contains(function ($p) {
+            return ($p['survey_response']['hotel_needed'] ?? false) || ($p['hotel_override'] ?? false);
+        });
+    }
+
     public function getSurveyDeadlineProperty()
     {
         $settings = $this->event_logistic->settings ?? [];
@@ -123,7 +146,7 @@ class Survey extends Component
 
     public function updatedParticipantId($value)
     {
-        $this->reset(['responses', 'hotel_needed', 'remarks', 'newName', 'isCoach']);
+        $this->reset(['responses', 'hotel_needed', 'remarks', 'newName', 'isCoach', 'cff_subscription']);
 
         if ($value === 'new' || ! $value) {
             return;
@@ -136,6 +159,7 @@ class Survey extends Component
             $this->responses = (array) ($r['responses'] ?? []);
             $this->hotel_needed = $r['hotel_needed'] ?? false;
             $this->remarks = $r['remarks'] ?? null;
+            $this->cff_subscription = $r['cff_subscription'] ?? $p['cff_subscription'] ?? '';
         }
     }
 
@@ -148,18 +172,22 @@ class Survey extends Component
         }
 
         $this->validate([
-            'participantId' => 'required',
-            'newName'       => 'required_if:participantId,new',
+            'participantId'    => 'required',
+            'newName'          => 'required_if:participantId,new',
+            'cff_subscription' => 'required|in:none,half_fare,ag',
+        ], [
+            'cff_subscription.required' => 'Veuillez indiquer si vous avez un abonnement CFF.',
         ]);
 
         $participants = $this->event_logistic->participants_data ?? [];
         $updated = false;
 
         $surveyResponse = [
-            'responses'    => $this->responses,
-            'hotel_needed' => $this->can_request_hotel ? $this->hotel_needed : false,
-            'remarks'      => $this->remarks,
-            'filled_at'    => now()->toDateTimeString(),
+            'responses'        => $this->responses,
+            'hotel_needed'     => $this->can_request_hotel ? $this->hotel_needed : false,
+            'remarks'          => $this->remarks,
+            'cff_subscription' => $this->cff_subscription ?: 'none',
+            'filled_at'        => now()->toDateTimeString(),
         ];
 
         if ($this->participantId === 'new') {
@@ -169,15 +197,17 @@ class Survey extends Component
             }
 
             $participants[] = [
-                'id'              => (string) Str::uuid(),
-                'name'            => $name,
-                'role'            => $this->isCoach ? 'coach' : 'athlete',
-                'survey_response' => $surveyResponse,
+                'id'               => (string) Str::uuid(),
+                'name'             => $name,
+                'role'             => $this->isCoach ? 'coach' : 'athlete',
+                'cff_subscription' => $this->cff_subscription ?: 'none',
+                'survey_response'  => $surveyResponse,
             ];
             $updated = true;
         } else {
             foreach ($participants as &$p) {
                 if (isset($p['id']) && (string) $p['id'] === (string) $this->participantId) {
+                    $p['cff_subscription'] = $this->cff_subscription ?: 'none';
                     $p['survey_response'] = $surveyResponse;
                     $updated = true;
                     break;
@@ -194,7 +224,7 @@ class Survey extends Component
             ]);
             session()->flash('message', 'Merci ! Votre réponse a été enregistrée.');
             if ($this->participantId === 'new') {
-                $this->reset(['participantId', 'newName', 'isCoach', 'responses', 'hotel_needed', 'remarks']);
+                $this->reset(['participantId', 'newName', 'isCoach', 'responses', 'hotel_needed', 'remarks', 'cff_subscription']);
             }
         } else {
             session()->flash('error', 'Participant non trouvé.');

@@ -99,8 +99,8 @@
                                             </div>
                                             <select wire:model.live="responses.{{ $day['date'] }}.aller.mode" class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md bg-white shadow-sm">
                                                 <option value="">-- Choisir --</option>
-                                                <option value="bus">J'ai besoin d'un transport (Bus du club)</option>
-                                                <option value="train">Propres moyens (Train)</option>
+                                                <option value="bus">J'ai besoin d'un transport (Organisé par le club : Bus/Voiture/Train)</option>
+                                                <option value="train">Propres moyens (Train individuel autonome)</option>
                                                 <option value="car">Propres moyens (Voiture)</option>
                                                 <option value="car_seats">Propres moyens (Voiture) + places dispos</option>
                                                 <option value="on_site">Déjà sur place / Pas besoin</option>
@@ -125,8 +125,8 @@
                                             </div>
                                             <select wire:model.live="responses.{{ $day['date'] }}.retour.mode" class="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md bg-white shadow-sm">
                                                 <option value="">-- Choisir --</option>
-                                                <option value="bus">J'ai besoin d'un transport (Bus du club)</option>
-                                                <option value="train">Propres moyens (Train)</option>
+                                                <option value="bus">J'ai besoin d'un transport (Organisé par le club : Bus/Voiture/Train)</option>
+                                                <option value="train">Propres moyens (Train individuel autonome)</option>
                                                 <option value="car">Propres moyens (Voiture)</option>
                                                 <option value="car_seats">Propres moyens (Voiture) + places dispos</option>
                                                 <option value="on_site">Reste sur place / Pas besoin</option>
@@ -145,6 +145,29 @@
                             @endforeach
                         </div>
 
+                        <!-- CFF Subscription Field -->
+                        <div class="bg-blue-50/50 p-4 rounded-md border border-blue-100 space-y-2">
+                            <label class="block text-sm font-medium text-blue-900">Abonnement CFF (si le trajet se fait en train) <span class="text-red-500">*</span></label>
+                            <p class="text-xs text-blue-700">Permet au club de prévoir les bons billets en cas de déplacement en train.</p>
+                            <div class="flex flex-wrap items-center gap-4 pt-1">
+                                <label class="inline-flex items-center text-xs text-gray-800 cursor-pointer">
+                                    <input type="radio" wire:model="cff_subscription" value="none" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                    <span class="ml-2 font-medium">Plein tarif (Aucun abonnement)</span>
+                                </label>
+                                <label class="inline-flex items-center text-xs text-gray-800 cursor-pointer">
+                                    <input type="radio" wire:model="cff_subscription" value="half_fare" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                    <span class="ml-2 font-semibold text-blue-800">Demi-tarif (1/2)</span>
+                                </label>
+                                <label class="inline-flex items-center text-xs text-gray-800 cursor-pointer">
+                                    <input type="radio" wire:model="cff_subscription" value="ag" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                    <span class="ml-2 font-semibold text-green-800">AG (Abonnement Général)</span>
+                                </label>
+                            </div>
+                            @error('cff_subscription')
+                                <p class="text-red-600 text-xs font-semibold mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         @if($this->can_request_hotel)
                             <div class="relative flex items-start bg-yellow-50 p-4 rounded-md border border-yellow-200">
                                 <div class="flex items-center h-5">
@@ -155,7 +178,7 @@
                                     <p class="text-yellow-700 text-xs">Option réservée aux entraîneurs. Pour les athlètes, l'administration gère directement l'attribution.</p>
                                 </div>
                             </div>
-                        @else
+                        @elseif($this->has_hotel)
                             <div class="text-sm bg-gray-50 p-4 rounded-md border border-gray-200">
                                 <p class="text-gray-600 italic">Note : L'attribution des chambres d'hôtel pour les athlètes et entraîneurs est gérée directement par le club selon les horaires de compétition.</p>
                             </div>
@@ -354,7 +377,17 @@
                                 @if($isAthlete && $hasAnySchedule)
                                     <tr class="hover:bg-gray-50/50 transition-colors">
                                         <td class="px-3 py-1.5 whitespace-nowrap text-[11px] font-medium text-gray-700">
-                                            {{ $p['name'] }}
+                                            <div class="inline-flex items-center space-x-1.5">
+                                                <span>{{ $p['name'] }}</span>
+                                                @php
+                                                    $sub = $p['survey_response']['cff_subscription'] ?? $p['cff_subscription'] ?? null;
+                                                @endphp
+                                                @if($sub === 'ag')
+                                                     <span class="px-1 text-[8px] font-black rounded bg-indigo-50 text-indigo-700 border border-indigo-200">AG</span>
+                                                 @elseif($sub === 'half_fare')
+                                                     <span class="px-1 text-[8px] font-black rounded bg-slate-100 text-slate-600 border border-slate-200">1/2</span>
+                                                 @endif
+                                            </div>
                                         </td>
                                         @foreach($days as $day)
                                             @php
