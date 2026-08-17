@@ -31,12 +31,12 @@ class GenerateMessageAction extends Action
                 Forms\Components\Select::make('template')
                     ->label('Modèle de message')
                     ->options([
-                        'comp_info_long'    => '📢 Compétition - Info Générale (Long)',
-                        'comp_info_short'   => '⚡ Compétition - Briefing Jour J / WhatsApp (Court)',
-                        'travel_preliminary'=> '📋 Déplacement - Infos Préliminaires (Hébergement & Transports)',
-                        'travel_survey'     => '✍️ Déplacement - Inscription & Sondage',
-                        'travel_plan'       => '🚘 Déplacement - Plan de Transport Définitif',
-                        'travel_expenses'   => '💰 Déplacement - Note de Frais & Remboursement (Art. 20)',
+                        'comp_info_long'    => '📢 Compétition - Info générale (Long)',
+                        'comp_info_short'   => '⚡ Compétition - Briefing jour J (Court)',
+                        'travel_preliminary'=> '📋 Déplacement - Infos préliminaires (Hébergement et transports)',
+                        'travel_survey'     => '✍️ Déplacement - Inscription et sondage',
+                        'travel_plan'       => '🚘 Déplacement - Plan de transport définitif',
+                        'travel_expenses'   => '💰 Déplacement - Note de frais et remboursement',
                     ])
                     ->default('comp_info_long')
                     ->live()
@@ -66,7 +66,7 @@ class GenerateMessageAction extends Action
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\TextInput::make('trainers_XXX')
-                            ->label('Destinataires Entraîneurs (ex: U14/U16)')
+                            ->label('Destinataires entraîneurs')
                             ->placeholder('Ex: U14/U16 ou Sprint')
                             ->visible(fn ($get) => $get('template') === 'comp_info_long')
                             ->live(onBlur: true)
@@ -83,14 +83,14 @@ class GenerateMessageAction extends Action
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\TextInput::make('hotel_link')
-                            ->label('Lien de l\'hôtel (pour parents/accompagnants)')
+                            ->label('Lien de l\'hôtel')
                             ->placeholder('https://...')
                             ->visible(fn ($get) => in_array($get('template'), ['travel_preliminary', 'travel_survey']))
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
 
                         Forms\Components\TextInput::make('participants_list_url')
-                            ->label('URL de la liste des participants (externe)')
+                            ->label('URL de la liste des participants')
                             ->placeholder('https://...')
                             ->visible(fn ($get) => $get('template') === 'travel_survey')
                             ->live(onBlur: true)
@@ -100,14 +100,14 @@ class GenerateMessageAction extends Action
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\TextInput::make('info_url')
-                            ->label('URL d\'information de la compétition (externe)')
+                            ->label('URL d\'information de la compétition')
                             ->placeholder('https://...')
                             ->visible(fn ($get) => in_array($get('template'), ['travel_preliminary', 'travel_survey']))
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
 
                         Forms\Components\TextInput::make('schedule_url')
-                            ->label('URL de l\'horaire (provisoire / externe)')
+                            ->label('URL de l\'horaire')
                             ->placeholder('https://...')
                             ->visible(fn ($get) => $get('template') === 'travel_survey')
                             ->live(onBlur: true)
@@ -124,7 +124,7 @@ class GenerateMessageAction extends Action
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\TextInput::make('qualification_url')
-                            ->label('Lien des qualifiés (URL)')
+                            ->label('Lien des qualifiés')
                             ->placeholder('https://...')
                             ->visible(fn ($get) => $get('template') === 'comp_info_long' && $get('registration_type') === 'qualification')
                             ->live(onBlur: true)
@@ -141,7 +141,7 @@ class GenerateMessageAction extends Action
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\TextInput::make('meeting_time')
-                            ->label('Heure de rendez-vous (Rdv)')
+                            ->label('Heure de rendez-vous')
                             ->placeholder('Ex: 07h30')
                             ->default('xxhxx')
                             ->visible(fn ($get) => $get('template') === 'comp_info_short')
@@ -172,11 +172,11 @@ class GenerateMessageAction extends Action
                     ->collapsed(),
 
                 Forms\Components\CheckboxList::make('weather')
-                    ->label('Conditions météo (Jour J)')
+                    ->label('Conditions météo')
                     ->options([
-                        'hot'  => '🥵 Canicule / Extrêmement chaud',
-                        'cold' => '🥶 Froid / Bonnet & Coupe-vent',
-                        'rain' => '☔️ Pluie / Imperméables',
+                        'hot'  => '🥵 Canicule',
+                        'cold' => '🥶 Froid',
+                        'rain' => '☔️ Pluie',
                     ])
                     ->columns(3)
                     ->visible(fn ($get) => $get('template') === 'comp_info_short')
@@ -191,14 +191,14 @@ class GenerateMessageAction extends Action
                     ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
 
                 Forms\Components\Textarea::make('custom_note')
-                    ->label('Remarque / Note spécifique (optionnel)')
+                    ->label('Remarque / Note (optionnel)')
                     ->placeholder('Ex: Pensez à vérifier vos maillots du club...')
                     ->rows(2)
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
 
                 Forms\Components\Textarea::make('message_output')
-                    ->label('Message généré (prêt à être copié)')
+                    ->label('Message généré')
                     ->rows(14)
                     ->dehydrated(false),
             ])
