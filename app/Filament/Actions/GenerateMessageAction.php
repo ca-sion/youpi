@@ -72,13 +72,54 @@ class GenerateMessageAction extends Action
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
 
+                        Forms\Components\TextInput::make('hotel_name')
+                            ->label('Nom de l\'hôtel')
+                            ->placeholder('Ex: Hôtel Ibis')
+                            ->visible(fn ($get) => in_array($get('template'), ['travel_preliminary', 'travel_survey']))
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+                    ]),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
                         Forms\Components\TextInput::make('hotel_link')
                             ->label('Lien de l\'hôtel (pour parents/accompagnants)')
                             ->placeholder('https://...')
                             ->visible(fn ($get) => in_array($get('template'), ['travel_preliminary', 'travel_survey']))
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                        Forms\Components\TextInput::make('participants_list_url')
+                            ->label('URL de la liste des participants (externe)')
+                            ->placeholder('https://...')
+                            ->visible(fn ($get) => $get('template') === 'travel_survey')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
                     ]),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('info_url')
+                            ->label('URL d\'information de la compétition (externe)')
+                            ->placeholder('https://...')
+                            ->visible(fn ($get) => in_array($get('template'), ['travel_preliminary', 'travel_survey']))
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+
+                        Forms\Components\TextInput::make('schedule_url')
+                            ->label('URL de l\'horaire (provisoire / externe)')
+                            ->placeholder('https://...')
+                            ->visible(fn ($get) => $get('template') === 'travel_survey')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
+                    ]),
+
+                Forms\Components\TextInput::make('stay_athletes')
+                    ->label('Athlètes et entraîneurs prévus pour dormir')
+                    ->placeholder('Ex: Jean Dupont, Marie Curie...')
+                    ->visible(fn ($get) => in_array($get('template'), ['travel_preliminary', 'travel_survey']))
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(fn ($set, $get, $record) => static::updateMessageOutput($set, $get, $record)),
 
                 Forms\Components\Grid::make(2)
                     ->schema([
@@ -165,13 +206,26 @@ class GenerateMessageAction extends Action
                 if (! $record) {
                     return;
                 }
+                $participants = collect($record->participants_data ?? []);
+                $stayAthletes = $participants
+                    ->filter(fn ($p) => ($p['survey_response']['hotel_needed'] ?? false) || ($p['hotel_override'] ?? false) || (! empty($p['stay_needed'])))
+                    ->pluck('name')
+                    ->map(fn ($n) => \Illuminate\Support\Str::replace('[E] ', '', $n))
+                    ->implode(', ');
+
                 $data = [
-                    'template'          => 'comp_info_long',
-                    'registration_type' => 'tiiva',
-                    'location'          => $record->settings['location'] ?? '',
-                    'meeting_time'      => 'xxhxx',
-                    'spikes_info'       => 'en céramique de 5mm. Vous pouvez en acheter sur place (6 CHF).',
-                    'include_checklist' => true,
+                    'template'              => 'comp_info_long',
+                    'registration_type'     => 'tiiva',
+                    'location'              => $record->settings['location'] ?? '',
+                    'hotel_name'            => $record->settings['hotel_name'] ?? '',
+                    'hotel_link'            => $record->settings['hotel_url'] ?? $record->settings['hotel_link'] ?? '',
+                    'participants_list_url' => $record->settings['participants_list_url'] ?? '',
+                    'info_url'              => $record->settings['info_url'] ?? $record->settings['competition_url'] ?? '',
+                    'schedule_url'          => $record->settings['schedule_url'] ?? '',
+                    'stay_athletes'         => $stayAthletes,
+                    'meeting_time'          => 'xxhxx',
+                    'spikes_info'           => 'en céramique de 5mm. Vous pouvez en acheter sur place (6 CHF).',
+                    'include_checklist'     => true,
                 ];
                 $data['message_output'] = LogisticsMessageGenerator::generate($record, $data);
                 $form->fill($data);
@@ -195,19 +249,25 @@ class GenerateMessageAction extends Action
             return;
         }
         $options = [
-            'template'           => $get('template'),
-            'registration_type'  => $get('registration_type'),
-            'location'           => $get('location'),
-            'trainers_XXX'       => $get('trainers_XXX'),
-            'hotel_link'         => $get('hotel_link'),
-            'qualification_url'  => $get('qualification_url'),
-            'qualified_athletes' => $get('qualified_athletes'),
-            'meeting_time'       => $get('meeting_time'),
-            'spikes_info'        => $get('spikes_info'),
-            'coaches_by_cat'     => $get('coaches_by_cat'),
-            'weather'            => $get('weather'),
-            'include_checklist'  => $get('include_checklist'),
-            'custom_note'        => $get('custom_note'),
+            'template'              => $get('template'),
+            'registration_type'     => $get('registration_type'),
+            'location'              => $get('location'),
+            'trainers_XXX'          => $get('trainers_XXX'),
+            'hotel_name'            => $get('hotel_name'),
+            'hotel_link'            => $get('hotel_link'),
+            'participants_list_url' => $get('participants_list_url'),
+            'info_url'              => $get('info_url'),
+            'external_info_url'     => $get('info_url'),
+            'schedule_url'          => $get('schedule_url'),
+            'stay_athletes'         => $get('stay_athletes'),
+            'qualification_url'     => $get('qualification_url'),
+            'qualified_athletes'    => $get('qualified_athletes'),
+            'meeting_time'          => $get('meeting_time'),
+            'spikes_info'           => $get('spikes_info'),
+            'coaches_by_cat'        => $get('coaches_by_cat'),
+            'weather'               => $get('weather'),
+            'include_checklist'     => $get('include_checklist'),
+            'custom_note'           => $get('custom_note'),
         ];
         $set('message_output', LogisticsMessageGenerator::generate($record, $options));
     }

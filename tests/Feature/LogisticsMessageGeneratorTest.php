@@ -50,20 +50,25 @@ class LogisticsMessageGeneratorTest extends TestCase
                 'start_date' => '2026-07-10',
             ],
             'participants_data' => [
-                ['id' => '1', 'name' => 'Athlete 1', 'role' => 'athlete'],
+                ['id' => '1', 'name' => 'Athlete 1', 'role' => 'athlete', 'stay_needed' => true],
+                ['id' => '2', 'name' => 'Athlete 2', 'role' => 'athlete', 'stay_needed' => false],
             ],
         ]);
 
         $message = LogisticsMessageGenerator::generate($logistic, [
             'template' => 'travel_preliminary',
             'location' => 'Genève',
+            'hotel_name' => 'Hôtel Ibis Lausanne',
             'hotel_link' => 'https://hotel-example.com',
+            'external_info_url' => 'https://swiss-athletics.ch/cs-2026',
         ]);
 
         $this->assertStringContainsString('Bonjour,', $message);
         $this->assertStringContainsString('Championnats Suisses', $message);
+        $this->assertStringContainsString('dans le même hôtel (Hôtel Ibis Lausanne)', $message);
         $this->assertStringContainsString('https://hotel-example.com', $message);
         $this->assertStringContainsString('Athlete 1', $message);
+        $this->assertStringContainsString('https://swiss-athletics.ch/cs-2026', $message);
         $this->assertStringContainsString('Michael Ravedoni, Chef technique', $message);
     }
 
@@ -80,10 +85,18 @@ class LogisticsMessageGeneratorTest extends TestCase
         $message = LogisticsMessageGenerator::generate($logistic, [
             'template' => 'travel_survey',
             'location' => 'Lausanne',
+            'participants_list_url' => 'https://example.com/participants',
+            'info_url' => 'https://example.com/infos',
+            'schedule_url' => 'https://example.com/horaires.pdf',
+            'stay_athletes' => 'Athlete A, Coach B',
         ]);
 
+        $this->assertStringContainsString('---- ✅ Liste des participants : https://example.com/participants', $message);
         $this->assertStringContainsString('---- 🚗 *Déplacement*', $message);
         $this->assertStringContainsString('---- 🛏️ *Hébergement*', $message);
+        $this->assertStringContainsString('Athlete A, Coach B', $message);
+        $this->assertStringContainsString('-- ℹ️ Informations : https://example.com/infos', $message);
+        $this->assertStringContainsString('-- 🕔 Horaire (provisoire) : https://example.com/horaires.pdf', $message);
         $this->assertStringContainsString('Michael Ravedoni, Chef technique', $message);
     }
 

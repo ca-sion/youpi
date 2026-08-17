@@ -227,13 +227,23 @@ class LogisticsMessageGenerator
         $location = ! empty($options['location']) ? $options['location'] : ($settings['location'] ?? 'LIEU');
 
         $participants = collect($eventLogistic->participants_data ?? []);
-        $athletesList = $participants
-            ->filter(fn ($p) => ($p['role'] ?? '') !== 'coach' && ! str_contains($p['name'] ?? '', '[E]'))
-            ->pluck('name')
-            ->implode(', ');
+        if (! empty($options['stay_athletes'])) {
+            $stayAthletes = $options['stay_athletes'];
+        } else {
+            $stayAthletes = $participants
+                ->filter(fn ($p) => ($p['survey_response']['hotel_needed'] ?? false) || ($p['hotel_override'] ?? false) || (! empty($p['stay_needed'])))
+                ->pluck('name')
+                ->map(fn ($n) => Str::replace('[E] ', '', $n))
+                ->implode(', ');
+        }
 
-        $hotelUrl = $options['hotel_link'] ?? 'URL';
-        $docUrl = $eventLogistic->document ? route('documents.show', $eventLogistic->document) : route('logistics.show', $eventLogistic);
+        $hotelName = $options['hotel_name'] ?? '';
+        $hotelText = ! empty($hotelName) ? " dans le même hôtel (*{$hotelName}*)" : " dans le même hôtel";
+
+        $hotelUrl = ! empty($options['hotel_link']) ? $options['hotel_link'] : 'URL';
+        $infoUrl = ! empty($options['external_info_url'])
+            ? $options['external_info_url']
+            : (! empty($options['info_url']) ? $options['info_url'] : 'URL');
 
         $lines = [];
         $lines[] = "Bonjour,";
@@ -244,13 +254,13 @@ class LogisticsMessageGenerator
         $lines[] = "";
         $lines[] = "🛏️ *Hébergement*";
         $lines[] = "Des chambres vont être réservées / ont déjà été réservées pour les athlètes qui devront dormir sur place. Il s'agit des athlètes dont la discipline a lieu le matin, qui ont une discipline sur plusieurs jours (qualification/finale) ou dont les disciplines sont étalées sur plusieurs jours de compétition.";
-        $lines[] = "Si les parents et les accompagnants souhaitent réserver dans le même hôtel, voici le site web de l'établissement : {$hotelUrl}.";
+        $lines[] = "Si les parents et les accompagnants souhaitent réserver{$hotelText}, voici le site web de l'établissement : {$hotelUrl}.";
         $lines[] = "";
-        $lines[] = "✅ Liste des athlètes concernés : " . ($athletesList ?: 'ATHLETES') . ".";
+        $lines[] = "✅ Liste des athlètes concernés : " . ($stayAthletes ?: 'ATHLETES') . ".";
         $lines[] = "Veuillez m'avertir en cas d'erreur.";
         $lines[] = "";
         $lines[] = "Je reste à votre disposition pour tout renseignement complémentaire.";
-        $lines[] = "Vous trouverez plus d'informations sur la compétition à l'adresse : {$docUrl}.";
+        $lines[] = "Vous trouverez plus d'informations sur la compétition à l'adresse : {$infoUrl}.";
         $lines[] = "";
         $lines[] = "Michael Ravedoni, Chef technique";
         $lines[] = "Envoyé à : athlètes, entraîneurs et parents d'athlètes concernés";
@@ -270,22 +280,31 @@ class LogisticsMessageGenerator
         $location = ! empty($options['location']) ? $options['location'] : ($settings['location'] ?? 'LIEU');
 
         $surveyUrl = route('logistics.survey', $eventLogistic);
-        $showUrl = route('logistics.show', $eventLogistic);
+        $participantsListUrl = ! empty($options['participants_list_url']) ? $options['participants_list_url'] : 'URL';
         $deadlineStr = static::getFormattedDeadline($eventLogistic);
-        $docUrl = $eventLogistic->document ? route('documents.show', $eventLogistic->document) : $showUrl;
+
+        $infoUrl = ! empty($options['info_url'])
+            ? $options['info_url']
+            : (! empty($options['external_info_url']) ? $options['external_info_url'] : 'URL');
+        $scheduleUrl = ! empty($options['schedule_url']) ? $options['schedule_url'] : 'URL';
 
         $participants = collect($eventLogistic->participants_data ?? []);
-        $stayAthletes = $participants
-            ->filter(fn ($p) => ($p['survey_response']['hotel_needed'] ?? false) || ($p['hotel_override'] ?? false))
-            ->pluck('name')
-            ->implode(', ');
+        if (! empty($options['stay_athletes'])) {
+            $stayAthletes = $options['stay_athletes'];
+        } else {
+            $stayAthletes = $participants
+                ->filter(fn ($p) => ($p['survey_response']['hotel_needed'] ?? false) || ($p['hotel_override'] ?? false) || (! empty($p['stay_needed'])))
+                ->pluck('name')
+                ->map(fn ($n) => Str::replace('[E] ', '', $n))
+                ->implode(', ');
+        }
 
         $lines = [];
         $lines[] = "Bonjour, voici le groupe pour les/le *{$eventLogistic->name}* qui se dérouleront/déroulera le {$dateFormatted} à *{$location}*. Vous êtes sur ce groupe car vous êtes inscrit pour y participer.";
-        $lines[] = "---- ✅ Liste des participants : {$showUrl}";
+        $lines[] = "---- ✅ Liste des participants : {$participantsListUrl}";
         $lines[] = "";
         $lines[] = "---- 🚗 *Déplacement*";
-        $lines[] = "Un déplacement est organisé (selon Art. 20 du Règlement). Voici les informations : {$showUrl}";
+        $lines[] = "Un déplacement est organisé (selon Art. 20 du Règlement). Voici les informations : {$surveyUrl}";
         $lines[] = "OU";
         $lines[] = "Veuillez ✍️ remplir le sondage ci-dessous pour le déplacement. Ainsi je pourrai organiser au mieux. Le bus n'a que 9/12 places, merci donc d'indiquer si vous venez par vos propres moyens afin que je puisse remplir les voitures au départ de Sion.";
         $lines[] = "-- ✍️ Sondage : {$surveyUrl}";
@@ -294,8 +313,8 @@ class LogisticsMessageGenerator
         $lines[] = "---- 🛏️ *Hébergement*";
         $lines[] = "Des chambres ont déjà été réservées pour les athlètes qui devront dormir sur place. Il s'agit des athlètes qui ont des disciplines étalées sur plusieurs jours de compétition : " . ($stayAthletes ?: 'ATHLETES') . ".";
         $lines[] = "";
-        $lines[] = "-- ℹ️ Informations : {$docUrl}";
-        $lines[] = "-- 🕔 Horaire (provisoire) : {$docUrl}";
+        $lines[] = "-- ℹ️ Informations : {$infoUrl}";
+        $lines[] = "-- 🕔 Horaire (provisoire) : {$scheduleUrl}";
         $lines[] = "";
         $lines[] = "Je reste à votre disposition en cas de questions ou remarques.";
         $lines[] = "Michael Ravedoni, Chef technique";
